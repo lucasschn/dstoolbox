@@ -125,7 +125,7 @@ classdef RampUpMotion < handle
                 analpha0 = 0;
             end
             if isempty(obj.t)
-                obj.t = 1:0.1:300;
+                obj.t = 0:0.1:300;
             end
             obj.analpha = obj.alphadot*obj.t + analpha0;
         end
@@ -193,6 +193,7 @@ classdef RampUpMotion < handle
             elseif ~isempty(obj.analpha) % compute analpha_lag from analpha
                 dalpha = diff(obj.analpha);
                 obj.analpha_lag = zeros(size(obj.analpha));
+                obj.analpha_lag(1) = obj.analpha(1); % = analpha0, as obj.t(1)=0
                 for k = 1:length(dalpha)
                     obj.analpha_lag(k+1) = obj.analpha_lag(k) + dalpha(k)*(1-exp(-s(k)/airfoil.Talpha));
                 end
@@ -203,10 +204,16 @@ classdef RampUpMotion < handle
             % time-evolution of alpha
             obj.computeAlphaLag(airfoil);
             i_lagonset = find(obj.analpha_lag>airfoil.alpha_ds0,1);
-            if ~isempty(obj.alpha)
+            if isempty(i_lagonset)
+                fprintf('The airfoil "%s" does not show stall in the experiment %s. /n',airfoil.name,obj.name)
+            else
+                if ~isempty(obj.alpha)
                 obj.alpha_lagonset = obj.alpha(i_lagonset);
-            else 
+                elseif ~isempty(obj.analpha)
                 obj.alpha_lagonset = obj.analpha(i_lagonset);
+                else
+                error('Impossible to define stall angle. %s has no angle of attack defined.',obj.name)
+                end
             end
         end
         function plotCL(obj)
@@ -275,7 +282,7 @@ classdef RampUpMotion < handle
                 hold on
                 plot(obj.t,obj.analpha_lag,'--','DisplayName','ideal \alpha''')
             end
-            if ~isempty(obj.alpha_CConset)
+            if ~isempty(obj.i_CConset)
                 plot(obj.t(obj.i_CConset),obj.alpha_CConset,'rx','DisplayName','\alpha_{ds,CC}')
                 hold on
                 plot(obj.t(obj.i_CConset),obj.alpha_lag(obj.i_CConset),'bx','DisplayName','\alpha''_{ds,CC}')
