@@ -6,6 +6,7 @@ classdef Airfoil < handle
         D1
         Talpha
         r0 = 0.01 % reduced pitch rate at which linear fitting begins
+        steady % corresponding steady curve
     end
     methods
         % Unique constructor with airfoil's name and chord length. Airfoil
@@ -66,7 +67,7 @@ classdef Airfoil < handle
                 if ramp.r >= obj.r0
                     if isempty(ramp.alpha)
                         alpha_lag_ds(k) = interp1(ramp.analpha,ramp.analpha_lag,alpha_ds(k));
-                    elseif isempty(ramp.i_continous_grow)
+                    elseif isempty(ramp.i_continuous_grow)
                         alpha_lag_ds(k) = interp1(ramp.alpha,ramp.alpha_lag,alpha_ds(k));
                     else % if alpha_continuous_grow is defined
                         alpha_lag_ds(k) = interp1(ramp.alpha_continuous_grow,ramp.alpha_lag(ramp.i_continuous_grow),alpha_ds(k));

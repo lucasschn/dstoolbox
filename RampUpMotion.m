@@ -39,6 +39,12 @@ classdef RampUpMotion < handle
             for k=1:length(prop)
                 eval(sprintf('obj.%s = p.Results.%s;',prop{k},prop{k}));
             end
+            if ~isempty(obj.alpha)
+                obj.alpha_rad = deg2rad(obj.alpha);
+            end
+            if isempty(obj.Ts) && ~isempty(obj.t)
+                obj.Ts = mean(diff(obj.t));
+            end
         end
         function isolateRamp(obj)
             dalpha = diff(obj.alpha);
@@ -93,12 +99,13 @@ classdef RampUpMotion < handle
                 error('CN and alpha must be of same length.')
             end
         end
-        function setalphadot(obj,alphadot)
+        function setAlphaDot(obj,alphadot)
+            % sets alphadot in degrees
             dalphadt = diff(obj.alpha)./diff(obj.t);
             if nargin > 1
-                obj.alphadot = alphadot;
+                obj.alphadot = alphadot; % deg/s
             else
-                obj.alphadot = max(dalphadt);
+                obj.alphadot = max(dalphadt); % deg/s
             end
             if ~isempty(obj.alpha)
                 analpha0 = lsqcurvefit(@(x,xdata) obj.alphadot*xdata+x,0,obj.t(dalphadt>=5),obj.alpha(dalphadt>=5));
@@ -106,7 +113,7 @@ classdef RampUpMotion < handle
                 analpha0 = 0;
             end
             if isempty(obj.t)
-                obj.t = 0:0.1:300;
+                obj.t = linspace(0,round(35/obj.alphadot,1),500);
             end
             obj.analpha = obj.alphadot*obj.t + analpha0;
         end
@@ -186,7 +193,7 @@ classdef RampUpMotion < handle
             obj.computeAlphaLag(airfoil);
             i_lagonset = find(obj.analpha_lag>airfoil.alpha_ds0,1);
             if isempty(i_lagonset)
-                fprintf('The airfoil "%s" does not show stall in the experiment %s. /n',airfoil.name,obj.name)
+                warning('The airfoil "%s" does not show stall in the experiment %s.',airfoil.name,obj.name)
             else
                 if ~isempty(obj.alpha)
                 obj.alpha_lagonset = obj.alpha(i_lagonset);
@@ -225,6 +232,24 @@ classdef RampUpMotion < handle
             ylabel('C_N (-)')
             title(obj.name)
         end
+        function plotCNLag(obj)
+            figure
+            if ~isempty(obj.alpha_lag)
+                plot(obj.alpha,obj.CN,'DisplayName','C_N(\alpha)')
+                hold on
+                plot(obj.alpha_lag,obj.CN,'--','DisplayName','C_N(\alpha'')')
+            elseif ~isempty(obj.analpha_lag)
+                plot(obj.analpha,obj.CN,'DisplayName','C_N(\alpha)')
+                hold on
+                plot(obj.analpha_lag,obj.CN,'--','DisplayName','C_N(\alpha'')')
+                warning('%s : CN curve was displayed for analytical alpha as the experimental alpha was not defined.',obj.name)
+            end
+            grid on
+            legend('Location','SouthEast')
+            xlabel('\alpha (°)')
+            ylabel('C_N (-)')
+            title(obj.name)
+        end
         function fig = plotCC(obj)
             fig = figure;
             plot(obj.alpha,obj.CC)
@@ -237,11 +262,13 @@ classdef RampUpMotion < handle
         end
         function plotAlpha(obj)
             figure
-            plot(obj.t,obj.alpha,'DisplayName','exp')
-            hold on
-            if ~isempty(obj.analpha)
-                
+            if ~isempty(obj.alpha)
+                plot(obj.t,obj.alpha,'DisplayName','exp')
+                hold on
+            end
+            if ~isempty(obj.analpha) 
                 plot(obj.t,obj.analpha,'--','DisplayName','ideal')
+                hold on
             end
             if ~isempty(obj.alpha_CConset)
                 plot(obj.t(obj.i_CConset),obj.alpha_CConset,'rx','DisplayName','\alpha_{ds,CC}')
