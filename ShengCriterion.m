@@ -31,11 +31,11 @@ path2ramps = 'data/2018_SH_003/Postprocessing/matfiles/loads/';
 % ms013.setCD( avg.Cd);
 % ms013.computeAirfoilFrame();
 % % ms013.isolateRamp();
-% ms013.findDSonset();
+% ms013.findExpOnset();
 % fig1 = ms013.plotCC();
 
 % ideal constructor 
-%ms019 = RampUpMotion('ms019'
+%ms018 = RampUpMotion('ms019'
 
 avg = load([path2ramps 'ms018mpt001_loads.mat'],'avg');
 avg = avg.avg;
@@ -47,7 +47,7 @@ ms018.setCD(avg.cD - cD0);
 ms018.computeAirfoilFrame();
 ms018.isolateRamp();
 % Define stall
-ms018.findDSonset();
+ms018.findExpOnset();
 fig0 = ms018.plotCC();
 ms018.setalphadot(5)
 
@@ -61,7 +61,7 @@ ms019.setCD(avg.cD - cD0);
 ms019.computeAirfoilFrame();
 ms019.isolateRamp();
 % Define stall
-ms019.findDSonset();
+ms019.findExpOnset();
 fig1 = ms019.plotCC();
 ms019.setalphadot(10)
 
@@ -76,7 +76,7 @@ ms020.setCD(avg.cD - cD0);
 ms020.computeAirfoilFrame();
 ms020.isolateRamp();
 % Define stall
-ms020.findDSonset();
+ms020.findExpOnset();
 fig2 = ms020.plotCC();
 ms020.setalphadot(12.5)
 
@@ -90,7 +90,7 @@ ms021.setCD(avg.cD - cD0);
 ms021.computeAirfoilFrame();
 ms021.isolateRamp();
 % Define stall
-ms021.findDSonset();
+ms021.findExpOnset();
 fig3 = ms021.plotCC();
 ms021.setalphadot(15)
 
@@ -104,7 +104,7 @@ ms022.setCD(avg.cD - cD0);
 ms022.computeAirfoilFrame();
 ms022.isolateRamp();
 % Define stall
-ms022.findDSonset();
+ms022.findExpOnset();
 fig4 = ms022.plotCC();
 ms022.setalphadot(17.5)
 
@@ -118,7 +118,7 @@ ms023.setCD(avg.cD - cD0);
 ms023.computeAirfoilFrame();
 ms023.isolateRamp();
 % Define stall
-ms023.findDSonset();
+ms023.findExpOnset();
 fig5 = ms023.plotCC();
 ms023.setalphadot(20)
 
@@ -132,7 +132,7 @@ ms024.setCD(avg.cD - cD0);
 ms024.computeAirfoilFrame();
 ms024.isolateRamp();
 % Define stall
-ms024.findDSonset();
+ms024.findExpOnset();
 fig6 = ms024.plotCC();
 ms024.setalphadot(25)
 

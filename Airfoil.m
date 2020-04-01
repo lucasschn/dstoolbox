@@ -5,8 +5,14 @@ classdef Airfoil < handle
         alpha_ds0
         D1
         Talpha
+        r0 = 0.01 % reduced pitch rate at which linear fitting begins
     end
     methods
+        % Unique constructor with airfoil's name and chord length. Airfoil
+        % user-defined name property can be distinct from the instance
+        % name. This allows characters in the name that are not allowed for
+        % variables. The chord length has to be positive, otherwise an
+        % error is thrown.
         function obj = Airfoil(name,c)
             obj.name = name;
             if c > 0
@@ -27,7 +33,7 @@ classdef Airfoil < handle
                     ramp.setPitchRate(obj);
                 end
                 %r(k-1) = ramp.rt(ramp.i_CConset);
-                if ramp.r>=0.01
+                if ramp.r>=obj.r0
                     r(end+1) = ramp.r;
                     alpha_ds(end+1) = ramp.alpha_CConset;
                 end
@@ -45,7 +51,7 @@ classdef Airfoil < handle
             ylabel('\alpha_{ds} (°)');
             title(obj.name)
             plot(r,polyval(p,r),'DisplayName','Linear fitting')
-            alpha_ds_prime = zeros(size(alpha_ds));
+            alpha_lag_ds = zeros(size(alpha_ds));
             for k=1:length(alpha_ds)
                 % retrieve which ramp corresponds to the current alpha_ds
                 for kk=2:nargin
@@ -57,17 +63,17 @@ classdef Airfoil < handle
                 % compute alpha_lag and finds alpha_lagonset
                 ramp.findModelOnset(obj);
                 % looking for the value of alpha_lag(alpha) at the point alpha_ds
-                if ramp.r >= 0.01
+                if ramp.r >= obj.r0
                     if isempty(ramp.alpha)
-                        alpha_ds_prime(k) = interp1(ramp.analpha,ramp.analpha_lag,alpha_ds(k));
+                        alpha_lag_ds(k) = interp1(ramp.analpha,ramp.analpha_lag,alpha_ds(k));
                     elseif isempty(ramp.i_continous_grow)
-                        alpha_ds_prime(k) = interp1(ramp.alpha,ramp.alpha_lag,alpha_ds(k));
+                        alpha_lag_ds(k) = interp1(ramp.alpha,ramp.alpha_lag,alpha_ds(k));
                     else % if alpha_continuous_grow is defined
-                        alpha_ds_prime(k) = interp1(ramp.alpha_continuous_grow,ramp.alpha_lag(ramp.i_continuous_grow),alpha_ds(k));
+                        alpha_lag_ds(k) = interp1(ramp.alpha_continuous_grow,ramp.alpha_lag(ramp.i_continuous_grow),alpha_ds(k));
                     end
                 end
             end
-            plot(r,alpha_ds_prime,'o','DisplayName','\alpha_{ds} (lagged)')
+            plot(r,alpha_lag_ds,'o','DisplayName','\alpha_{ds} (lagged)')
             plot(r,ones(size(r)).*obj.alpha_ds0,'--','DisplayName','\alpha_{ds,0}');
             legend('Location','SouthEast')
         end

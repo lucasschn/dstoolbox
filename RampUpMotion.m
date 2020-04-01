@@ -27,41 +27,19 @@ classdef RampUpMotion < handle
         rt % instantaneous red. pitch rate (shoudl be const)
     end
     methods
-        % constructor (not possible to overload in Matlab)
+        % convenient constructor with name/value pair of any attribute of RampUpMotion
         function obj = RampUpMotion(varargin)
-            
-            obj.name = varargin{1};
-            
-            if nargin >= 2 %(name,alpha)
-                
-                if length(varargin{2}) > 1
-                    obj.alpha = varargin{2};
-                    obj.alpha_rad = deg2rad(obj.alpha);
-                    
-                elseif nargin == 3 %(name,alpha,Ts)
-                    obj.Ts = varargin{3};
-                    obj.Ts = varargin{3};
-                    
-                elseif nargin == 4 %(name,alpha,CN,Ts)
-                    obj.Ts = varargin{2};
-                    obj.CN = varargin{3};
-                    obj.Ts = varargin{4};
-                    obj.t = 0:obj.Ts:obj.Ts*(length(obj.alpha)-1);
-                    
-                elseif nargin == 5 %(name,alpha,CN,V,Ts)
-                    obj.Ts = varargin{2};
-                    obj.CN = varargin{3};
-                    obj.V = varargin{4};
-                    obj.Ts = varargin{5};
-                    obj.t = 0:obj.Ts:obj.Ts*(length(obj.alpha)-1);
-                else
-                    error('The second argument must be the measured incidence angles vector.')
-                end
+            p = inputParser;
+            % Add name / default value pairs
+            prop = properties('RampUpMotion'); % makes a cell array of all properties of the specified ClassName
+            for k=1:length(prop)
+                p.addParameter(prop{k},[]);
+            end
+            p.parse(varargin{:}); % {:} is added to take the content of the cells
+            for k=1:length(prop)
+                eval(sprintf('obj.%s = p.Results.%s;',prop{k},prop{k}));
             end
         end
-%         function name = objName(obj)
-%             name = inputname(1); % 1 stands for arg nb 1
-%         end
         function isolateRamp(obj)
             dalpha = diff(obj.alpha);
             i_end = find((abs(dalpha)<1e-2) .* (obj.alpha(1:end-1)>10),ceil(1/obj.Ts));
@@ -82,6 +60,9 @@ classdef RampUpMotion < handle
             [~,imax] = max(ls);
             obj.i_continuous_grow = i_grow{imax};
             obj.alpha_continuous_grow = obj.alpha(i_grow{imax});
+        end
+        function setName(obj)
+            obj.name = inputname(1);
         end
         function sett(obj,t)
             if length(t)==length(obj.alpha)
