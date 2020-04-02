@@ -4,24 +4,33 @@ classdef RampUpMotion < handle
         alpha
         alpha_continuous_grow
         i_continuous_grow
+        % eperimental pitch angle evolutions
         alpha_rad
         analpha
         alpha_lag
         analpha_lag
+        % experimental dynamic stall angles
         alpha_CConset
+        alpha_CLonset
+        % their indices
         i_CConset
         i_CNonset
-        alpha_CLonset
+        % model outputs
         alpha_lagonset % corresponds to alpha'_ds
         alphadot %°/s
+        alpha_onset % modelled one
+        % exprimental load curves
         CL
         CD
         CN
+        CC
+        % Fitting parameters
         CNslope1
         CNslope2
-        CC
+        % experimental parts
         Ts
         t
+        % experimental flow parameters
         V
         r % reduced pitch rate
         rt % instantaneous red. pitch rate (shoudl be const)
@@ -197,8 +206,10 @@ classdef RampUpMotion < handle
             else
                 if ~isempty(obj.alpha)
                 obj.alpha_lagonset = obj.alpha(i_lagonset);
+                obj.alpha_onset = interp1(obj.alpha_lag(obj.i_continuous_grow),obj.alpha_continuous_grow,obj.alpha_lagonset);
                 elseif ~isempty(obj.analpha)
                 obj.alpha_lagonset = obj.analpha(i_lagonset);
+                obj.alpha_onset = interp1(obj.analpha_lag,obj.analpha,obj.alpha_lagonset);
                 else
                 error('Impossible to define stall angle. %s has no angle of attack defined.',obj.name)
                 end
