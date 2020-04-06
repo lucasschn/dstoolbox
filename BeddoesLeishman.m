@@ -2,7 +2,6 @@ close all
 clear all
 clc
 set(0,'DefaultFigureWindowStyle','docked')
-addpath '/Users/lucas/Documents/EPFL/PDM/DS Toolbox'
 
 %% Static data
 

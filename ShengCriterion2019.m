@@ -32,7 +32,7 @@ end
 %% Running Sheng experiment
 airfoil = Airfoil('flatplate',0.15);
 % Define alpha_ds0 & compute Talpha
-airfoil.Sheng(ms013,ms034,ms014);
+figs = airfoil.Sheng(ms013,ms034,ms014,ms015);
 
 %% Add Sheng's predicted stall angles to the figures
 for k=1:length(c)
@@ -41,3 +41,5 @@ for k=1:length(c)
     hold on
     evalin('base',sprintf('plot(%s.alpha_lagonset*ones(2,1),fig%d.CurrentAxes.YLim,''b--'')',msname,k));
 end
+
+figure(figs)

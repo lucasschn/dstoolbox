@@ -22,7 +22,7 @@ classdef Airfoil < handle
                 error('Please enter a valid chord length.')
             end
         end
-        function Sheng(varargin)
+        function figs = Sheng(varargin)
             obj = varargin{1};
             % argument is a series of RampUpMotions
             r = [];
@@ -43,14 +43,14 @@ classdef Airfoil < handle
             obj.D1 = p(1);
             obj.alpha_ds0 = p(2);
             obj.Talpha = pi/180*obj.D1; % Talpha seems too low
-%             obj.Talpha = 3.97;
-            figure
+%             obj.Talpha = 7;
+            figs = figure;
             plot(r,alpha_ds,'o','DisplayName','\alpha_{ds} (exp)')
             hold on
             grid on
             xlabel('reduced pitch rate r (-)');
             ylabel('\alpha_{ds} (°)');
-            title(obj.name)
+            title(sprintf('%s ($T_{\\alpha} = %.2f$)',obj.name,obj.Talpha),'interpreter','latex')
             plot(r,polyval(p,r),'DisplayName','Linear fitting')
             alpha_lag_ds = zeros(size(alpha_ds));
             for k=1:length(alpha_ds)
@@ -76,7 +76,7 @@ classdef Airfoil < handle
             end
             plot(r,alpha_lag_ds,'o','DisplayName','\alpha_{ds} (lagged)')
             plot(r,ones(size(r)).*obj.alpha_ds0,'--','DisplayName','\alpha_{ds,0}');
-            legend('Location','SouthEast')
+            legend('Location','NorthWest')
         end
     end
 end

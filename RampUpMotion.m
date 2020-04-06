@@ -57,16 +57,18 @@ classdef RampUpMotion < handle
         end
         function isolateRamp(obj)
             dalpha = diff(obj.alpha);
-            i_end = find((abs(dalpha)<1e-2) .* (obj.alpha(1:end-1)>10),ceil(1/obj.Ts));
+            i_end = find((abs(dalpha/obj.Ts)<1e-2) .* (obj.alpha(1:end-1)>10),ceil(1/obj.Ts));
             i_end = i_end(end);
             t_end = obj.t(i_end);
             fprintf('Data will be cutoff at %.2fs \n',t_end)
+            if 1
             obj.alpha = obj.alpha(1:i_end);
             obj.t = obj.t(1:i_end);
             obj.CN = obj.CN(1:i_end);
             obj.CC = obj.CC(1:i_end);
             obj.CL = obj.CL(1:i_end);
             obj.CD = obj.CD(1:i_end);
+            end
             % then find valid values for continuously increasing alphas
             i_grow = findGrowingIndices(obj.alpha);
             for l=1:length(i_grow)
@@ -269,7 +271,7 @@ classdef RampUpMotion < handle
             grid on
             xlabel('\alpha (°)')
             ylabel('C_C (-)')
-            title(obj.name)
+            title(sprintf('%s ($\\dot{\\alpha} = %.2f ^{\\circ}$/s)',obj.name,obj.alphadot),'interpreter','latex')
         end
         function plotAlpha(obj)
             figure
