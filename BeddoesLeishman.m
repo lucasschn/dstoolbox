@@ -5,45 +5,37 @@ set(0,'DefaultFigureWindowStyle','docked')
 
 %% Static data
 
-load('naca0012')
+data = load('naca0012');
+data = data.naca0012;
 
-c = 0.457;
+naca0012 = Airfoil('naca0012',0.457);
 M = 0.3;
 a = 340.3;
-Uinf = M*a;
 nu = 1.48e-5;
-Re = Uinf*c/nu;
-
-% pitching motion
-meanrad = deg2rad(naca0012.mean);
-amprad = deg2rad(naca0012.amp);
-k = 0.1; % reduced frequency
-
+Re = M*a*naca0012.c/nu;
 
 % Look at OpenJetCorr if using simcos data
-steady = SteadyCurve(naca0012.alphaSteady,naca0012.CNsteady);
+naca0012.steady = SteadyCurve(data.alphaSteady,data.CNsteady);
 
 % experimental separation point
-fexp = (2*sqrt(steady.CN./(2*pi*steady.alpha_rad))-1).^2;
+fexp = (2*sqrt(naca0012.steady.CN./(2*pi*naca0012.steady.alpha_rad))-1).^2;
 
 %% Dynamic data
 
-freq = k*Uinf/(pi*c);
-Ts = 1/(freq*length(naca0012.alphaxp));
-pitching = PitchingMotion(naca0012.alphaxp,naca0012.CNxp,Ts);
-pitching.setSinus(meanrad,amprad,freq);
-
+% pitching motion
+mean_rad = deg2rad(data.mean);
+amp_rad = deg2rad(data.amp);
+pitching = PitchingMotion('alpha',data.alphaxp,'CN',data.CNxp,'V',M*a,'k',0.1);
+pitching.setSinus(naca0012,mean_rad,amp_rad);
 
 % Resample CNsteady
-pitching.setCNsteady(pitching,steady)
+pitching.setCNsteady(pitching,naca0012.steady)
 
 % model parameters
 % values for seppoint in deg
-fitKirchhoff(steady);
-plotKirchhoff(steady);
+naca0012.steady.fitKirchhoff();
+naca0012.steady.plotKirchhoff();
 % values for seppoint in rad
-% S1 = 0.0122;
-% S2 = 0.0240;
 Tp = 6;
 Tf = 3;
 Tv = 3.5;
@@ -51,9 +43,9 @@ Tv = 3.5;
 for kp=1:length(Tp)
     for kf=1:length(Tf)
         for kv=1:length(Tv)
-            params = sprintf('S1=%0.1f, S2=%0.1f, Tp=%0.1f, Tf=%0.1f, Tv=%0.1f',steady.S1,steady.S2,Tp(kp),Tf(kf),Tv(kv));
+            params = sprintf('S1=%0.1f, S2=%0.1f, Tp=%0.1f, Tf=%0.1f, Tv=%0.1f',naca0012.steady.S1,naca0012.steady.S2,Tp(kp),Tf(kf),Tv(kv));
             disp(params);
-            [CN_LB,CNk,CNI,CNC,CNp,CNprime,CNf,CNv,f,fp,fpp,alphaf,alphaE] = ComputeUnsteadyLift(pitching,k,a,M,c,steady,Tp(kp),Tf(kf),Tv(kv));
+            [CN_LB,CNk,CNI,CNC,CNp,CNprime,CNf,CNv,f,fp,fpp,alphaf,alphaE] = ComputeUnsteadyLift(pitching,naca0012,M,Tp(kp),Tf(kf),Tv(kv));
             
 %             fig4 = figure;
 %             semilogy(steady.alpha,fexp,'DisplayName','experimental')
@@ -85,7 +77,7 @@ for kp=1:length(Tp)
 %             ylabel('\alpha (°)')
 %             
             fig7 = figure;
-            plot(steady.alpha,f,'DisplayName','f')
+            plot(naca0012.steady.alpha,f,'DisplayName','f')
             hold on
             plot(pitching.alpha(1:length(fp)),fp,'DisplayName','f''')
             plot(pitching.alpha(1:length(fpp)),fpp,'DisplayName','f''''')
@@ -110,7 +102,7 @@ for kp=1:length(Tp)
             elseif length(Tp)==1
                 subplot(length(Tf),length(Tv),length(Tv)*(kf-1)+kv)
             end
-            plot(steady.alpha,CNk,'DisplayName','C_{N,steady}')
+            plot(naca0012.steady.alpha,CNk,'DisplayName','C_{N,steady}')
             hold on
             %             plot(PitchingMotion.alphaxp(1:length(CNI)),CNI,'DisplayName','C_N^I')
             %             plot(PitchingMotion.alphaxp(1:length(CNC)),CNC,'DisplayName','C_N^C')
@@ -131,23 +123,6 @@ for kp=1:length(Tp)
         end
     end
 end
-
-%% Comparison with Sheng 
-t = 0:Ts:Ts*(length(pitching.alpha)-1);
-s = 2*Uinf*t/c;
-Tp_sheng = Tp(kp);
-DeltaCNprime_sheng = diff(Slope(steady)*pitching.analpha_rad).*(1-exp(-s(1:end-1))/Tp_sheng);
-CNprime_sheng = cumsum(DeltaCNprime_sheng);
-% CNprime_sheng = Slope(steady)*pitching.analpha_rad.*(1-exp(-s/Tp_sheng));
-
-fig9 = figure;
-plot(pitching.alpha(1:length(CNprime)),CNprime,'DisplayName','Leishman')
-hold on 
-plot(pitching.alpha(1:length(CNprime_sheng)),CNprime_sheng,'DisplayName','Sheng')
-legend show
-grid on
-xlabel('\alpha')
-ylabel('C_N')
 
 %% Save figures
 % saveas(fig4,'fig/f_fit.png')

@@ -9,6 +9,7 @@ classdef SteadyCurve < handle
         alpha1
         f
         CNalpha
+        slope % pre-stall slope
     end
     methods
         % constructor
@@ -37,7 +38,7 @@ classdef SteadyCurve < handle
             CNslopes = obj.CNalpha(obj.alpha<10);
             alphaslopes = obj.alpha(1:length(CNslopes)+1);
             CNslope = sum(diff(alphaslopes).*CNslopes)/sum(diff(alphaslopes)); % mean weighted by the distance between two successive alphas
-            
+            obj.slope = CNslope;
         end
         function plot(obj)
             figure
