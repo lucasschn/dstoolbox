@@ -1,64 +1,63 @@
-classdef PitchingMotion < handle
+classdef PitchingMotion < AirfoilMotion
     properties
-        name
-        alpha
-        alpha_rad
-        analpha
-        analpha_rad
-        CN
-        CC
-        CL
-        CD
         CNsteady
         mean_rad
         amp_rad
         freq
         omega
-        phi % phase at t=0 in radians
-        Ts
-        t
-        S % convective time
-        k
-        rt
-        V
-        M
+        phi % phase at t=0 in radians        
+        k % reduced freq
         % Beddoes-Leishman
-        % Beddoes constants
-        A1 = 0.3;
-        A2 = 0.7;
-        b1 = 0.14;
-        b2 = 0.53;
+        DeltaS
+        Tp
+        Tf
+        Tv
         % Attached flow behaviour
         CNI
         CNC
         CNp
         alphaE
         alphaE_rad
-        
+        % LE separation
+        CNprime
+        % TE separation
+        alphaf
+        alphaf_rad
+        CNk
+        f
+        fp
+        fpp
+        % Dynamic Stall
+        CNv
+        CNf
+        CN_LB
+    end
+    properties (Constant = true)
+        % Beddoes constants
+        A1 = 0.3;
+        A2 = 0.7;
+        b1 = 0.14;
+        b2 = 0.53;
     end
     methods
         % convenient constructor with name/value pair of any attribute of
         % PitchingMotion
         function obj = PitchingMotion(varargin)
+            obj@AirfoilMotion(varargin)
             p = inputParser;
-            % Add name / default value pairs
-            prop = properties('PitchingMotion'); % makes a cell array of all properties of the specified ClassName
+            mco = ?PitchingMotion;
+            prop = mco.PropertyList; % makes a cell array of all properties of the specified ClassName
             for k=1:length(prop)
-                if strcmp(prop{k},'A1')
-                    p.addParameter(prop{k},0.3);
-                elseif strcmp(prop{k},'A2')
-                    p.addParameter(prop{k},0.7);
-                elseif strcmp(prop{k},'b1')
-                    p.addParameter(prop{k},0.14);
-                elseif strcmp(prop{k},'b2')
-                    p.addParameter(prop{k},0.53);
-                else
-                    p.addParameter(prop{k},[]);
+                if ~prop(k).Constant
+                    p.addParameter(prop(k).Name,[]);
                 end
             end
             p.parse(varargin{:}); % {:} is added to take the content of the cells
+            % Add name / default value pairs
             for k=1:length(prop)
-                eval(sprintf('obj.%s = p.Results.%s;',prop{k},prop{k}));
+                if ~prop(k).Constant
+                    eval(sprintf('obj.%s = p.Results.%s;',prop(k).Name,prop(k).Name))
+                end
             end
             if ~isempty(obj.alpha)
                 obj.alpha_rad = deg2rad(obj.alpha);
@@ -74,34 +73,20 @@ classdef PitchingMotion < handle
                 obj.M = obj.V/a;
             end
         end
-        function computeAirfoilFrame(obj)
-            if ~isempty(obj.CD) && ~isempty(obj.CL)
-                if ~isempty(obj.CC) || ~isempty(obj.CN)
-                    warning('The data for CN and CC will be erased.')
-                end
-                obj.CN = obj.CL.*cos(obj.alpha_rad) + obj.CD.*sin(obj.alpha_rad);
-                obj.CC = obj.CD.*cos(obj.alpha_rad) - obj.CL.*sin(obj.alpha_rad);
-            else
-                error('CL and CD must be defined to compute CN and CC.')
-            end
-        end
-        function computeFlowFrame(obj)
-            if ~isempty(obj.CC) && ~isempty(obj.CN)
-                if ~isempty(obj.CD) || ~isempty(obj.CL)
-                    warning('The data for CL and CD will be erased.')
-                end
-                obj.CL = obj.CN.*cos(obj.alpha_rad) - obj.CC.*sin(obj.alpha_rad);
-                obj.CD = obj.CC.*cos(obj.alpha_rad) + obj.CN.*sin(obj.alpha_rad);
-            else
-                error('CL and CD must be defined to compute CN and CC.')
-            end
-        end
         function setSinus(obj,airfoil,mean_rad,amp_rad,freq)
-            obj.freq = obj.k*obj.V/(pi*airfoil.c);
-            obj.Ts = 1/(obj.freq*length(obj.alpha));
-            obj.t = 0:obj.Ts:obj.Ts*(length(obj.alpha)-1);
             if nargin<5
+                if isempty(obj.freq)
+                    if isempty(obj.k) && isempty(obj.V)
+                        error('k and V are unassigned, impossible to compute the sinus')
+                    else
+                        obj.freq = obj.k*obj.V/(pi*airfoil.c);
+                    end
+                end
                 freq = obj.freq;
+            end
+            if isempty(obj.t) && isempty(obj.Ts)
+                obj.Ts = 1/(freq*length(obj.alpha));
+                obj.t = 0:obj.Ts:obj.Ts*(length(obj.alpha)-1);
             end
             if ~isempty(obj.amp_rad)
                 warning('amp_rad value of PitchingMotion instance is not empty. Erasing with new value.')
@@ -117,9 +102,8 @@ classdef PitchingMotion < handle
             else % if phi is in 3rd or 4th quadrant
                 obj.phi = pi - asin((obj.alpha(1)-obj.mean_rad)/obj.amp_rad);
             end
-            obj.Ts = 1/(freq*length(obj.alpha));
-            obj.t = 0:obj.Ts:obj.Ts*(length(obj.alpha)-1);
             obj.analpha_rad = mean_rad + amp_rad*sin(obj.omega*obj.t-obj.phi);
+            obj.analpha = rad2deg(obj.analpha_rad);
         end
         function setPitchRate(obj,airfoil)
             % compute instantaneous reduced pitch rate
@@ -137,40 +121,29 @@ classdef PitchingMotion < handle
             end
         end
         function setCNsteady(obj,varargin)
-            if isa(varargin{2},'SteadyCurve')
-                steady = varargin{2};
+            if isa(varargin{1},'SteadyCurve')
+                steady = varargin{1};
                 obj.CNsteady = interp1(steady.alpha,steady.CN,obj.alpha);
             else
-                if length(varargin{2})==length(obj.alpha)
-                    obj.CNsteady = varargin{2};
+                if length(varargin{1})==length(obj.alpha)
+                    obj.CNsteady = varargin{1};
                 else
                     error('CN and alpha must be of same length. Provide a SteadyCurve object for resampling.')
                 end
             end
         end
-        function plotAlpha(obj)
-            figure
-            plot(obj.t,obj.alpha,'DisplayName','\alpha')
-            hold on
-            plot(obj.t,obj.analpha,'DisplayName','ideal \alpha')
-            grid on
-            legend show
-            xlabel('t (s)')
-            ylabel('\alpha (deg)')
-            title(obj.name)
-        end
-        function BeddoesLeishman(obj,airfoil)
+        function BeddoesLeishman(obj,airfoil,Tp,Tf,Tv)
             obj.computeAttachedFlow(airfoil);
-            obj.computeTEseparation();
-            obj.computeLEseparation();
-            obj.computeDS();
+            obj.computeLEseparation(airfoil,Tp);
+            obj.computeTEseparation(airfoil,Tf);
+            obj.computeDS(Tv);
         end
         function computeAttachedFlow(obj,airfoil)
             obj.S = 2*obj.V*obj.t/airfoil.c;
             obj.computeImpulsiveLift(airfoil,'analytical');
             obj.computeCirculatoryLift(airfoil);
             % effective angle of attack
-            obj.alphaE_rad = obj.CNC/airfoil.steady.slope;
+            obj.alphaE_rad = obj.CNC/airfoil.steady.slope; % slope is in rad
             obj.alphaE = rad2deg(obj.alphaE_rad);
             
             % Potential normal coefficient
@@ -191,7 +164,7 @@ classdef PitchingMotion < handle
                     % angles in radian
                     deltaalpha = diff(obj.alpha);
                     ddalpha = diff(deltaalpha);
-                                D = zeros(size(ddalpha));
+                    D = zeros(size(ddalpha));
                     for n=2:length(ddalpha)
                         D(n) = D(n-1)*exp(-obj.Ts/(Kalpha*Tl))+(ddalpha(n)/obj.Ts)*exp(-obj.Ts/(2*Kalpha*Tl));
                     end
@@ -212,23 +185,117 @@ classdef PitchingMotion < handle
         end
         function computeCirculatoryLift(obj,airfoil)
             % Circulatory normal coeff
-            DeltaS = mean(diff(obj.S));
+            obj.DeltaS = mean(diff(obj.S));
             deltaalpha = diff(obj.alpha);
             X = zeros(size(deltaalpha));
             Y = zeros(size(deltaalpha));
             for n=2:deltaalpha
-                X(n) = X(n-1)*exp(-obj.b1*betasquared*DeltaS) + obj.A1*deltaalpha(n)*exp(-obj.b1*betasquared*DeltaS/2);
-                Y(n) = Y(n-1)*exp(-obj.b2*betasquared*DeltaS) + obj.A2*deltaalpha(n)*exp(-obj.b2*betasquared*DeltaS/2);
+                X(n) = X(n-1)*exp(-obj.b1*betasquared*obj.DeltaS) + obj.A1*deltaalpha(n)*exp(-obj.b1*betasquared*obj.DeltaS/2);
+                Y(n) = Y(n-1)*exp(-obj.b2*betasquared*obj.DeltaS) + obj.A2*deltaalpha(n)*exp(-obj.b2*betasquared*obj.DeltaS/2);
             end
-            CNslope = Slope(airfoil.steady);
+            CNslope = Slope(airfoil.steady); % rad
             obj.CNC = CNslope*(obj.alpha_rad(1:length(X))-X-Y);
             
         end
-        function computeTEseparation(obj)
+        function computeLEseparation(obj,airfoil,Tp)
+            % Computes the delayed normal coefficient, CNprime, depending
+            % on the time constant Tp for a given airfoil undergoing the
+            % instanciated pitching motion.
+            obj.Tp = Tp;
+            Dp = zeros(size(obj.CNp));
+            for n=2:length(obj.CNp)
+                Dp(n) =  Dp(n-1)*exp(-obj.DeltaS/obj.Tp) + (obj.CNp(n)-obj.CNp(n-1))*exp(-obj.DeltaS/(2*obj.Tp));
+            end
+            obj.CNprime = airfoil.steady.slope*obj.analpha_rad(1:length(Dp)) - Dp; % we pretend the flow is attached over the whole alpha-range
         end
-        function computeLEseparation(obj)
+        function computeTEseparation(obj,airfoil,Tf)
+            obj.Tf = Tf;
+            obj.DeltaS = mean(diff(obj.S));
+            obj.f = seppoint(airfoil.steady,airfoil.steady.alpha);
+            
+            % Kirchhoff law
+            obj.CNk = Kirchhoff(airfoil.steady,airfoil.steady.alpha);
+            
+            obj.alphaf_rad = obj.CNprime/airfoil.steady.slope;
+            obj.alphaf = rad2deg(obj.alphaf_rad);
+            
+            obj.fp = seppoint(airfoil.steady,obj.alphaf); % effective separation point
+            
+            Df=zeros(size(obj.fp));
+            for n=2:length(obj.fp)
+                Df(n) = Df(n-1)*exp(-obj.DeltaS/Tf) + (obj.fp(n)-obj.fp(n-1))*exp(-obj.DeltaS/(2*Tf));
+            end
+            
+            obj.fpp = obj.fp - Df;
         end
-        function computeDS(obj)
+        function computeDS(obj,Tv)
+            % Computes the final Beddoes-Leishman predicted CN for the instanciated pitching motion, after
+            % having computed the attached-flow behavior and both TE and LE
+            % separation with the homolog methods.
+            
+            obj.Tv = Tv;
+            
+            % vortex normal coeff
+            KN = (1+sqrt(obj.fpp)).^2/4;
+            Cv = obj.CNC(1:length(KN)).*(1-KN);
+            
+            obj.CNv=zeros(size(Cv));
+            for n=2:length(Cv)
+                obj.CNv(n) = obj.CNv(n-1)*exp(-obj.DeltaS/Tv) + (Cv(n)-Cv(n-1))*exp(-obj.DeltaS/(2*Tv));
+            end
+            
+            if length(obj.CNI)<length(obj.CNC)
+                obj.CNf = ((1+sqrt(obj.fpp))/2).^2.*obj.CNC(1:length(obj.CNI))+obj.CNI;
+            else
+                obj.CNf = ((1+sqrt(obj.fpp))/2).^2.*obj.CNC+obj.CNI(1:length(obj.CNC));
+            end
+            
+            % normal force coefficient
+            obj.CN_LB = obj.CNf + obj.CNv;
+        end
+        function plotAlphas(obj)
+            figure;
+            plot(obj.alpha,'DisplayName','\alpha_{xp}')
+            hold on
+            plot(obj.alphaf,'DisplayName','\alpha_f')
+            plot(obj.alphaE,'DisplayName','\alpha_E')
+            grid on
+            legend('Location','Best')
+            ylabel('\alpha (°)')
+        end
+        function plotSeparation(obj,airfoil,mode,save)
+            figure
+            switch mode
+                case 'normal'
+                    plot(airfoil.steady.alpha,obj.f,'DisplayName','f')
+                    hold on
+                    plot(obj.alpha(1:length(obj.fp)),obj.fp,'DisplayName','f''')
+                    plot(obj.alpha(1:length(obj.fpp)),obj.fpp,'DisplayName','f''''')
+                case 'log'
+                    semilogy(airfoil.steady.alpha,airfoil.steady.fexp,'DisplayName','experimental')
+                    hold on
+                    semilogy(airfoil.steady.alpha,obj.f,'DisplayName','model')
+            end
+            legend show
+            title(sprintf('%s (Tp = %.2f, Tf = %.2f, Tv = %.2f)',obj.name,obj.Tp,obj.Tf,obj.Tv))
+            grid on
+            xlabel('\alpha (°)')
+            ylabel('separation point (x/c)')
+            if save
+                saveas(gcf,'fig/f_curves.png')
+            end
+        end
+        function plotAttachedLift(obj,airfoil)
+            figure;
+            plot(airfoil.steady.alpha,steady.CN,'x')
+            hold on
+            plot(airfoil.steady.alpha,obj.CNk)
+            plot(airfoil.steady.alpha1*ones(2),ylim,'r--')
+            legend('static data','Kirchhoff')
+            xlabel('\alpha')
+            ylabel('C_N')
+            grid on
+            title('Lift attached flow')
         end
     end
 end

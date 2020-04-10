@@ -1,12 +1,8 @@
-classdef RampUpMotion < handle
+classdef RampUpMotion < AirfoilMotion
     properties
-        name
-        alpha
         alpha_continuous_grow
         i_continuous_grow
-        % eperimental pitch angle evolutions
-        alpha_rad
-        analpha
+        % experimental pitch angle evolutions
         alpha_lag
         analpha_lag
         % experimental dynamic stall angles
@@ -19,25 +15,17 @@ classdef RampUpMotion < handle
         alpha_lagonset % corresponds to alpha'_ds
         alphadot %°/s
         alpha_onset % modelled one
-        % exprimental load curves
-        CL
-        CD
-        CN
-        CC
         % Fitting parameters
         CNslope1
         CNslope2
-        % experimental parts
-        Ts
-        t
         % experimental flow parameters
-        V
         r % reduced pitch rate
-        rt % instantaneous red. pitch rate (shoudl be const)
+
     end
     methods
         % convenient constructor with name/value pair of any attribute of RampUpMotion
         function obj = RampUpMotion(varargin)
+            obj@AirfoilMotion(varargin)
             p = inputParser;
             % Add name / default value pairs
             prop = properties('RampUpMotion'); % makes a cell array of all properties of the specified ClassName
@@ -77,9 +65,6 @@ classdef RampUpMotion < handle
             [~,imax] = max(ls);
             obj.i_continuous_grow = i_grow{imax};
             obj.alpha_continuous_grow = obj.alpha(i_grow{imax});
-        end
-        function setName(obj)
-            obj.name = inputname(1);
         end
         function sett(obj,t)
             if length(t)==length(obj.alpha)
@@ -127,28 +112,6 @@ classdef RampUpMotion < handle
                 obj.t = linspace(0,round(35/obj.alphadot,1),500);
             end
             obj.analpha = obj.alphadot*obj.t + analpha0;
-        end
-        function computeAirfoilFrame(obj)
-            if ~isempty(obj.CD) && ~isempty(obj.CL)
-                if ~isempty(obj.CC) || ~isempty(obj.CN)
-                    warning('The data for CN and CC will be erased.')
-                end
-                obj.CN = obj.CL.*cos(obj.alpha_rad) + obj.CD.*sin(obj.alpha_rad);
-                obj.CC = obj.CD.*cos(obj.alpha_rad) - obj.CL.*sin(obj.alpha_rad);
-            else
-                error('CL and CD must be defined to compute CN and CC.')
-            end
-        end
-        function computeFlowFrame(obj)
-            if ~isempty(obj.CC) && ~isempty(obj.CN)
-                if ~isempty(obj.CD) || ~isempty(obj.CL)
-                    warning('The data for CL and CD will be erased.')
-                end
-                obj.CL = obj.CN.*cos(obj.alpha_rad) - obj.CC.*sin(obj.alpha_rad);
-                obj.CD = obj.CC.*cos(obj.alpha_rad) + obj.CN.*sin(obj.alpha_rad);
-            else
-                error('CL and CD must be defined to compute CN and CC.')
-            end
         end
         function setPitchRate(obj,airfoil)
             obj.r = deg2rad(obj.alphadot)*airfoil.c/(2*obj.V);
@@ -274,22 +237,10 @@ classdef RampUpMotion < handle
             title(sprintf('%s ($\\dot{\\alpha} = %.2f ^{\\circ}$/s)',obj.name,obj.alphadot),'interpreter','latex')
         end
         function plotAlpha(obj)
-            figure
-            if ~isempty(obj.alpha)
-                plot(obj.t,obj.alpha,'DisplayName','exp')
-                hold on
-            end
-            if ~isempty(obj.analpha) 
-                plot(obj.t,obj.analpha,'--','DisplayName','ideal')
-                hold on
-            end
+            plotAlpha@AirfoilMotion(obj)
             if ~isempty(obj.alpha_CConset)
                 plot(obj.t(obj.i_CConset),obj.alpha_CConset,'rx','DisplayName','\alpha_{ds,CC}')
-            end
-            legend show
-            grid on
-            ylabel('\alpha (°)')
-            xlabel('t (s)')
+            end  
         end
         function plotAlphaLag(obj)
             figure

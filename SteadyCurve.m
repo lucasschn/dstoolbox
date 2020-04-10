@@ -9,7 +9,8 @@ classdef SteadyCurve < handle
         alpha1
         f
         CNalpha
-        slope % pre-stall slope
+        slope % pre-stall slope in 1/rad
+        fexp
     end
     methods
         % constructor
@@ -35,8 +36,8 @@ classdef SteadyCurve < handle
         end
         function CNslope = Slope(obj)
             % CN slope for attached flow
-            CNslopes = obj.CNalpha(obj.alpha<10);
-            alphaslopes = obj.alpha(1:length(CNslopes)+1);
+            CNslopes = obj.CNalpha(obj.alpha<10); % 1/rad
+            alphaslopes = obj.alpha_rad(1:length(CNslopes)+1); % rad
             CNslope = sum(diff(alphaslopes).*CNslopes)/sum(diff(alphaslopes)); % mean weighted by the distance between two successive alphas
             obj.slope = CNslope;
         end
@@ -101,6 +102,11 @@ classdef SteadyCurve < handle
             else
                 obj.CN0 = CN0;
             end
+        end
+        function computeSeparation(obj)
+            % computes the experimental separation point using Kirchhoff
+            % model
+            obj.fexp = (2*sqrt(naca0012.steady.CN./(2*pi*naca0012.steady.alpha_rad))-1).^2;
         end
     end
 end
