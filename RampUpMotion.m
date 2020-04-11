@@ -121,10 +121,10 @@ classdef RampUpMotion < AirfoilMotion
         function findExpOnset(obj)
             % finds experimental dynamic stall onset for a specific ramp-up
             % experiment
-            obj.CNslope1 = lsqcurvefit(@(x,xdata) x*xdata,0,obj.alpha(obj.alpha<15),obj.CN(obj.alpha<15));
-            err = abs(obj.CN - obj.CNslope1*obj.alpha);
-            i_CNonset = find(err>1e-2);
-            [CNmax,iCNmax] = max(obj.CN);
+%             obj.CNslope1 = lsqcurvefit(@(x,xdata) x*xdata,0,obj.alpha(obj.alpha<15),obj.CN(obj.alpha<15));
+%             err = abs(obj.CN - obj.CNslope1*obj.alpha);
+%             i_CNonset = find(err>1e-2);
+%             [CNmax,iCNmax] = max(obj.CN);
             %obj.CNslope2 = lsqcurvefit(@(x,xdata) x*xdata+CNmax-x*xdata(iCNmax),0,obj.alpha(1:iCNmax),obj.CN(1:iCNmax));
             %             dCLdalpha = diff(obj.CL(obj.i_continuous_grow))./diff(obj.alpha_continuous_grow);
 %             figure

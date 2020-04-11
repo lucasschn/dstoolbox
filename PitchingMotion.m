@@ -5,7 +5,7 @@ classdef PitchingMotion < AirfoilMotion
         amp_rad
         freq
         omega
-        phi % phase at t=0 in radians        
+        phi % phase at t=0 in radians     
         k % reduced freq
         % Beddoes-Leishman
         DeltaS
@@ -73,36 +73,74 @@ classdef PitchingMotion < AirfoilMotion
                 obj.M = obj.V/a;
             end
         end
-        function setSinus(obj,airfoil,mean_rad,amp_rad,freq)
-            if nargin<5
+        function setSinus(obj,airfoil,mean_rad0,amp_rad0,freq0,fs0)
+            % setSinus uses mean_rad0, amp_rad0 and the optional argument freq0 as first guesses to
+            % fin a sinusoid of the form alpha(t) = mean_rad +
+            % amp_rad*sin(omega*t+phi) to the experimental angle of attack
+            % belonging to the instanciated PitchingMotion object.
+            if isempty(freq0)
                 if isempty(obj.freq)
                     if isempty(obj.k) && isempty(obj.V)
                         error('k and V are unassigned, impossible to compute the sinus')
                     else
-                        obj.freq = obj.k*obj.V/(pi*airfoil.c);
+                        freq0 = obj.k*obj.V/(pi*airfoil.c);
                     end
                 end
-                freq = obj.freq;
             end
-            if isempty(obj.t) && isempty(obj.Ts)
-                obj.Ts = 1/(freq*length(obj.alpha));
-                obj.t = 0:obj.Ts:obj.Ts*(length(obj.alpha)-1);
+            alpha_norm0 = (obj.alpha_rad(1)-mean_rad0)/amp_rad0;
+            if alpha_norm0 > 1
+                alpha_norm0 = 1;
+            elseif alpha_norm0 < -1
+                alpha_norm0 = -1;
             end
-            if ~isempty(obj.amp_rad)
-                warning('amp_rad value of PitchingMotion instance is not empty. Erasing with new value.')
-            end
-            if ~isempty(obj.mean_rad)
-                warning('mean_rad value of PitchingMotion instance is not empty. Erasing with new value.')
-            end
-            obj.amp_rad = amp_rad;
-            obj.mean_rad = mean_rad;
-            obj.omega = 2*pi*freq;
-            if diff(obj.alpha(1:2))>0 % if phi is in 1st or 2nd quadrant
-                obj.phi = asin((obj.alpha(1)-obj.mean_rad)/obj.amp_rad);
+            if obj.alpha_rad(1) > mean_rad0 % if phi is in 1st or 2nd quadrant
+                phi0 = asin(alpha_norm0);
             else % if phi is in 3rd or 4th quadrant
-                obj.phi = pi - asin((obj.alpha(1)-obj.mean_rad)/obj.amp_rad);
+                phi0 = pi - asin((obj.alpha_rad(1)-mean_rad0)/amp_rad0);
             end
-            obj.analpha_rad = mean_rad + amp_rad*sin(obj.omega*obj.t-obj.phi);
+            omega0 = 2*pi*freq0;
+            if isempty(fs0)
+                pks_plus = findpeaks(obj.alpha);
+                pks_minus = findpeaks(-obj.alpha);
+                nbperiod = (length(pks_plus) + length(pks_minus))/2;
+                T0 = 1/freq0; % duration of a period
+                nb_samples_per_period = length(obj.alpha_rad)/nbperiod;
+                Ts0 = T0/nb_samples_per_period; % sampling period
+            else 
+                Ts0 = 1/fs0;
+            end
+            % we have to fit the time vector as a function of alpha
+            opts = optimset('Display','iter');
+            x0 = [Ts0, omega0, mean_rad0, amp_rad0, phi0];
+            alphaopt0 = x0(3) + x0(4)*sin(x0(2)*x0(1)*[0:(length(obj.alpha_rad)-1)]+x0(5));
+            S = 0;
+            for ks=1:length(alphaopt0)
+                S = S + (alphaopt0(ks)-obj.alpha_rad(ks)).^2;
+            end
+            if S > 1 % This does not work properly, I don't know why
+                LB = 0.9*[0, 0, mean_rad0, amp_rad0, phi0];
+                UB = [1e-9, 5e4, 1.2*mean_rad0, 1.2*amp_rad0, 5e4, 1.2*phi0];
+                sinparams = lsqcurvefit(@(x,xdata) x(3)+x(4)*sin(x(2)*x(1)*xdata+x(5)),x0,[0:(length(obj.alpha_rad)-1)].',obj.alpha_rad,LB,UB,opts);
+                if ~isempty(obj.amp_rad)
+                    warning('amp_rad value of PitchingMotion instance is not empty. Erasing with new value.')
+                end
+                if ~isempty(obj.mean_rad)
+                    warning('mean_rad value of PitchingMotion instance is not empty. Erasing with new value.')
+                end
+                obj.Ts = sinparams(1);
+                obj.omega = sinparams(2);
+                obj.mean_rad = sinparams(3);
+                obj.amp_rad = sinparams(4);
+                obj.phi = sinparams(5);
+            else
+                obj.Ts = x0(1);
+                obj.omega = x0(2);
+                obj.mean_rad = x0(3);
+                obj.amp_rad = x0(4);
+                obj.phi = x0(5);
+            end
+            obj.t = 0:obj.Ts:obj.Ts*(length(obj.alpha_rad)-1);
+            obj.analpha_rad = obj.mean_rad + obj.amp_rad*sin(obj.omega*obj.t+obj.phi);
             obj.analpha = rad2deg(obj.analpha_rad);
         end
         function setPitchRate(obj,airfoil)
@@ -133,18 +171,18 @@ classdef PitchingMotion < AirfoilMotion
             end
         end
         function BeddoesLeishman(obj,airfoil,Tp,Tf,Tv)
-            obj.computeAttachedFlow(airfoil);
+            obj.computeAttachedFlow(airfoil,'analytical');
             obj.computeLEseparation(airfoil,Tp);
             obj.computeTEseparation(airfoil,Tf);
             obj.computeDS(Tv);
         end
-        function computeAttachedFlow(obj,airfoil)
+        function computeAttachedFlow(obj,airfoil,alphamode)
             obj.S = 2*obj.V*obj.t/airfoil.c;
-            obj.computeImpulsiveLift(airfoil,'analytical');
-            obj.computeCirculatoryLift(airfoil);
+            obj.computeImpulsiveLift(airfoil,alphamode);
+            obj.computeCirculatoryLift(airfoil,alphamode);
             % effective angle of attack
-            obj.alphaE_rad = obj.CNC/airfoil.steady.slope; % slope is in rad
-            obj.alphaE = rad2deg(obj.alphaE_rad);
+            obj.alphaE = obj.CNC/airfoil.steady.slope; % slope is in deg
+            obj.alphaE_rad = deg2rad(obj.alphaE_rad);
             
             % Potential normal coefficient
             if length(obj.CNI)<length(obj.CNC)
@@ -180,21 +218,28 @@ classdef PitchingMotion < AirfoilMotion
                     end
                     % analytical alpha
                     obj.CNI = 4*Kalpha*Tl/obj.M*(danalphadt-D);
-            end
-            
+            end 
         end
-        function computeCirculatoryLift(obj,airfoil)
+        function computeCirculatoryLift(obj,airfoil,alphamode)
             % Circulatory normal coeff
             obj.DeltaS = mean(diff(obj.S));
-            deltaalpha = diff(obj.alpha);
+            betasquared = 1-obj.M^2;
+            switch alphamode
+                case 'experimental'
+                deltaalpha = diff(obj.alpha);
+                case 'analytical'
+                deltaalpha = diff(obj.analpha);  
+                otherwise
+                    error('The type of alpha to be taken for computations has to be specified.')
+            end
             X = zeros(size(deltaalpha));
             Y = zeros(size(deltaalpha));
-            for n=2:deltaalpha
+            for n=2:length(deltaalpha)
                 X(n) = X(n-1)*exp(-obj.b1*betasquared*obj.DeltaS) + obj.A1*deltaalpha(n)*exp(-obj.b1*betasquared*obj.DeltaS/2);
                 Y(n) = Y(n-1)*exp(-obj.b2*betasquared*obj.DeltaS) + obj.A2*deltaalpha(n)*exp(-obj.b2*betasquared*obj.DeltaS/2);
             end
-            CNslope = Slope(airfoil.steady); % rad
-            obj.CNC = CNslope*(obj.alpha_rad(1:length(X))-X-Y);
+            CNslope = computeSlope(airfoil.steady); % has to be in degrees
+            obj.CNC = CNslope*(obj.alpha(1:length(X))-X-Y);
             
         end
         function computeLEseparation(obj,airfoil,Tp)
@@ -206,7 +251,7 @@ classdef PitchingMotion < AirfoilMotion
             for n=2:length(obj.CNp)
                 Dp(n) =  Dp(n-1)*exp(-obj.DeltaS/obj.Tp) + (obj.CNp(n)-obj.CNp(n-1))*exp(-obj.DeltaS/(2*obj.Tp));
             end
-            obj.CNprime = airfoil.steady.slope*obj.analpha_rad(1:length(Dp)) - Dp; % we pretend the flow is attached over the whole alpha-range
+            obj.CNprime = airfoil.steady.slope*obj.analpha(1:length(Dp)) - Dp; % we pretend the flow is attached over the whole alpha-range
         end
         function computeTEseparation(obj,airfoil,Tf)
             obj.Tf = Tf;
@@ -216,8 +261,8 @@ classdef PitchingMotion < AirfoilMotion
             % Kirchhoff law
             obj.CNk = Kirchhoff(airfoil.steady,airfoil.steady.alpha);
             
-            obj.alphaf_rad = obj.CNprime/airfoil.steady.slope;
-            obj.alphaf = rad2deg(obj.alphaf_rad);
+            obj.alphaf = obj.CNprime/airfoil.steady.slope; %twice the pulsation
+            obj.alphaf_rad = deg2rad(obj.alphaf);
             
             obj.fp = seppoint(airfoil.steady,obj.alphaf); % effective separation point
             
@@ -254,13 +299,14 @@ classdef PitchingMotion < AirfoilMotion
             obj.CN_LB = obj.CNf + obj.CNv;
         end
         function plotAlphas(obj)
-            figure;
+            figure
             plot(obj.alpha,'DisplayName','\alpha_{xp}')
             hold on
             plot(obj.alphaf,'DisplayName','\alpha_f')
             plot(obj.alphaE,'DisplayName','\alpha_E')
             grid on
             legend('Location','Best')
+            xlabel('time (s)')
             ylabel('\alpha (°)')
         end
         function plotSeparation(obj,airfoil,mode,save)

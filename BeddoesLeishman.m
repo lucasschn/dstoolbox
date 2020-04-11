@@ -8,7 +8,7 @@ set(0,'DefaultFigureWindowStyle','docked')
 data = load('naca0012');
 data = data.naca0012;
 
-naca0012 = Airfoil('naca0012',0.457);
+naca0012 = Airfoil('naca0012',0.1);
 M = 0.3;
 a = 340.3;
 nu = 1.48e-5;
@@ -30,20 +30,18 @@ pitching.setSinus(naca0012,mean_rad,amp_rad);
 pitching.setCNsteady(naca0012.steady)
 
 % model parameters
-% values for seppoint in deg
 naca0012.steady.fitKirchhoff();
 naca0012.steady.plotKirchhoff();
-% values for seppoint in rad
-Tp = 3;
-Tf = 1;
-Tv = 1;
+Tp = 3.7;
+Tf = 3;
+Tv = 4;
 
 for kp=1:length(Tp)
     for kf=1:length(Tf)
         for kv=1:length(Tv)
             params = sprintf('S1=%0.1f, S2=%0.1f, Tp=%0.1f, Tf=%0.1f, Tv=%0.1f',naca0012.steady.S1,naca0012.steady.S2,Tp(kp),Tf(kf),Tv(kv));
             disp(params);
-            ComputeUnsteadyLift(pitching,naca0012,Tp(kp),Tf(kf),Tv(kv));
+            computeUnsteadyLift(pitching,naca0012,Tp(kp),Tf(kf),Tv(kv));
             pitching.plotAlphas()
             pitching.plotSeparation(naca0012,'normal',0) % last argument is saving figure or not  
             

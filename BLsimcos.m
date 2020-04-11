@@ -16,6 +16,9 @@ nr=13;
 data = load(pressuredata(nr));
 
 pitching = PitchingMotion('alpha',data.alpha,'CL',data.mCl);
-pitching.setSinus(airfoil,deg2rad(LB(nr).alpha_0),deg2rad(LB(nr).alpha_1),LB(nr).fosc);
-
-pitching.setCNsteady(airfoil.steady)
+pitching.setSinus(airfoil,deg2rad(LB(nr).alpha_0),deg2rad(LB(nr).alpha_1),LB(nr).fosc,LB(nr).FS);
+% pitching.computeAirfoilFrame();
+% pitching.setCNsteady(airfoil.steady)
+% 
+% airfoil.steady.fitKirchhoff();
+% airfoil.steady.plotKirchhoff();
