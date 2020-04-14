@@ -17,7 +17,7 @@ del_A = rad2deg((1 + 0.3)*((mCl*delta*S_wing)./S_windt));
 mA_corr = (mA + del_A); 
 mCl_corr = mCl + mCl.*cosd(del_A);
 
-save('static_corr','mA','mCl_corr')
+save('static_corr','mA_corr','mCl_corr')
 
 alpha_temp = 1:1:30;
 CLa = 2*pi*deg2rad(alpha_temp);
@@ -48,7 +48,7 @@ del_A_dyn = rad2deg((1 + 0.3)*((Cl*delta*S_wing)./S_windt));
 Cl_corr = Cl + Cl.*cosd(del_A_dyn);
 Alpha_corr = (Alpha + del_A_dyn); 
 
-save('dynamic_corr','Alpha','Cl_corr')
+save('dynamic_corr','Alpha_corr','Cl_corr')
 
 figure;
 set(gcf, 'Units', 'centimeters','PaperPositionMode', 'auto','Position', afFigurePosition);

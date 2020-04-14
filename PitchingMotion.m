@@ -15,6 +15,7 @@ classdef PitchingMotion < AirfoilMotion
         % Attached flow behaviour
         CNI
         CNC
+        CCC
         CNp
         alphaE
         alphaE_rad
@@ -27,9 +28,10 @@ classdef PitchingMotion < AirfoilMotion
         f
         fp
         fpp
+        CNf
+        CCf
         % Dynamic Stall
         CNv
-        CNf
         CN_LB
     end
     properties (Constant = true)
@@ -188,8 +190,9 @@ classdef PitchingMotion < AirfoilMotion
             obj.computeCirculatoryLift(airfoil,alphamode);
             % effective angle of attack
             obj.alphaE = obj.CNC/airfoil.steady.slope; % slope is in deg
-            obj.alphaE_rad = deg2rad(obj.alphaE_rad);
-            
+            obj.alphaE_rad = deg2rad(obj.alphaE);
+            % chord force
+            obj.CCC = obj.CNC.*tan(obj.alphaE_rad);
             % Potential normal coefficient
             if length(obj.CNI)<length(obj.CNC)
                 obj.CNp = obj.CNI + obj.CNC(1:length(obj.CNI));
@@ -266,7 +269,7 @@ classdef PitchingMotion < AirfoilMotion
             % Kirchhoff law
             obj.CNk = Kirchhoff(airfoil.steady,airfoil.steady.alpha);
             
-            obj.alphaf = obj.CNprime/airfoil.steady.slope; %twice the pulsation
+            obj.alphaf = obj.CNprime/airfoil.steady.slope;
             obj.alphaf_rad = deg2rad(obj.alphaf);
             
             obj.fp = seppoint(airfoil.steady,obj.alphaf); % effective separation point
@@ -277,6 +280,15 @@ classdef PitchingMotion < AirfoilMotion
             end
             
             obj.fpp = obj.fp - Df;
+                        
+            if length(obj.CNI)<length(obj.CNC)
+                obj.CNf = ((1+sqrt(obj.fpp))/2).^2.*obj.CNC(1:length(obj.CNI))+obj.CNI;
+            else
+                obj.CNf = ((1+sqrt(obj.fpp))/2).^2.*obj.CNC+obj.CNI(1:length(obj.CNC));
+            end
+            
+            eta = 0.95;
+            obj.CCf = eta*airfoil.steady.slope*obj.alphaE.^2.*sqrt(obj.fpp); 
         end
         function computeDS(obj,Tv)
             % Computes the final Beddoes-Leishman predicted CN for the instanciated pitching motion, after
@@ -293,22 +305,16 @@ classdef PitchingMotion < AirfoilMotion
             for n=2:length(Cv)
                 obj.CNv(n) = obj.CNv(n-1)*exp(-obj.DeltaS/Tv) + (Cv(n)-Cv(n-1))*exp(-obj.DeltaS/(2*Tv));
             end
-            
-            if length(obj.CNI)<length(obj.CNC)
-                obj.CNf = ((1+sqrt(obj.fpp))/2).^2.*obj.CNC(1:length(obj.CNI))+obj.CNI;
-            else
-                obj.CNf = ((1+sqrt(obj.fpp))/2).^2.*obj.CNC+obj.CNI(1:length(obj.CNC));
-            end
-            
+
             % normal force coefficient
             obj.CN_LB = obj.CNf + obj.CNv;
         end
         function plotAlphas(obj)
             figure
-            plot(obj.alpha,'DisplayName','\alpha_{xp}')
+            plot(obj.t,obj.alpha,'LineWidth',2,'DisplayName','\alpha_{xp}')
             hold on
-            plot(obj.alphaf,'DisplayName','\alpha_f')
-            plot(obj.alphaE,'DisplayName','\alpha_E')
+            plot(obj.t(1:length(obj.alphaf)),obj.alphaf,'DisplayName','\alpha_f')
+            plot(obj.t(1:length(obj.alphaE)),obj.alphaE,'DisplayName','\alpha_E')
             grid on
             legend('Location','Best')
             xlabel('time (s)')
