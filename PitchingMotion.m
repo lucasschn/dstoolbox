@@ -73,12 +73,14 @@ classdef PitchingMotion < AirfoilMotion
                 obj.M = obj.V/a;
             end
         end
-        function setSinus(obj,airfoil,mean_rad0,amp_rad0,freq0,fs0)
+        function setSinus(obj,airfoil,varargin)
             % setSinus uses mean_rad0, amp_rad0 and the optional argument freq0 as first guesses to
             % fin a sinusoid of the form alpha(t) = mean_rad +
             % amp_rad*sin(omega*t+phi) to the experimental angle of attack
             % belonging to the instanciated PitchingMotion object.
-            if isempty(freq0)
+            mean_rad0 = varargin{1};
+            amp_rad0 = varargin{2};
+            if nargin < 5
                 if isempty(obj.freq)
                     if isempty(obj.k) && isempty(obj.V)
                         error('k and V are unassigned, impossible to compute the sinus')
@@ -86,20 +88,23 @@ classdef PitchingMotion < AirfoilMotion
                         freq0 = obj.k*obj.V/(pi*airfoil.c);
                     end
                 end
+            else
+                freq0 = varargin{3};
             end
+            
             alpha_norm0 = (obj.alpha_rad(1)-mean_rad0)/amp_rad0;
             if alpha_norm0 > 1
                 alpha_norm0 = 1;
             elseif alpha_norm0 < -1
                 alpha_norm0 = -1;
             end
-            if obj.alpha_rad(1) > mean_rad0 % if phi is in 1st or 2nd quadrant
+            if diff(obj.alpha_rad(1:2)) > 0 % if phi is in 1st or 4th quadrant
                 phi0 = asin(alpha_norm0);
-            else % if phi is in 3rd or 4th quadrant
-                phi0 = pi - asin((obj.alpha_rad(1)-mean_rad0)/amp_rad0);
+            else % if phi is in 2nd or 3rd quadrant
+                phi0 = pi - asin(alpha_norm0);
             end
             omega0 = 2*pi*freq0;
-            if isempty(fs0)
+            if nargin < 6
                 pks_plus = findpeaks(obj.alpha);
                 pks_minus = findpeaks(-obj.alpha);
                 nbperiod = (length(pks_plus) + length(pks_minus))/2;
@@ -107,10 +112,10 @@ classdef PitchingMotion < AirfoilMotion
                 nb_samples_per_period = length(obj.alpha_rad)/nbperiod;
                 Ts0 = T0/nb_samples_per_period; % sampling period
             else 
+                fs0 = varargin{4};
                 Ts0 = 1/fs0;
             end
             % we have to fit the time vector as a function of alpha
-            opts = optimset('Display','iter');
             x0 = [Ts0, omega0, mean_rad0, amp_rad0, phi0];
             alphaopt0 = x0(3) + x0(4)*sin(x0(2)*x0(1)*[0:(length(obj.alpha_rad)-1)]+x0(5));
             S = 0;
@@ -118,9 +123,10 @@ classdef PitchingMotion < AirfoilMotion
                 S = S + (alphaopt0(ks)-obj.alpha_rad(ks)).^2;
             end
             if S > 1 % This does not work properly, I don't know why
+                opts = optimset('Display','iter');
                 LB = 0.9*[0, 0, mean_rad0, amp_rad0, phi0];
                 UB = [1e-9, 5e4, 1.2*mean_rad0, 1.2*amp_rad0, 5e4, 1.2*phi0];
-                sinparams = lsqcurvefit(@(x,xdata) x(3)+x(4)*sin(x(2)*x(1)*xdata+x(5)),x0,[0:(length(obj.alpha_rad)-1)].',obj.alpha_rad,LB,UB,opts);
+                sinparams = lsqcurvefit(@(x,xdata) x(3)+x(4)*sin(x(2)*x(1)*xdata+x(5)),x0,reshape(0:(length(obj.alpha_rad)-1),size(obj.alpha_rad)),obj.alpha_rad,LB,UB,opts);
                 if ~isempty(obj.amp_rad)
                     warning('amp_rad value of PitchingMotion instance is not empty. Erasing with new value.')
                 end
@@ -238,8 +244,7 @@ classdef PitchingMotion < AirfoilMotion
                 X(n) = X(n-1)*exp(-obj.b1*betasquared*obj.DeltaS) + obj.A1*deltaalpha(n)*exp(-obj.b1*betasquared*obj.DeltaS/2);
                 Y(n) = Y(n-1)*exp(-obj.b2*betasquared*obj.DeltaS) + obj.A2*deltaalpha(n)*exp(-obj.b2*betasquared*obj.DeltaS/2);
             end
-            CNslope = computeSlope(airfoil.steady); % has to be in degrees
-            obj.CNC = CNslope*(obj.alpha(1:length(X))-X-Y);
+            obj.CNC = airfoil.steady.slope*(reshape(obj.alpha(1:length(X)),size(X))-X-Y);
             
         end
         function computeLEseparation(obj,airfoil,Tp)

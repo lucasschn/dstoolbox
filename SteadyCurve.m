@@ -36,13 +36,17 @@ classdef SteadyCurve < handle
             end
             alpha_static_stall=obj.alpha(ialphass);
         end
-        function CNslope = computeSlope(obj)
+        function computeSlope(obj)
             % CN slope for attached flow
             CNslopes = obj.CNalpha(obj.alpha<10); % 1/deg
-            alphaslopes = obj.alpha(1:length(CNslopes)+1); % deg
-            CNslope = sum(diff(alphaslopes).*CNslopes)/sum(diff(alphaslopes)); % mean weighted by the distance between two successive alphas
-            obj.slope = CNslope;
-            obj.slope_rad = obj.slope*180/pi;
+            if isempty(CNslopes)
+                obj.slope_rad = 2*pi; %1/rad
+                obj.slope = obj.slope_rad*pi/180; %1/deg
+            else
+                alphaslopes = obj.alpha(1:length(CNslopes)+1); % deg
+                obj.slope = sum(diff(alphaslopes).*CNslopes)/sum(diff(alphaslopes)); % mean weighted by the distance between two successive alphas
+                obj.slope_rad = obj.slope*180/pi;
+            end
         end
         function plot(obj)
             figure
@@ -55,8 +59,8 @@ classdef SteadyCurve < handle
             obj.computeSlope();
             stall_slope_minus = obj.CNalpha(find(obj.alpha<obj.alpha_static_stall,1,'last'));
             stall_slope_plus = obj.CNalpha(find(obj.alpha>obj.alpha_static_stall,1,'first'));
-            S10 = 0.3*deg2rad(obj.alpha_static_stall)/(2*sqrt(0.7))*((1+sqrt(0.7))/2-2*stall_slope_minus/(obj.slope_rad*(1+sqrt(0.7)))).^(-1);
-            S20 = 0.66*deg2rad(obj.alpha_static_stall)/(2*sqrt(0.7))*((1+sqrt(0.7))/2+2*stall_slope_plus/(obj.slope_rad*(1+sqrt(0.7)))).^(-1);
+            S10 = 0.3*deg2rad(obj.alpha_static_stall)/(2*sqrt(0.7))*(((1+sqrt(0.7))/2)^2-stall_slope_minus/obj.slope_rad).^(-1);
+            S20 = 0.66*deg2rad(obj.alpha_static_stall)/(2*sqrt(0.7))*(((1+sqrt(0.7))/2)^2-stall_slope_plus/obj.slope_rad).^(-1);
             opts = optimset('Display','off');
             
             Kfunc = @(x,alpha) Kirchhoff(obj,obj.alpha,x);
@@ -78,10 +82,10 @@ classdef SteadyCurve < handle
                     sprintf('Norm of the residual is %0.2e',res)
                 case 4
                     disp('Computed search direction too small.')
-                    warning('S1 and S2 have not been assigned, as lsqcurvefit has not conevrged to a solution')
+                    warning('S1 and S2 have not been assigned, as lsqcurvefit has not converged to a solution')
                 case 0
                     disp('Too many function evaluations or iterations.')
-                    warning('S1 and S2 have not been assigned, as lsqcurvefit has not conevrged to a solution')
+                    warning('S1 and S2 have not been assigned, as lsqcurvefit has not converged to a solution')
                 case -1
                     disp('Stopped by output/plot function.')
                     warning('S1 and S2 have not been assigned, as lsqcurvefit has not conevrged to a solution')

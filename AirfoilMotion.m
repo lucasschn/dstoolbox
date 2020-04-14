@@ -29,8 +29,12 @@ classdef AirfoilMotion < handle
                 p.addParameter(prop{k},[]);
             end
         end
-        function setName(obj)
-            obj.name = inputname(1);
+        function setName(obj,name)
+            if nargin > 1
+                obj.name = name;
+            else
+                obj.name = inputname(1);
+            end
        end
         function computeAirfoilFrame(obj)
             if ~isempty(obj.CD) && ~isempty(obj.CL)
@@ -69,6 +73,32 @@ classdef AirfoilMotion < handle
             xlabel('t (s)')
             ylabel('\alpha (°)')
             title(obj.name)
+        end
+        function plotPolars(obj)
+            figure
+            suptitle(sprintf('Polar plots %s',obj.name))
+            subplot(221)
+            plot(obj.alpha,obj.CL)
+            xlabel('\alpha (°)')
+            ylabel('C_L')
+            grid on
+            subplot(222)
+            plot(obj.alpha,obj.CD)
+            xlabel('\alpha (°)')
+            ylabel('C_D')
+            grid on
+            subplot(223)
+            plot(obj.alpha,obj.CN)
+            xlabel('\alpha (°)')
+            ylabel('C_N')
+            grid on
+            subplot(224)
+            if ~isempty(obj.CC)
+                plot(obj.alpha,obj.CC)
+                xlabel('\alpha (°)')
+                ylabel('C_C')
+                grid on
+            end
         end
     end
 end
