@@ -9,7 +9,6 @@ V = 50; %m/s
 Re = 9.2e5; % chord as characteristic length
 M = 0.14; 
 
-
 %% Static data
 
 % static_data = csvread('fatma_data.csv');
@@ -18,7 +17,7 @@ M = 0.14;
 airfoil = Airfoil('OA209',0.3);
 %airfoil.steady = SteadyCurve(static_data(:,1),static_data(:,2));
 load('static_corr')
-airfoil.steady = SteadyCurve(mA_corr,mCl_corr);
+airfoil.steady = SteadyCurve(mA,mCl_corr);
 %% Dynamic data
 nr=13;
 
@@ -33,7 +32,7 @@ end
 
 load('dynamic_corr')
 % assuming CL = CN
-pitching = PitchingMotion('alpha',Alpha_corr,'CN',Cl_corr.*cosd(Alpha_corr),'k',LB(nr).k,'freq',LB(nr).fosc,'V',50);
+pitching = PitchingMotion('alpha',Alpha,'CN',Cl_corr.*cosd(Alpha),'k',LB(nr).k,'freq',LB(nr).fosc,'V',50);
 pitching.setSinus(airfoil,deg2rad(LB(nr).alpha_0),deg2rad(LB(nr).alpha_1),LB(nr).fosc,LB(nr).FS);
 pitching.setName('simcos')
 pitching.setCNsteady(airfoil.steady)
@@ -47,9 +46,9 @@ airfoil.steady.plotKirchhoff();
 
 
 %% Define Beddoes-Leishman model
-Tp = 3;
-Tf = 1;
-Tv = 1;
+Tp = 1.7;
+Tf = 3;
+Tv = 6;
 pitching.BeddoesLeishman(airfoil,Tp,Tf,Tv);
 
 %% Plot results

@@ -18,8 +18,9 @@ classdef RampUpMotion < AirfoilMotion
         % Fitting parameters
         CNslope1
         CNslope2
-        % experimental flow parameters
+        % experimental parameters
         r % reduced pitch rate
+        f_pts
 
     end
     methods
@@ -174,7 +175,8 @@ classdef RampUpMotion < AirfoilMotion
                 obj.alpha_onset = interp1(obj.alpha_lag(obj.i_continuous_grow),obj.alpha_continuous_grow,obj.alpha_lagonset);
                 elseif ~isempty(obj.analpha)
                 obj.alpha_lagonset = obj.analpha(i_lagonset);
-                obj.alpha_onset = interp1(obj.analpha_lag,obj.analpha,obj.alpha_lagonset);
+                [c,ia] = unique(obj.analpha_lag);
+                obj.alpha_onset = interp1(c,obj.analpha(ia),obj.alpha_lagonset);
                 else
                 error('Impossible to define stall angle. %s has no angle of attack defined.',obj.name)
                 end

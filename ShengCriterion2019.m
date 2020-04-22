@@ -33,7 +33,7 @@ end
 airfoil = Airfoil('flatplate',0.15);
 % Define alpha_ds0 & compute Talpha
 figs = airfoil.Sheng(ms013,ms034,ms014,ms015);
-
+saveas(gcf,'fig/Sheng/ShengSH2019_dsr.png')
 %% Add Sheng's predicted stall angles to the figures
 for k=1:length(c)
     msname = sprintf('ms%03i',LB(c(k)).ms);

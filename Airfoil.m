@@ -42,16 +42,18 @@ classdef Airfoil < handle
             p = polyfit(r,alpha_ds,1);
             obj.D1 = p(1);
             obj.alpha_ds0 = p(2);
-            obj.Talpha = pi/180*obj.D1; % Talpha seems too low
+            obj.Talpha = pi/180*obj.D1; % Talpha seems too low for SH2019
 %             obj.Talpha = 7;
             figs = figure;
-            plot(r,alpha_ds,'o','DisplayName','\alpha_{ds} (exp)')
+            plot(r,alpha_ds,'.','DisplayName','\alpha_{ds} (exp)','MarkerSize',20)
             hold on
             grid on
-            xlabel('reduced pitch rate r (-)');
-            ylabel('\alpha_{ds} (°)');
-            title(sprintf('%s ($T_{\\alpha} = %.2f$)',obj.name,obj.Talpha),'interpreter','latex')
-            plot(r,polyval(p,r),'DisplayName','Linear fitting')
+            xlabel('reduced pitch rate r (-)','FontSize',20);
+            ylabel('\alpha_{ds} (°)','FontSize',20);
+            ax = gca;
+            ax.FontSize = 20;
+            title(sprintf('%s ($T_{\\alpha} = %.2f$)',obj.name,obj.Talpha),'interpreter','latex','FontSize',20)
+            plot(r,polyval(p,r),'DisplayName','Linear fitting','LineWidth',2)
             alpha_lag_ds = zeros(size(alpha_ds));
             for k=1:length(alpha_ds)
                 % retrieve which ramp corresponds to the current alpha_ds
@@ -74,9 +76,9 @@ classdef Airfoil < handle
                     end
                 end
             end
-            plot(r,alpha_lag_ds,'o','DisplayName','\alpha_{ds} (lagged)')
-            plot(r,ones(size(r)).*obj.alpha_ds0,'--','DisplayName','\alpha_{ds,0}');
-            legend('Location','NorthWest')
+            plot(r,alpha_lag_ds,'.','DisplayName','\alpha_{ds} (lagged)','MarkerSize',20)
+            plot(r,ones(size(r)).*obj.alpha_ds0,'--','DisplayName','\alpha_{ds,0}','LineWidth',2);
+            legend('Location','NorthWest','FontSize',20)
         end
     end
 end

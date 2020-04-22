@@ -12,7 +12,7 @@ if isempty(motion.Ts)
             if ~isempty(motion.f_pts)
                 Ts = motion.f_pts/freq; % rev/sampling interval * time/rev = time/sampling intervail
             else
-                error('f_pts must be set on this data beforehand, e.g. using findSinus.')
+                error('Ts or f_pts must be set on this data beforehand, e.g. using findSinus.')
             end
         case 'RampUpMotion'
             % r = alphadot*c/(2*V)

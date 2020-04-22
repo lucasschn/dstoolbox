@@ -25,6 +25,8 @@ end
 % Define alpha_ds0 & compute Talpha
 naca23012.Sheng(ms1,ms2,ms3,ms4,ms5,ms6,ms7,ms8,ms9,ms10,ms11,ms12,ms13,ms14,ms15,ms16,ms17,ms18,ms19,ms20,ms21,ms22,ms23,ms24,ms25,ms26,ms27);
 
+saveas(gcf,'fig/Sheng/Sheng23012.png')
+
 r = 0.025; % compares well to ms19
 alphadot = rad2deg(r)*2*V/naca23012.c; % deg
 alpha = CNalpha23012(:,1);
@@ -51,6 +53,7 @@ grid on
 % legend show
 % grid on
 
+
 %% NACA 0012
 naca0012 = Airfoil('NACA 0012',0.55); 
 
@@ -69,3 +72,5 @@ end
 naca0012.Sheng(ms1,ms2,ms3,ms4,ms5,ms6,ms7,ms8,ms9,ms10,ms11,ms12,ms13,ms14,ms15,ms16,ms17,ms18,ms19,ms20,ms21,ms22,ms23);
 % How to automate this argument passing? Sheng should be accepting a vector
 % of ramps instead?
+
+saveas(gcf,'fig/Sheng/Sheng0012.png')

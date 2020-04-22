@@ -37,7 +37,8 @@ classdef SteadyCurve < handle
             alpha_static_stall=obj.alpha(ialphass);
         end
         function computeSlope(obj)
-            % CN slope for attached flow
+            % CN slope for attached flow. Should be around 2pi/beta
+            % converted to degrees. 
             CNslopes = obj.CNalpha(obj.alpha<10); % 1/deg
             if isempty(CNslopes)
                 obj.slope_rad = 2*pi; %1/rad
@@ -93,7 +94,7 @@ classdef SteadyCurve < handle
                     disp('Bounds are inconsistent.')
                     warning('S1 and S2 have not been assigned, as lsqcurvefit has not conevrged to a solution')
             end
-        end
+        end          
         function plotKirchhoff(obj)
             figure
             plot(obj.alpha,obj.CN,'DisplayName','data')
