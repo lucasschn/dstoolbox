@@ -106,16 +106,22 @@ classdef SteadyCurve < handle
             ylabel('C_N')
         end
         function setCN0(obj,CN0)
-            if isnan(CN0)
-                error('CN= cannot be NaN.')
-            else
-                obj.CN0 = CN0;
+            if nargin == 2
+                if isnan(CN0)
+                    error('CN= cannot be NaN.')
+                else
+                    obj.CN0 = CN0;
+                end
+            elseif nargin == 1
+                obj.CN0 = interp1(obj.alpha,obj.CN,0);
             end
+                
         end
         function computeSeparation(obj)
             % computes the experimental separation point using Kirchhoff
             % model
-            obj.fexp = (2*sqrt(naca0012.steady.CN./(2*pi*naca0012.steady.alpha_rad))-1).^2;
+            obj.fexp = max([zeros(size(obj.CN)),min([ones(size(obj.CN)), (2*sqrt((obj.CN-obj.CN0)./(obj.slope*obj.alpha))-1).^2],[],2)],[],2);
+            
         end
     end
 end

@@ -6,6 +6,7 @@ classdef AirfoilMotion < handle
         alpha_rad
         analpha
         analpha_rad
+        alphadot_rad
         % exprimental load curves
         CL
         CD
@@ -19,6 +20,12 @@ classdef AirfoilMotion < handle
         % experimental flow parameters
         V
         M
+        % Goman-Khrabrov
+        tau1
+        tau2
+        x
+        alpha_lag
+        CN_GK
     end
     methods
         function obj = AirfoilMotion(varargin)
@@ -57,6 +64,24 @@ classdef AirfoilMotion < handle
             else
                 error('CL and CD must be defined to compute CN and CC.')
             end
+        end
+        function GomanKhrabrov(obj,steady,tau1,tau2)
+            % Resample CNsteady to fit experimental unsteady alphas
+            obj.tau1 = tau1;
+            obj.tau2 = tau2;
+            steady.setCN0();
+            obj.setCNsteady(steady)
+            steady.computeSlope();
+            steady.computeSeparation();
+            obj.alphadot_rad = diff(obj.alpha_rad)./diff(obj.t);
+            obj.alpha_lag = obj.alpha_rad(1:length(obj.alphadot_rad))-tau2*obj.alphadot_rad;
+            u = obj.alpha_lag; 
+            u(u<min(steady.alpha_rad)) = min(steady.alpha_rad);
+            u(u>max(steady.alpha_rad)) = max(steady.alpha_rad);
+            x0 = interp1(steady.alpha_rad,steady.fexp,u);
+            sys = ss(-1/tau1,1/tau1,1,0);
+            obj.x = lsim(sys,x0,obj.t(1:length(x0)));
+            obj.CN_GK = steady.slope/4*(1+sqrt(obj.x)).^2+steady.CN0; 
         end
         function plotAlpha(obj)
             figure
@@ -99,6 +124,14 @@ classdef AirfoilMotion < handle
                 ylabel('C_C')
                 grid on
             end
+        end
+        function plotGK(obj)
+            figure
+            plot(obj.alpha(1:length(obj.CN_GK)),obj.CN_GK,'LineWidth',2)
+            xlabel('\alpha (°)')
+            ylabel('C_N')
+            grid on
+            title(sprintf('\\tau_1 = %.3f \\tau_2 = %.2f',obj.tau1,obj.tau2))
         end
     end
 end

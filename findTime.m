@@ -23,5 +23,5 @@ if isempty(motion.Ts)
 else
     Ts = motion.Ts;
 end
-    t = 0:Ts:Ts*(N-1);
+    t = reshape(0:Ts:Ts*(N-1),size(motion.alpha));
 end

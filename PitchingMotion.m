@@ -343,5 +343,6 @@ classdef PitchingMotion < AirfoilMotion
             xlabel('\alpha (°)')
             ylabel('C_N''')
         end
+        
     end
 end
