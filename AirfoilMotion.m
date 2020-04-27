@@ -140,7 +140,6 @@ classdef AirfoilMotion < matlab.mixin.SetGet
         function BeddoesLeishman(obj,airfoil,Tp,Tf,Tv,alphamode)
             airfoil.steady.fitKirchhoff()
             obj.computeAttachedFlow(airfoil,alphamode);
-            obj.computeLEseparation(airfoil,Tp,alphamode);
             obj.computeTEseparation(airfoil,Tf);
             obj.computeDS(Tv);
         end
@@ -226,22 +225,6 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             end
             
         end
-        function computeLEseparation(obj,airfoil,Tp,alphamode)
-            % Computes the delayed normal coefficient, CNprime, depending
-            % on the time constant Tp for a given airfoil undergoing the
-            % instanciated pitching motion.
-            obj.Tp = Tp;
-            Dp = zeros(size(obj.CNp));
-            for n=2:length(obj.CNp)
-                Dp(n) =  Dp(n-1)*exp(-obj.DeltaS/obj.Tp) + (obj.CNp(n)-obj.CNp(n-1))*exp(-obj.DeltaS/(2*obj.Tp));
-            end
-            switch alphamode
-                case 'analytical'
-                    obj.CNprime = airfoil.steady.slope*obj.analpha(1:length(Dp)) - Dp; % we pretend the flow is attached over the whole alpha-range
-                case 'experimental'
-                    obj.CNprime = airfoil.steady.slope*obj.alpha(1:length(Dp)) - Dp; % we pretend the flow is attached over the whole alpha-range
-            end 
-        end
         function computeTEseparation(obj,airfoil,Tf)
             obj.Tf = Tf;
             obj.DeltaS = mean(diff(obj.S));
@@ -250,10 +233,10 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             % Kirchhoff law
             obj.CNk = Kirchhoff(airfoil.steady,airfoil.steady.alpha);
             
-            obj.alphaf = obj.CNprime/airfoil.steady.slope;
+ 
             obj.alphaf_rad = deg2rad(obj.alphaf);
             
-            obj.fp = seppoint(airfoil.steady,obj.alphaf); % effective separation point
+            obj.fp = seppoint(airfoil.steady,obj.alpha_lag); % effective separation point
             
             Df=zeros(size(obj.fp));
             for n=2:length(obj.fp)
@@ -261,15 +244,13 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             end
             
             obj.fpp = obj.fp - Df;
-            
-            if length(obj.CNI)<length(obj.CNC)
-                obj.CNf = ((1+sqrt(obj.fpp))/2).^2.*obj.CNC(1:length(obj.CNI))+obj.CNI;
-            else
-                obj.CNf = ((1+sqrt(obj.fpp))/2).^2.*obj.CNC+obj.CNI(1:length(obj.CNC));
-            end
-            
+           
+            n = min([length(obj.CNI),length(obj.CNC)]);
+            obj.CNf = ((1+sqrt(obj.fpp(1:n)))/2).^2.*obj.CNC(1:n)+obj.CNI(1:n);
+
             eta = 0.95;
-            obj.CCf = eta*airfoil.steady.slope*obj.alphaE(1:length(obj.fpp)).^2.*sqrt(obj.fpp);
+            
+            obj.CCf = eta*airfoil.steady.slope*obj.alphaE(1:n).^2.*sqrt(obj.fpp(1:n));
         end
         function computeDS(obj,Tv)
             % Computes the final Beddoes-Leishman predicted CN for the instanciated pitching motion, after
@@ -279,15 +260,16 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             
             % vortex normal coeff
             KN = (1+sqrt(obj.fpp)).^2/4;
-            Cv = obj.CNC(1:length(KN)).*(1-KN);
+            n = min([length(obj.CNC),length(KN)]);
+            Cv = obj.CNC(1:n).*(1-KN(1:n));
             
             obj.CNv=zeros(size(Cv));
             for n=2:length(Cv)
                 obj.CNv(n) = obj.CNv(n-1)*exp(-obj.DeltaS/Tv) + (Cv(n)-Cv(n-1))*exp(-obj.DeltaS/(2*Tv));
             end
-            
+            n = min([n,length(obj.CNf)]);
             % normal force coefficient
-            obj.CN_LB = obj.CNf + obj.CNv;
+            obj.CN_LB = obj.CNf(1:n) + obj.CNv(1:n);
         end
         function GomanKhrabrov(obj,steady,tau1,tau2)
             % Resample CNsteady to fit experimental unsteady alphas
