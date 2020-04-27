@@ -137,7 +137,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
                 error('CL and CD must be defined to compute CN and CC.')
             end
         end
-        function BeddoesLeishman(obj,airfoil,Tp,Tf,Tv,alphamode)
+        function BeddoesLeishman(obj,airfoil,Tf,Tv,alphamode)
             airfoil.steady.fitKirchhoff()
             obj.computeAttachedFlow(airfoil,alphamode);
             obj.computeTEseparation(airfoil,Tf);
