@@ -22,7 +22,7 @@ naca0012.steady = SteadyCurve(data.alpha_st,data.CN_st);
 % pitching motion
 mean_rad = deg2rad(data.mean);
 amp_rad = deg2rad(data.amp);
-pitching = PitchingMotion('alpha',data.alpha_xp,'CN',data.CN_xp,'V',M*a,'k',0.1);
+pitching = PitchingMotion('alpha',data.alpha_xp,'CN',data.CN_xp,'M',M,'k',0.1);
 pitching.setName();
 pitching.setSinus(naca0012,mean_rad,amp_rad,2*pi/0.032,-pi/2);
 
@@ -32,9 +32,10 @@ pitching.setCNsteady(naca0012.steady)
 % model parameters
 % naca0012.steady.fitKirchhoff();
 naca0012.steady.computeSlope();
-Kirchhoff(naca0012.steady,naca0012.steady.alpha,[.5,1.7]);
+naca0012.steady.setCN0();
+naca0012.steady.fitKirchhoff();
 naca0012.steady.plotKirchhoff();
-Tp = [3.7];
+Tp = [1];
 Tf = 3;
 Tv = 4;
 
@@ -43,7 +44,7 @@ for kp=1:length(Tp)
         for kv=1:length(Tv)
             params = sprintf('S1=%0.1f, S2=%0.1f, Tp=%0.1f, Tf=%0.1f, Tv=%0.1f',naca0012.steady.S1,naca0012.steady.S2,Tp(kp),Tf(kf),Tv(kv));
             disp(params);
-            pitching.BeddoesLeishman(naca0012,Tp(kp),Tf(kf),Tv(kv));
+            pitching.BeddoesLeishman(naca0012,Tp(kp),Tf(kf),Tv(kv),'experimental');
 %             pitching.plotAlphas()
 %             pitching.plotSeparation(naca0012,'normal',0) % last argument is saving figure or not  
             fig2 = figure;
@@ -72,7 +73,7 @@ for kp=1:length(Tp)
             plot_dir(pitching.alpha,pitching.CN,'DisplayName','C_{N,xp}','LineWidth',2,'Color','b');
             
             if kp==1 && kf==1 && kv==1
-                legend('Location','Best','FontSize',20)
+                legend('Location','NorthWest','FontSize',20)
             end
             title(params)
             grid on

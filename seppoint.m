@@ -1,7 +1,7 @@
 function f = seppoint(steady,alpha)
 %SEPPOINT Returns the separation point of the boundary layer. AoAs in
 %degrees.
-% The function seppoint(S,dalpha) returns scalar or vector values of the boundary layer separation point f of
+% The function seppoint(steady,dalpha) returns scalar or vector values of the boundary layer separation point f of
 % in terms of position normalized by chord length x/c.
 % The output is therefore between 0 and 1. The input arguments are an alpha
 % scalar or vector giving the angle of attack in degrees at which f should be
@@ -10,6 +10,6 @@ function f = seppoint(steady,alpha)
 
 f1 = 1 - 0.3*exp((alpha-steady.alpha_static_stall)/steady.S1);
 f2 = 0.04 +.66*exp((steady.alpha_static_stall-alpha)/steady.S2);
-f = (alpha<=steady.alpha_static_stall).*f1 + (alpha>steady.alpha_static_stall).*f2;
+f = (alpha<=steady.alpha_static_stall).*f1 + (alpha>steady.alpha_static_stall).*f2; % f1 is weighted by 1 if alpha<alpha_ss and f2 by 0 and vice-versa
 end
 

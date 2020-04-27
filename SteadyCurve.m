@@ -26,6 +26,7 @@ classdef SteadyCurve < handle
             else
                 obj.alpha_static_stall = alpha_static_stall;
             end
+            obj.computeSlope();
         end
         function alpha_static_stall = StallAngle(obj)
             % Static stall angle

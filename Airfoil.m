@@ -22,6 +22,9 @@ classdef Airfoil < handle
                 error('Please enter a valid chord length.')
             end
         end
+        function b = b(obj)
+            b = obj.c/2;
+        end
         function figs = Sheng(varargin)
             obj = varargin{1};
             % argument is a series of RampUpMotions

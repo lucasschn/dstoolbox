@@ -26,11 +26,13 @@ for k=1:length(c)
     ramp.isolateRamp();
     % Define stall
     ramp.findExpOnset();
-    evalin('base',sprintf('fig%d = %s.plotCC()',k,msname));
+    evalin('base',sprintf('fig%d = %s.plotCC();',k,msname));
 end
 
 %% Running Sheng experiment
 airfoil = Airfoil('flatplate',0.15);
+static = load('static_flatplate');
+airfoil.steady = SteadyCurve(static.alpha,static.Cn,13);
 % Define alpha_ds0 & compute Talpha
 figs = airfoil.Sheng(ms013,ms034,ms014,ms015);
 saveas(gcf,'fig/Sheng/ShengSH2019_dsr.png')

@@ -21,28 +21,28 @@ classdef RampUpMotion < AirfoilMotion
         % experimental parameters
         r % reduced pitch rate
         f_pts
-
+        
     end
     methods
         % convenient constructor with name/value pair of any attribute of RampUpMotion
         function obj = RampUpMotion(varargin)
-            obj@AirfoilMotion(varargin)
+%             obj@AirfoilMotion(varargin{:})
             p = inputParser;
             % Add name / default value pairs
-            prop = properties('RampUpMotion'); % makes a cell array of all properties of the specified ClassName
+            mco = ?RampUpMotion;
+            prop = mco.PropertyList; % makes a cell array of all properties of the specified ClassName
             for k=1:length(prop)
-                p.addParameter(prop{k},[]);
+                if ~prop(k).Constant
+                    p.addParameter(prop(k).Name,[]);
+                end
             end
             p.parse(varargin{:}); % {:} is added to take the content of the cells
             for k=1:length(prop)
-                eval(sprintf('obj.%s = p.Results.%s;',prop{k},prop{k}));
+                if ~prop(k).Constant
+                    obj.set(prop(k).Name,p.Results.(prop(k).Name))
+                end
             end
-            if ~isempty(obj.alpha)
-                obj.alpha_rad = deg2rad(obj.alpha);
-            end
-            if isempty(obj.Ts) && ~isempty(obj.t)
-                obj.Ts = mean(diff(obj.t));
-            end
+            obj.fillProps() 
         end
         function isolateRamp(obj)
             dalpha = diff(obj.alpha);
@@ -50,14 +50,22 @@ classdef RampUpMotion < AirfoilMotion
             i_end = i_end(end);
             t_end = obj.t(i_end);
             fprintf('Data will be cutoff at %.2fs \n',t_end)
-            if 1
             obj.alpha = obj.alpha(1:i_end);
+            obj.alpha_rad = obj.alpha_rad(1:i_end);
+            if ~isempty(obj.analpha)
+                obj.analpha = obj.analpha(1:i_end);
+            end
+            if ~isempty(obj.analpha_rad)
+                obj.analpha_rad = obj.analpha_rad(1:i_end);
+            else 
+                obj.analpha_rad = deg2rad(obj.analpha_rad);
+            end
             obj.t = obj.t(1:i_end);
             obj.CN = obj.CN(1:i_end);
             obj.CC = obj.CC(1:i_end);
             obj.CL = obj.CL(1:i_end);
             obj.CD = obj.CD(1:i_end);
-            end
+
             % then find valid values for continuously increasing alphas
             i_grow = findGrowingIndices(obj.alpha);
             for l=1:length(i_grow)
