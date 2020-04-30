@@ -129,7 +129,8 @@ classdef RampUpMotion < AirfoilMotion
         end
         function findExpOnset(obj)
             % finds experimental dynamic stall onset for a specific ramp-up
-            % experiment
+            % experiment. Is then used in Sheng algorithm to define the
+            % vector alpha_ds.
 %             obj.CNslope1 = lsqcurvefit(@(x,xdata) x*xdata,0,obj.alpha(obj.alpha<15),obj.CN(obj.alpha<15));
 %             err = abs(obj.CN - obj.CNslope1*obj.alpha);
 %             i_CNonset = find(err>1e-2);
@@ -172,16 +173,17 @@ classdef RampUpMotion < AirfoilMotion
         end
         function findModelOnset(obj,airfoil)
             % finds the Sheng-predicted dynamic stall angle for a specific
-            % time-evolution of alpha
+            % time-evolution of alpha. Predicts alpha_onset from
+            % alpha_lagonset from previously defined alpha_ds0.
             obj.computeAlphaLag(airfoil);
-            i_lagonset = find(obj.analpha_lag>airfoil.alpha_ds0,1);
+            i_lagonset = find(obj.alpha_lag>airfoil.alpha_ds0,1);
             if isempty(i_lagonset)
                 warning('The airfoil "%s" does not show stall in the experiment %s.',airfoil.name,obj.name)
             else
                 if ~isempty(obj.alpha)
                 obj.alpha_lagonset = obj.alpha(i_lagonset);
                 obj.alpha_onset = interp1(obj.alpha_lag(obj.i_continuous_grow),obj.alpha_continuous_grow,obj.alpha_lagonset);
-                elseif ~isempty(obj.analpha)
+                elseif ~isempty(obj.analpha) % if alpha is empty
                 obj.alpha_lagonset = obj.analpha(i_lagonset);
                 [c,ia] = unique(obj.analpha_lag);
                 obj.alpha_onset = interp1(c,obj.analpha(ia),obj.alpha_lagonset);
