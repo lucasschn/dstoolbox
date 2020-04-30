@@ -25,49 +25,43 @@ classdef Airfoil < handle
         function b = b(obj)
             b = obj.c/2;
         end
-        function figs = Sheng(varargin)
-            obj = varargin{1};
-            % argument is a series of RampUpMotions
-            r = [];
-            alpha_ds = [];
-            for k=2:nargin % first argument is self
+        function computeTalpha(obj,r,alpha_ds)
+            % computes Talpha based on a vector of reduced pitch rates r and
+            % corresponding dynamic stall angles alpha_ds. Talpha is the slope
+            % of the curve fitting alpha_ds as a function of r.
+            p = polyfit(r,alpha_ds,1);
+            obj.D1 = p(1); % deg
+            obj.alpha_ds0 = p(2);
+            obj.Talpha = pi/180*obj.D1; % rad, Talpha seems too low for SH2019
+        end
+        function fig = Sheng(obj,varargin)
+            %% extract r and alpha_ds from arguments
+            % argument is a set of RampUpMotions
+            r = -ones(size(varargin));
+            alpha_ds = -ones(size(varargin));
+            for k=1:nargin-1 % first argument is self
                 ramp = varargin{k};
                 if isempty(ramp.r)
-                    % with alphdot
+                    % compute it with alphadot
                     ramp.setPitchRate(obj);
                 end
-                %r(k-1) = ramp.rt(ramp.i_CConset);
                 if ramp.r>=obj.r0
-                    r(end+1) = ramp.r;
-                    alpha_ds(end+1) = ramp.alpha_CConset;
-                end
-            end
-            p = polyfit(r,alpha_ds,1);
-            obj.D1 = p(1);
-            obj.alpha_ds0 = p(2);
-            obj.Talpha = pi/180*obj.D1; % Talpha seems too low for SH2019
-%             obj.Talpha = 7;
-            figs = figure;
-            plot(r,alpha_ds,'.','DisplayName','\alpha_{ds} (exp)','MarkerSize',20)
-            hold on
-            grid on
-            xlabel('reduced pitch rate r (-)','FontSize',20);
-            ylabel('\alpha_{ds} (°)','FontSize',20);
-            ax = gca;
-            ax.FontSize = 20;
-            title(sprintf('%s ($T_{\\alpha} = %.2f$)',obj.name,obj.Talpha),'interpreter','latex','FontSize',20)
-            plot(r,polyval(p,r),'DisplayName','Linear fitting','LineWidth',2)
-            alpha_lag_ds = zeros(size(alpha_ds));
-            for k=1:length(alpha_ds)
-                % retrieve which ramp corresponds to the current alpha_ds
-                for kk=2:nargin
-                    tmp = varargin{kk};
-                    if tmp.r == r(k)
-                        ramp = varargin{kk};
+                    r(k) = ramp.r;
+                    % Define experimental stall if necessary
+                    if isempty(ramp.i_CConset)
+                        ramp.findExpOnset();
                     end
+                    alpha_ds(k) = ramp.alpha_CConset;
                 end
-                % compute alpha_lag and finds alpha_lagonset
-                ramp.findModelOnset(obj);
+                
+            end
+            
+            % compute alpha_lag using Talpha and finds alpha_lagonset
+            obj.computeTalpha(r,alpha_ds)
+            alpha_lag_ds = -ones(size(varargin));
+            for k=1:nargin-1
+                ramp = varargin{k};
+                ramp.findModelOnset(obj); % alpha_lagonset = alpha_lag_ds only if Talpha is correct
                 % looking for the value of alpha_lag(alpha) at the point alpha_ds
                 if ramp.r >= obj.r0
                     if isempty(ramp.alpha)
@@ -79,9 +73,30 @@ classdef Airfoil < handle
                     end
                 end
             end
+            
+            fig = obj.plotSheng(r,alpha_ds,alpha_lag_ds);
+            
+        end
+        function fig = plotSheng(obj,r,alpha_ds,alpha_lag_ds)
+            fig = obj.plotDS(r,alpha_ds);
+            figure(fig)
+            plot(r,obj.D1.*r+obj.alpha_ds0,'DisplayName','Linear fitting','LineWidth',2)
+            title(sprintf('%s ($T_{\\alpha} = %.2f$)',obj.name,obj.Talpha),'interpreter','latex','FontSize',20)
             plot(r,alpha_lag_ds,'.','DisplayName','\alpha_{ds} (lagged)','MarkerSize',20)
             plot(r,ones(size(r)).*obj.alpha_ds0,'--','DisplayName','\alpha_{ds,0}','LineWidth',2);
             legend('Location','NorthWest','FontSize',20)
         end
+    end
+    methods (Static)
+       function fig = plotDS(r,alpha_ds)
+            fig = figure;
+            plot(r,alpha_ds,'.','DisplayName','\alpha_{ds} (exp)','MarkerSize',20)
+            hold on
+            grid on
+            xlabel('reduced pitch rate r (-)','FontSize',20);
+            ylabel('\alpha_{ds} (°)','FontSize',20);
+            ax = gca;
+            ax.FontSize = 20;
+       end
     end
 end
