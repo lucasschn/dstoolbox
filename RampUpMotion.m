@@ -150,12 +150,15 @@ classdef RampUpMotion < AirfoilMotion
         function computeAlphaLag(obj,airfoil)
             % computes the vector alpha_lag for an experimental time evolution of alpha
             s = obj.t*obj.V/(airfoil.c/2);
+            DeltaS = mean(diff(s));
             if ~isempty(obj.alpha) % compute alpha_lag from alpha using Eq.5
                 dalpha = diff(obj.alpha);
+                Dalpha = zeros(size(obj.alpha));
                 obj.alpha_lag = zeros(size(obj.alpha));
                 for k = 1:length(dalpha)
-                    obj.alpha_lag(k+1) = obj.alpha_lag(k) + dalpha(k)*(1-exp(-s(k)/airfoil.Talpha));
+                    Dalpha(k+1) = Dalpha(k)*exp(-DeltaS/airfoil.Talpha) + dalpha(k)*exp(-DeltaS/(2*airfoil.Talpha));
                 end
+                obj.alpha_lag = obj.alpha - Dalpha;
                 if ~isempty(obj.alpha_lag) % compute analpha_lag from alpha_lag 
                     dalpha_lagdt = diff(obj.alpha_lag)./diff(obj.t);
                     alphadot_lag = max(dalpha_lagdt);
@@ -164,11 +167,12 @@ classdef RampUpMotion < AirfoilMotion
                 end
             elseif ~isempty(obj.analpha) % compute analpha_lag from analpha
                 dalpha = diff(obj.analpha);
+                Dalpha = zeros(size(obj.analpha));
                 obj.analpha_lag = zeros(size(obj.analpha));
-                obj.analpha_lag(1) = obj.analpha(1); % = analpha0, as obj.t(1)=0
                 for k = 1:length(dalpha)
-                    obj.analpha_lag(k+1) = obj.analpha_lag(k) + dalpha(k)*(1-exp(-s(k)/airfoil.Talpha));
+                    Dalpha(k+1) = Dalpha(k)*exp(-DeltaS/airfoil.Talpha) + dalpha(k)*exp(-DeltaS/(2*airfoil.Talpha));
                 end
+                obj.analpha_lag = obj.analpha - Dalpha;
             end
         end
         function findModelOnset(obj,airfoil)
