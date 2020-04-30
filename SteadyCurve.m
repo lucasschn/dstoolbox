@@ -3,6 +3,7 @@ classdef SteadyCurve < handle
         alpha
         alpha_rad
         CN
+        CL
         CN0 = 0;
         alpha_static_stall % denoted alpha_1 in Beddoes-Leishman
         f
@@ -50,12 +51,19 @@ classdef SteadyCurve < handle
                 obj.slope_rad = obj.slope*180/pi;
             end
         end
-        function plot(obj)
+        function plotCN(obj)
             figure
             plot(obj.alpha,obj.CN)
             grid on
             xlabel('\alpha (°)')
             ylabel('C_N')
+        end
+        function plotCL(obj)
+            figure
+            plot(obj.alpha,obj.CL)
+            grid on
+            xlabel('\alpha (°)')
+            ylabel('C_L')
         end
         function fitKirchhoff(obj)
             obj.computeSlope();
