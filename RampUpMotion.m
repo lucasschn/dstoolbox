@@ -148,34 +148,41 @@ classdef RampUpMotion < AirfoilMotion
             obj.alpha_CConset = obj.alpha(obj.i_CConset); % Sheng uses an inverted definition of CC
         end
         function computeAlphaLag(obj,airfoil)
-            % computes the vector alpha_lag for an experimental time evolution of alpha
+            % computes the delayed angle of attack alpha_lag w.r.t. the
+            % experimental angle of attack alpha. The time constant for the
+            % delay is the corresponding Talpha(r), r being the reduced
+            % pitch rate of the ramp-up motion.
             s = obj.t*obj.V/(airfoil.c/2);
+            Talpha = interp1(airfoil.r,airfoil.Talpha,obj.r);
             if ~isempty(obj.alpha) % compute alpha_lag from alpha using Eq.5
                 dalpha = diff(obj.alpha);
                 obj.alpha_lag = zeros(size(obj.alpha));
+                DeltaS = mean(diff(s));
+                Dalpha = zeros(size(obj.alpha));
                 for k = 1:length(dalpha)
-                    obj.alpha_lag(k+1) = obj.alpha_lag(k) + dalpha(k)*(1-exp(-s(k)/airfoil.Talpha));
+                    Dalpha(k+1) = Dalpha(k)*exp(-DeltaS/Talpha) + dalpha(k)*exp(-DeltaS/(2*Talpha));
                 end
-                if ~isempty(obj.alpha_lag) % compute analpha_lag from alpha_lag 
-                    dalpha_lagdt = diff(obj.alpha_lag)./diff(obj.t);
-                    alphadot_lag = max(dalpha_lagdt);
-                    analpha_lag0 = lsqcurvefit(@(x,xdata) alphadot_lag*xdata+x,0,obj.t(dalpha_lagdt>=5),obj.alpha_lag(dalpha_lagdt>=5));
-                    obj.analpha_lag =  alphadot_lag*obj.t + analpha_lag0;
-                end
+                obj.alpha_lag = obj.alpha - Dalpha;
+                % compute analpha_lag from alpha_lag
+                dalpha_lagdt = diff(obj.alpha_lag)./diff(obj.t);
+                alphadot_lag = max(dalpha_lagdt);
+                analpha_lag0 = lsqcurvefit(@(x,xdata) alphadot_lag*xdata+x,0,obj.t(dalpha_lagdt>=5),obj.alpha_lag(dalpha_lagdt>=5));
+                obj.analpha_lag =  alphadot_lag*obj.t + analpha_lag0;
+                
             elseif ~isempty(obj.analpha) % compute analpha_lag from analpha
                 dalpha = diff(obj.analpha);
                 obj.analpha_lag = zeros(size(obj.analpha));
                 obj.analpha_lag(1) = obj.analpha(1); % = analpha0, as obj.t(1)=0
                 for k = 1:length(dalpha)
-                    obj.analpha_lag(k+1) = obj.analpha_lag(k) + dalpha(k)*(1-exp(-s(k)/airfoil.Talpha));
+                    Dalpha(k+1) = Dalpha(k)*exp(-DeltaS/Talpha) + dalpha(k)*exp(-DeltaS/(2*Talpha));
                 end
+                obj.alpha_lag = obj.alpha - Dalpha;
             end
         end
         function findModelOnset(obj,airfoil)
             % finds the Sheng-predicted dynamic stall angle for a specific
             % time-evolution of alpha. Predicts alpha_onset from
             % alpha_lagonset from previously defined alpha_ds0.
-            obj.computeAlphaLag(airfoil);
             i_lagonset = find(obj.alpha_lag>airfoil.alpha_ds0,1);
             if isempty(i_lagonset)
                 warning('The airfoil "%s" does not show stall in the experiment %s.',airfoil.name,obj.name)

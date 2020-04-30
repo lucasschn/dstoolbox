@@ -6,7 +6,7 @@ run('/Users/lucas/src/codes_smarth/labbook.m')
 
 %% Setting up the ramps
 
-c = [22,26,30,84];
+c = [22,26,30,34,38,42,46,50,84];
 
 for k=1:length(c)
     data = load(loadmat(LB(c(k)).ms,LB(c(k)).mpt),'raw','inert','avg','zero');
@@ -23,7 +23,7 @@ for k=1:length(c)
     ramp.setCL(inert.Cl);
     ramp.setCD(inert.Cd);
     ramp.computeAirfoilFrame();
-    ramp.isolateRamp();
+%     ramp.isolateRamp();
     % Define stall
     ramp.findExpOnset();
     evalin('base',sprintf('fig%d = %s.plotCC();',k,msname));
@@ -34,14 +34,14 @@ airfoil = Airfoil('flatplate',0.15);
 static = load('static_flatplate');
 airfoil.steady = SteadyCurve(static.alpha,static.Cn,13);
 % Define alpha_ds0 & compute Talpha
-figs = airfoil.Sheng(ms013,ms034,ms014,ms015);
+figs = airfoil.Sheng(ms013,ms014,ms034,ms015,ms016,ms017,ms018,ms019);
 saveas(gcf,'fig/Sheng/ShengSH2019_dsr.png')
-%% Add Sheng's predicted stall angles to the figures
-for k=1:length(c)
-    msname = sprintf('ms%03i',LB(c(k)).ms);
-    evalin('base',sprintf('figure(fig%d)',k))
-    hold on
-    evalin('base',sprintf('plot(%s.alpha_lagonset*ones(2,1),fig%d.CurrentAxes.YLim,''b--'')',msname,k));
-end
+% %% Add Sheng's predicted stall angles to the figures
+% for k=1:length(c)
+%     msname = sprintf('ms%03i',LB(c(k)).ms);
+%     evalin('base',sprintf('figure(fig%d)',k))
+%     hold on
+%     evalin('base',sprintf('plot(%s.alpha_lagonset*ones(2,1),fig%d.CurrentAxes.YLim,''b--'')',msname,k));
+% end
 
 figure(figs)
