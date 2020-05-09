@@ -34,7 +34,7 @@ airfoil = Airfoil('flatplate',0.15);
 static = load('static_flatplate');
 airfoil.steady = SteadyCurve(static.alpha,static.Cn,13);
 % Define alpha_ds0 & compute Talpha
-figs = airfoil.Sheng(ms013,ms034,ms014,ms015);
+figs = airfoil.Sheng(ms013,ms014,ms034,ms015);
 saveas(gcf,'fig/Sheng/ShengSH2019_dsr.png')
 %% Add Sheng's predicted stall angles to the figures
 for k=1:length(c)
