@@ -235,8 +235,8 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             
  
             obj.alphaf_rad = deg2rad(obj.alphaf);
-            
-            obj.fp = seppoint(airfoil.steady,obj.alpha_lag); % effective separation point
+            delta_alpha1 = airfoil.alpha_ds0 - airfoil.steady.alpha_static_stall; % for r>r0
+            obj.fp = seppoint(airfoil.steady,obj.alpha_lag - delta_alpha1); % effective separation point
             
             Df=zeros(size(obj.fp));
             for n=2:length(obj.fp)

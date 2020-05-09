@@ -5,7 +5,7 @@ classdef Airfoil < handle
         alpha_ds0
         D1
         Talpha
-        r0 = 0.01 % reduced pitch rate at which linear fitting begins
+        r0 = 0.01 % reduced pitch rate for bilinear transition  
         steady % corresponding steady curve
     end
     methods
@@ -25,12 +25,11 @@ classdef Airfoil < handle
         function b = b(obj)
             b = obj.c/2;
         end
-        function figs = Sheng(varargin)
-            obj = varargin{1};
+        function figs = Sheng(obj,varargin)
             % argument is a series of RampUpMotions
-            r = [];
-            alpha_ds = [];
-            for k=2:nargin % first argument is self
+            r = -ones(size(varargin));
+            alpha_ds = -ones(size(varargin));
+            for k=1:nargin-1
                 ramp = varargin{k};
                 if isempty(ramp.r)
                     % with alphdot
@@ -38,15 +37,14 @@ classdef Airfoil < handle
                 end
                 %r(k-1) = ramp.rt(ramp.i_CConset);
                 if ramp.r>=obj.r0
-                    r(end+1) = ramp.r;
-                    alpha_ds(end+1) = ramp.alpha_CConset;
+                    r(k) = ramp.r;
+                    alpha_ds(k) = ramp.alpha_CConset;
                 end
             end
             p = polyfit(r,alpha_ds,1);
             obj.D1 = p(1);
             obj.alpha_ds0 = p(2);
-            obj.Talpha = pi/180*obj.D1; % Talpha seems too low for SH2019
-%             obj.Talpha = 7;
+            obj.Talpha = pi/180*obj.D1;
             figs = figure;
             plot(r,alpha_ds,'.','DisplayName','\alpha_{ds} (exp)','MarkerSize',20)
             hold on
@@ -60,7 +58,7 @@ classdef Airfoil < handle
             alpha_lag_ds = zeros(size(alpha_ds));
             for k=1:length(alpha_ds)
                 % retrieve which ramp corresponds to the current alpha_ds
-                for kk=2:nargin
+                for kk=1:nargin-1
                     tmp = varargin{kk};
                     if tmp.r == r(k)
                         ramp = varargin{kk};
