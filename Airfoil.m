@@ -26,7 +26,7 @@ classdef Airfoil < handle
         function b = b(obj)
             b = obj.c/2;
         end
-        function fig = computeTalpha(obj)
+        function fig = computeTalpha(obj,varargin)
             % computes Talpha based on a vector of reduced pitch rates r and
             % corresponding dynamic stall angles alpha_ds. Talpha is the slope
             % of the curve fitting alpha_ds as a function of r.
@@ -34,9 +34,10 @@ classdef Airfoil < handle
             alpha_ds_r = @(x,r) x(1)-(x(1)-alpha_ss)*exp(-x(2)*r);
             
             xopt = lsqcurvefit(alpha_ds_r,[obj.alpha_ds(end) 1],obj.r,obj.alpha_ds,[0 0 0 ],[Inf Inf Inf]);
-            obj.D1 = xopt(1) + (xopt(1)-alpha_ss)*exp(-xopt(2)*obj.r); % deg
+            obj.D1 = 100*xopt(1) + 100*(xopt(1)-alpha_ss)*exp(-xopt(2)*obj.r); % deg
             %             obj.alpha_ds0 = p(2);
-            obj.Talpha = obj.D1; % rad
+            %obj.Talpha = pi/180*obj.D1; % rad
+            obj.Talpha = 2*0.5/obj.c*[obj.findTalpha(varargin{1}),obj.findTalpha(varargin{2}), obj.findTalpha(varargin{3}), obj.findTalpha(varargin{4}), obj.findTalpha(varargin{5}), obj.findTalpha(varargin{6}), obj.findTalpha(varargin{7}), obj.findTalpha(varargin{8})]; 
             fig = obj.plotDS();
             figure(fig)
             subplot(211)
@@ -47,6 +48,17 @@ classdef Airfoil < handle
             xlabel('reduced pitch rate r (-)','FontSize',20);
             ylabel('T_\alpha','FontSize',20)
             grid on
+        end
+        function [tau_sol,t0] = findTalpha(obj,ramp)
+            t0 = interp1(ramp.analpha,ramp.t,0);
+            t_ds = ramp.t(ramp.i_CConset)-t0;
+            alpha_ss = obj.steady.alpha_static_stall;
+            K = ramp.alphadot;
+            syms tau
+            
+            sol = solve(alpha_ss == K*(t_ds - tau*(1-exp(-t_ds/tau))),'Real',true,'IgnoreAnalyticConstraints',true);
+            
+            tau_sol = double(sol); % in dimensional time here
         end
         function fig = Sheng(obj,varargin)
             %% extract r and alpha_ds from arguments
@@ -71,7 +83,7 @@ classdef Airfoil < handle
             end
             
             % compute alpha_lag using Talpha and finds alpha_lagonset
-            fig = obj.computeTalpha();
+            fig = obj.computeTalpha(varargin{:});
             alpha_lag_ds = -ones(size(varargin));
             for k=1:nargin-1
                 ramp = varargin{k};
@@ -102,7 +114,6 @@ classdef Airfoil < handle
             plot(obj.r,ones(size(obj.r)).*obj.steady.alpha_static_stall,'--','DisplayName','\alpha_{ss}','LineWidth',2);
             legend('FontSize',20,'Location','East')
         end
-        
         function fig = plotDS(obj)
             fig = figure;
             subplot(211)

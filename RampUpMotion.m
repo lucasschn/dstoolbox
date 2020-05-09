@@ -154,10 +154,10 @@ classdef RampUpMotion < AirfoilMotion
             % pitch rate of the ramp-up motion.
             s = obj.t*obj.V/(airfoil.c/2);
             Talpha = interp1(airfoil.r,airfoil.Talpha,obj.r);
+            DeltaS = mean(diff(s));
             if ~isempty(obj.alpha) % compute alpha_lag from alpha using Eq.5
                 dalpha = diff(obj.alpha);
                 obj.alpha_lag = zeros(size(obj.alpha));
-                DeltaS = mean(diff(s));
                 Dalpha = zeros(size(obj.alpha));
                 for k = 1:length(dalpha)
                     Dalpha(k+1) = Dalpha(k)*exp(-DeltaS/Talpha) + dalpha(k)*exp(-DeltaS/(2*Talpha));
@@ -172,7 +172,7 @@ classdef RampUpMotion < AirfoilMotion
             elseif ~isempty(obj.analpha) % compute analpha_lag from analpha
                 dalpha = diff(obj.analpha);
                 obj.analpha_lag = zeros(size(obj.analpha));
-                obj.analpha_lag(1) = obj.analpha(1); % = analpha0, as obj.t(1)=0
+                Dalpha = zeros(size(obj.alpha));
                 for k = 1:length(dalpha)
                     Dalpha(k+1) = Dalpha(k)*exp(-DeltaS/Talpha) + dalpha(k)*exp(-DeltaS/(2*Talpha));
                 end
@@ -261,7 +261,7 @@ classdef RampUpMotion < AirfoilMotion
                 plot(obj.t(obj.i_CConset),obj.alpha_CConset,'rx','DisplayName','\alpha_{ds,CC}')
             end  
         end
-        function plotAlphaLag(obj)
+        function plotAlphaLag(obj,airfoil)
             figure
             if ~isempty(obj.alpha)
                 plot(obj.t,obj.alpha,'DisplayName','\alpha')
@@ -278,9 +278,13 @@ classdef RampUpMotion < AirfoilMotion
                 hold on
                 plot(obj.t(obj.i_CConset),obj.alpha_lag(obj.i_CConset),'bx','DisplayName','\alpha''_{ds,CC}')
             end
+            plot(obj.t(obj.i_CConset),airfoil.steady.alpha_static_stall,'x','DisplayName','\alpha_{ss}')
+            [Talpha,t0] = airfoil.findTalpha(obj);
+            plot(obj.t,obj.alphadot*(obj.t-t0-Talpha*(1-exp(-(obj.t-t0)/Talpha))),'--','DisplayName','ideal ramp response')
             grid on
             xlabel('t (s)')
             ylabel('\alpha')
+            title(sprintf('%s ($\\dot{\\alpha} = %.2f ^{\\circ}$/s)',obj.name,obj.alphadot),'interpreter','latex')
             legend('Location','SouthEast')
         end
         function plotPitchRate(obj)

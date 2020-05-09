@@ -23,7 +23,7 @@ for k=1:length(c)
     ramp.setCL(inert.Cl);
     ramp.setCD(inert.Cd);
     ramp.computeAirfoilFrame();
-%     ramp.isolateRamp();
+    ramp.isolateRamp();
     % Define stall
     ramp.findExpOnset();
     evalin('base',sprintf('fig%d = %s.plotCC();',k,msname));
