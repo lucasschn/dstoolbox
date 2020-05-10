@@ -6,7 +6,7 @@ run('/Users/lucas/src/codes_smarth/labbook.m')
 
 %% Setting up the ramps
 
-c = [22,26,30,84];
+c = [22,26,84,30];
 
 for k=1:length(c)
     data = load(loadmat(LB(c(k)).ms,LB(c(k)).mpt),'raw','inert','avg','zero');
