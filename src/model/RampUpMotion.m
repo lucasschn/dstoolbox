@@ -1,4 +1,4 @@
-classdef RampUpMotion < AirfoilMotion
+cclassdef RampUpMotion < AirfoilMotion
     properties
         % does not depend on the airfoil
         % experimental parameters
@@ -240,6 +240,7 @@ classdef RampUpMotion < AirfoilMotion
             if ~isempty(obj.alpha_CConset)
                 plot(obj.t(obj.i_CConset),obj.alpha_CConset,'rx','DisplayName','\alpha_{ds,CC}')
             end  
+            title(sprintf('%s ($\\dot{\\alpha}$ = %.2f \degree/s)',obj.name,obj.alphadot),'interpreter','latex')
         end
         function plotPitchRate(obj)
             figure
