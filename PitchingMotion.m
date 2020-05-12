@@ -14,7 +14,6 @@ classdef PitchingMotion < AirfoilMotion
         % convenient constructor with name/value pair of any attribute of
         % PitchingMotion
         function obj = PitchingMotion(varargin)
-            obj@AirfoilMotion(varargin{:}) % calls the superclass method AirfoilMotion (constructor)
             p = inputParser;
             mco = ?PitchingMotion;
             prop = mco.PropertyList; % makes a cell array of all properties of the specified ClassName
@@ -32,7 +31,6 @@ classdef PitchingMotion < AirfoilMotion
             end
             obj.fillProps
         end
-
 
         function setSinus(obj,airfoil,varargin)
             % setSinus reconstructs the experimental angle of attack using a sinusoid of the form alpha(t) = mean_rad +
@@ -129,6 +127,25 @@ classdef PitchingMotion < AirfoilMotion
             xlabel('\alpha (°)')
             ylabel('C_N''')
         end
-        
+        function plotLB(obj,xaxis)
+            figure
+            switch xaxis
+                case 'alpha'
+                    plot(obj.alpha(1:length(obj.CN)),obj.CN,'DisplayName','exp')
+                    hold on 
+                    plot(obj.alpha(1:length(obj.CN_LB)),obj.CN_LB,'DisplayName','LB')
+                    xlabel('\alpha (°)')
+                case 'convectime'
+                    plot(obj.S(obj.t < 1/obj.freq),obj.CN(obj.t < 1/obj.freq),'DisplayName','exp')
+                    hold on
+                    plot(obj.S(obj.t < 1/obj.freq),obj.CN_LB(obj.t < 1/obj.freq),'DisplayName','LB')
+                    xlabel('t_c (-)')
+            end
+            grid on 
+            legend('Location','NorthEast','FontSize',20)
+            ylabel('C_N')
+            ax = gca;
+            ax.FontSize = 20;
+        end
     end
 end
