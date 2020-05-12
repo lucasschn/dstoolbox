@@ -67,7 +67,7 @@ classdef SteadyCurve < handle
             
             Kfunc = @(x,alpha) Kirchhoff(obj,obj.alpha,x);
             
-            [fitparams,res,~,exitflag] = lsqcurvefit(Kfunc,[S10 S20],obj.alpha,obj.CN,[0 0],[2 2],opts);
+            [fitparams,res,~,exitflag] = lsqcurvefit(Kfunc,[S10 S20],obj.alpha,obj.CN,[0 0],[10 10],opts);
             
             switch(exitflag)
                 case 1
