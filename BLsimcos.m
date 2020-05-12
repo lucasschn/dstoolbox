@@ -40,23 +40,22 @@ pitching.setCNsteady(airfoil.steady)
 % set static slope and zero lift
 airfoil.steady.computeSlope();
 airfoil.steady.setCN0();
-airfoil.steady.CN0 = interp1(airfoil.steady.alpha,airfoil.steady.CN,0,'linear','extrap');
+
 
 airfoil.steady.fitKirchhoff();
 airfoil.steady.plotKirchhoff(); 
 
-
 %% Define Beddoes-Leishman model
-Tp = 1.7;
+Tp = 3;
 Tf = 3;
 Tv = 6;
 pitching.BeddoesLeishman(airfoil,Tp,Tf,Tv,'analytical');
 
 %% Plot results
 figure
-plot(pitching.alpha(1:length(pitching.CN_LB)),pitching.CN_LB,'DisplayName','C_{N,LB}','Color','r','LineWidth',2)
-hold on
 plot(pitching.alpha,pitching.CN,'DisplayName','C_{N,xp}','Color','b','LineWidth',2)
+hold on
+plot(pitching.alpha(1:length(pitching.CN_LB)),pitching.CN_LB,'DisplayName','C_{N,LB}','Color','r','LineWidth',2)
 plot(pitching.alpha,pitching.alpha*2*pi*pi/180,'r--','DisplayName','2\pi\alpha')
 legend('Location','SouthWest')
 xlabel('\alpha (°)')

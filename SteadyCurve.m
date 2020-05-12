@@ -57,6 +57,7 @@ classdef SteadyCurve < handle
             grid on
             xlabel('\alpha (°)')
             ylabel('C_N')
+            axis([0 Inf 0 Inf])
         end
         function plotCL(obj)
             figure
@@ -117,14 +118,14 @@ classdef SteadyCurve < handle
         function setCN0(obj,CN0)
             if nargin == 2
                 if isnan(CN0)
-                    error('CN= cannot be NaN.')
+                    error('CN0 cannot be NaN.')
                 else
                     obj.CN0 = CN0;
                 end
             elseif nargin == 1
-                obj.CN0 = interp1(obj.alpha,obj.CN,0);
+                obj.CN0 = interp1(obj.alpha,obj.CN,0,'linear','extrap');
             end
-                
+            fprintf('CN0 is equal to %.4f',obj.CN0)
         end
         function computeSeparation(obj)
             % computes the experimental separation point using Kirchhoff
