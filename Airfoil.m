@@ -32,12 +32,13 @@ classdef Airfoil < handle
             % of the curve fitting alpha_ds as a function of r.
             alpha_ss = obj.steady.alpha_static_stall;
             alpha_ds_r = @(x,r) x(1)-(x(1)-alpha_ss)*exp(-x(2)*r);
-            
-            xopt = lsqcurvefit(alpha_ds_r,[obj.alpha_ds(end) 1],obj.r,obj.alpha_ds,[0 0 0 ],[Inf Inf Inf]);
-            obj.D1 = 100*xopt(1) + 100*(xopt(1)-alpha_ss)*exp(-xopt(2)*obj.r); % deg
-            %             obj.alpha_ds0 = p(2);
-            %obj.Talpha = pi/180*obj.D1; % rad
-            obj.Talpha = 2*0.5/obj.c*[obj.findTalpha(varargin{1}),obj.findTalpha(varargin{2}), obj.findTalpha(varargin{3}), obj.findTalpha(varargin{4}), obj.findTalpha(varargin{5}), obj.findTalpha(varargin{6}), obj.findTalpha(varargin{7}), obj.findTalpha(varargin{8})]; 
+            % exponential fit
+            xopt = lsqcurvefit(alpha_ds_r,[obj.alpha_ds(end) 1],obj.r,obj.alpha_ds,[0 0],[Inf Inf]);
+            % determination of Talpha so that alpha_lag(t_ds) = alpha_ss
+            obj.Talpha = 2*0.5/obj.c*[obj.findTalpha(varargin{1}),...
+                obj.findTalpha(varargin{2}), obj.findTalpha(varargin{3}),...
+                obj.findTalpha(varargin{4}), obj.findTalpha(varargin{5}),...
+                obj.findTalpha(varargin{6})]; 
             fig = obj.plotDS();
             figure(fig)
             subplot(211)
@@ -45,6 +46,10 @@ classdef Airfoil < handle
             plot(obj.r,alpha_ds_r(xopt,obj.r),'LineWidth',2,'DisplayName','exponential fit')
             subplot(212)
             plot(obj.r,obj.Talpha,'LineWidth',2,'DisplayName','T_\alpha')
+            hold on 
+            A = xopt(1);
+            B = xopt(2);
+            plot(obj.r,B*(A-alpha_ss)*ones(size(obj.r)))
             xlabel('reduced pitch rate r (-)','FontSize',20);
             ylabel('T_\alpha','FontSize',20)
             grid on
