@@ -5,8 +5,10 @@ set(0,'DefaultFigureWindowStyle','docked')
 run('/Users/lucas/src/codes_smarth/labbook.m')
 
 %% Setting up the ramps
-
-c = [22,26,84,30,34,38];
+% ms012 cannot be used because inert is not defined
+% ms higher than 17 cannot be used because DS occurs after alpha has
+% reached 30°
+c = [22,27,84,31,34,38];
 
 for k=1:length(c)
     data = load(loadmat(LB(c(k)).ms,LB(c(k)).mpt),'raw','inert','avg','zero');

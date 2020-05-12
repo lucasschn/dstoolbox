@@ -72,11 +72,11 @@ classdef SteadyCurve < handle
             stall_slope_plus = obj.CNalpha(find(obj.alpha>obj.alpha_static_stall,1,'first'));
             S10 = 0.3*deg2rad(obj.alpha_static_stall)/(2*sqrt(0.7))*(((1+sqrt(0.7))/2)^2-stall_slope_minus/obj.slope_rad).^(-1);
             S20 = 0.66*deg2rad(obj.alpha_static_stall)/(2*sqrt(0.7))*(((1+sqrt(0.7))/2)^2-stall_slope_plus/obj.slope_rad).^(-1);
-            opts = optimset('Display','off');
+            opts = optimset('Display','off'); % replace off by iter for max. details
             
             Kfunc = @(x,alpha) Kirchhoff(obj,obj.alpha,x);
             
-            [fitparams,res,~,exitflag] = lsqcurvefit(Kfunc,[S10 S20],obj.alpha,obj.CN,[0 0],[2 2],opts);
+            [fitparams,res,~,exitflag] = lsqcurvefit(Kfunc,[S10 S20],obj.alpha,obj.CN,[0 0],[10 10],opts);
             
             switch(exitflag)
                 case 1

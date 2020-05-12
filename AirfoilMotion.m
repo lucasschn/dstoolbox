@@ -329,8 +329,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
                 dalpha_lagdt = diff(obj.alpha_lag)./diff(obj.t);
                 alphadot_lag = max(dalpha_lagdt);
                 analpha_lag0 = lsqcurvefit(@(x,xdata) alphadot_lag*xdata+x,0,obj.t(dalpha_lagdt>=5),obj.alpha_lag(dalpha_lagdt>=5));
-                obj.analpha_lag =  alphadot_lag*obj.t + analpha_lag0;
-                
+                obj.analpha_lag =  alphadot_lag*obj.t + analpha_lag0;   
             elseif ~isempty(obj.analpha) % compute analpha_lag from analpha
                 dalpha = diff(obj.analpha);
                 obj.analpha_lag = zeros(size(obj.analpha));
@@ -382,7 +381,19 @@ classdef AirfoilMotion < matlab.mixin.SetGet
                 ylabel('C_C')
                 grid on
             end
-        end        
+        end       
+        function plotLB(obj)
+            figure
+            plot(obj.alpha(1:length(obj.CN)),obj.CN,'DisplayName','exp')
+            hold on
+            plot(obj.alpha(1:length(obj.CN_LB)),obj.CN_LB,'DisplayName','LB')
+            xlabel('\alpha (°)')
+            ylabel('C_N')
+            grid on
+            legend('Location','NorthEast','FontSize',20)
+            ax = gca;
+            ax.FontSize = 20;
+        end
         function plotGK(obj)
             figure
             plot(obj.alpha(1:length(obj.CN_GK)),obj.CN_GK,'LineWidth',2)

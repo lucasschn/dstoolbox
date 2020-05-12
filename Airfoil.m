@@ -35,7 +35,7 @@ classdef Airfoil < handle
             % exponential fit
             xopt = lsqcurvefit(alpha_ds_r,[obj.alpha_ds(end) 1],obj.r,obj.alpha_ds,[0 0],[Inf Inf]);
             % determination of Talpha so that alpha_lag(t_ds) = alpha_ss
-            obj.Talpha = 2*0.5/obj.c*[obj.findTalpha(varargin{1}),...
+            obj.Talpha = [obj.findTalpha(varargin{1}),...
                 obj.findTalpha(varargin{2}), obj.findTalpha(varargin{3}),...
                 obj.findTalpha(varargin{4}), obj.findTalpha(varargin{5}),...
                 obj.findTalpha(varargin{6})]; 
@@ -45,25 +45,23 @@ classdef Airfoil < handle
             hold on
             plot(obj.r,alpha_ds_r(xopt,obj.r),'LineWidth',2,'DisplayName','exponential fit')
             subplot(212)
-            plot(obj.r,obj.Talpha,'LineWidth',2,'DisplayName','T_\alpha')
+            plot(obj.r,obj.Talpha,'.','MarkerSize',20,'DisplayName','T_\alpha')
             hold on 
             A = xopt(1);
             B = xopt(2);
-            plot(obj.r,B*(A-alpha_ss)*ones(size(obj.r)))
+            plot(obj.r,pi/180*B*(A-alpha_ss)*exp(-B*obj.r),'DisplayName','fit for T_\alpha')
             xlabel('reduced pitch rate r (-)','FontSize',20);
             ylabel('T_\alpha','FontSize',20)
             grid on
         end
-        function [tau_sol,t0] = findTalpha(obj,ramp)
+        function [Talpha,t0] = findTalpha(obj,ramp)
             t0 = interp1(ramp.analpha,ramp.t,0);
             t_ds = ramp.t(ramp.i_CConset)-t0;
             alpha_ss = obj.steady.alpha_static_stall;
             K = ramp.alphadot;
-            syms tau
-            
+            syms tau % dimensional time constant 
             sol = solve(alpha_ss == K*(t_ds - tau*(1-exp(-t_ds/tau))),'Real',true,'IgnoreAnalyticConstraints',true);
-            
-            tau_sol = double(sol); % in dimensional time here
+            Talpha = 2*ramp.V/obj.c *  double(sol); % in adimensional time here
         end
         function fig = Sheng(obj,varargin)
             %% extract r and alpha_ds from arguments
