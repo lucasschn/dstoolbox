@@ -52,6 +52,9 @@ classdef AirfoilMotion < matlab.mixin.SetGet
         x
         alpha_shift
         CN_GK
+        %% Sheng 
+        alpha_lag
+        analpha_lag
     end
     properties (Constant = true)
         % Beddoes constants
@@ -146,6 +149,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
         end
         function computeAttachedFlow(obj,airfoil,alphamode)
             obj.S = 2*obj.V*obj.t/airfoil.c;
+            obj.DeltaS = mean(diff(obj.S));
             obj.computeImpulsiveLift(airfoil,alphamode);
             obj.computeCirculatoryLift(airfoil,alphamode);
             % effective angle of attack
@@ -185,7 +189,6 @@ classdef AirfoilMotion < matlab.mixin.SetGet
         end
         function computeCirculatoryLift(obj,airfoil,alphamode)
             % Circulatory normal coeff
-            obj.DeltaS = mean(diff(obj.S));
             switch alphamode
                 case 'experimental'
                     obj.computeExperimentalCirculatoryLift(airfoil);
@@ -244,7 +247,6 @@ classdef AirfoilMotion < matlab.mixin.SetGet
         end
         function computeTEseparation(obj,airfoil,Tf)
             obj.Tf = Tf;
-            obj.DeltaS = mean(diff(obj.S));
             obj.f = seppoint(airfoil.steady,airfoil.steady.alpha);
             
             % Kirchhoff law
@@ -307,6 +309,38 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             obj.x = lsim(sys,x0,obj.t(1:length(x0)));
             obj.CN_GK = steady.slope/4*(1+sqrt(obj.x)).^2+steady.CN0;
         end
+        function computeAlphaLag(obj,airfoil)
+            % computes the delayed angle of attack alpha_lag w.r.t. the
+            % experimental angle of attack alpha. The time constant for the
+            % delay is the corresponding Talpha(r), r being the reduced
+            % pitch rate of the ramp-up motion.
+            obj.S = obj.t*obj.V/(airfoil.c/2);
+            Talpha = interp1(airfoil.r,airfoil.Talpha,obj.r);
+            obj.DeltaS = mean(diff(obj.S));
+            if ~isempty(obj.alpha) % compute alpha_lag from alpha using Eq.5
+                dalpha = diff(obj.alpha);
+                obj.alpha_lag = zeros(size(obj.alpha));
+                Dalpha = zeros(size(obj.alpha));
+                for k = 1:length(dalpha)
+                    Dalpha(k+1) = Dalpha(k)*exp(-obj.DeltaS/Talpha) + dalpha(k)*exp(-obj.DeltaS/(2*Talpha));
+                end
+                obj.alpha_lag = obj.alpha - Dalpha;
+                % compute analpha_lag from alpha_lag
+                dalpha_lagdt = diff(obj.alpha_lag)./diff(obj.t);
+                alphadot_lag = max(dalpha_lagdt);
+                analpha_lag0 = lsqcurvefit(@(x,xdata) alphadot_lag*xdata+x,0,obj.t(dalpha_lagdt>=5),obj.alpha_lag(dalpha_lagdt>=5));
+                obj.analpha_lag =  alphadot_lag*obj.t + analpha_lag0;
+                
+            elseif ~isempty(obj.analpha) % compute analpha_lag from analpha
+                dalpha = diff(obj.analpha);
+                obj.analpha_lag = zeros(size(obj.analpha));
+                Dalpha = zeros(size(obj.alpha));
+                for k = 1:length(dalpha)
+                    Dalpha(k+1) = Dalpha(k)*exp(-obj.DeltaS/Talpha) + dalpha(k)*exp(-obj.DeltaS/(2*Talpha));
+                end
+                obj.alpha_lag = obj.alpha - Dalpha;
+            end
+        end
         function plotAlpha(obj)
             figure
             if ~isempty(obj.alpha)
@@ -357,13 +391,6 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             grid on
             title(sprintf('\\tau_1 = %.3f \\tau_2 = %.2f',obj.tau1,obj.tau2))
         end
-        function plotLB(obj)
-            figure
-            plot(obj.alpha(1:length(obj.CN_LB)),obj.CN_LB)
-            grid on 
-            xlabel('\alpha (°)')
-            ylabel('C_N')
-        end
         function plotAlphas(obj)
             figure
             plot(obj.t,obj.alpha,'LineWidth',2,'DisplayName','\alpha_{xp}')
@@ -396,6 +423,42 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             if save
                 saveas(gcf,'fig/f_curves.png')
             end
+        end
+        function plotSheng(obj,airfoil)
+            figure
+            plot(obj.rss,obj.alpha_ds,'.','DisplayName','\alpha_{ds} (exp)','MarkerSize',20)
+            hold on 
+            plot(airfoil.r,airfoil.alpha_ds)
+            grid on
+            ylabel('\alpha_{ds} (°)','FontSize',20);
+            ax = gca;
+            ax.FontSize = 20;
+        end
+        function plotAlphaLag(obj,airfoil)
+            figure
+            if ~isempty(obj.alpha)
+                plot(obj.t,obj.alpha,'DisplayName','\alpha')
+                hold on
+                plot(obj.t,obj.alpha_lag,'DisplayName','\alpha''')
+            end
+            if ~isempty(obj.analpha)
+                plot(obj.t,obj.analpha,'--','DisplayName','ideal \alpha')
+                hold on
+                %plot(obj.t,obj.analpha_lag,'--','DisplayName','ideal \alpha''')
+            end
+            if ~isempty(obj.i_CConset)
+                plot(obj.t(obj.i_CConset),obj.alpha_CConset,'rx','DisplayName','\alpha_{ds,CC}')
+                hold on
+                %plot(obj.t(obj.i_CConset),obj.alpha_lag(obj.i_CConset),'bx','DisplayName','\alpha''_{ds,CC}')
+            end
+            plot(obj.t(obj.i_CConset),airfoil.steady.alpha_static_stall,'x','DisplayName','\alpha_{ss}')
+            [Talpha,t0] = airfoil.findTalpha(obj);
+            plot(obj.t,obj.alphadot*(obj.t-t0-Talpha*(1-exp(-(obj.t-t0)/Talpha))),'--','DisplayName','ideal ramp response')
+            grid on
+            xlabel('t (s)')
+            ylabel('\alpha')
+            title(sprintf('%s ($\\dot{\\alpha} = %.2f ^{\\circ}$/s)',obj.name,obj.alphadot),'interpreter','latex')
+            legend('Location','SouthEast')
         end
     end
 end
