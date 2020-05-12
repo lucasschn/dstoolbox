@@ -22,20 +22,20 @@ classdef SteadyCurve < handle
             obj.CN = CNSteady;
             obj.CNalpha = diff(obj.CN)./diff(obj.alpha); % in 1/deg
             if nargin < 3
-                obj.alpha_ss = StallAngle(obj);
+                StallAngle(obj);
             else
                 obj.alpha_ss = alpha_ss;
             end
             obj.computeSlope();
         end
-        function alpha_ss = StallAngle(obj)
+        function StallAngle(obj)
             % Static stall angle
             dalpha = diff(obj.alpha);
             ialphass = 1;
             while (ialphass==1 || dalpha(ialphass-1)<0.01)
                 ialphass = find(obj.CNalpha(ialphass:end)<0,1)+ ialphass;
             end
-            alpha_ss=obj.alpha(ialphass);
+            obj.alpha_ss=obj.alpha(ialphass);
         end
         function computeSlope(obj)
             % CN slope for attached flow. Should be around 2pi/beta

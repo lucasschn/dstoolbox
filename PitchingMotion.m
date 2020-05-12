@@ -8,8 +8,9 @@ classdef PitchingMotion < AirfoilMotion
         phi % phase at t=0 in radians
         k % reduced freq
         f_pts
+        % LE separation
+        CNprime
     end
-
     methods
         % convenient constructor with name/value pair of any attribute of
         % PitchingMotion
@@ -31,7 +32,22 @@ classdef PitchingMotion < AirfoilMotion
             end
             obj.fillProps
         end
-
+        function computeLEseparation(obj,airfoil,Tp,alphamode)
+            % Computes the delayed normal coefficient, CNprime, depending
+            % on the time constant Tp for a given airfoil undergoing the
+            % instanciated pitching motion.
+            obj.Tp = Tp;
+            Dp = zeros(size(obj.CNp));
+            for n=2:length(obj.CNp)
+                Dp(n) =  Dp(n-1)*exp(-obj.DeltaS/obj.Tp) + (obj.CNp(n)-obj.CNp(n-1))*exp(-obj.DeltaS/(2*obj.Tp));
+            end
+            switch alphamode
+                case 'analytical'
+                    obj.CNprime = airfoil.steady.slope*obj.analpha(1:length(Dp)) - Dp; % we pretend the flow is attached over the whole alpha-range
+                case 'experimental'
+                    obj.CNprime = airfoil.steady.slope*obj.alpha(1:length(Dp)) - Dp; % we pretend the flow is attached over the whole alpha-range
+            end
+        end
         function setSinus(obj,airfoil,varargin)
             % setSinus reconstructs the experimental angle of attack using a sinusoid of the form alpha(t) = mean_rad +
             % amp_rad*sin(omega*t+phi). If no optional argument is given,
@@ -116,6 +132,11 @@ classdef PitchingMotion < AirfoilMotion
             ylabel('C_N')
             grid on
             title('Lift attached flow')
+        end
+        function computeSepLag(obj,airfoil)
+            obj.alphaf = obj.CNprime/airfoil.steady.slope; % effective separation point
+            obj.alphaf_rad = deg2rad(obj.alphaf);
+            obj.fp = seppoint(airfoil.steady,obj.alphaf); 
         end
         function plotStallOnset(obj,airfoil)
             CN_static_stall = interp1(airfoil.steady.alpha,airfoil.steady.CN,airfoil.steady.alpha_static_stall);

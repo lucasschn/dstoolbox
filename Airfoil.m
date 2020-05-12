@@ -26,6 +26,9 @@ classdef Airfoil < handle
         function b = b(obj)
             b = obj.c/2;
         end
+        function setTalpha()
+            obj.Talpha = load('Talpha_flatplate.mat');
+        end
         function computeTalpha(obj,r,alpha_ds)
             % computes Talpha based on a vector of reduced pitch rates r and
             % corresponding dynamic stall angles alpha_ds. Talpha is the slope
@@ -73,7 +76,7 @@ classdef Airfoil < handle
                 if ramp.r >= obj.r0
                     alpha_crit(k) = obj.alpha_ds0;
                 else
-                    alpha_crit(k) = obj.steady.alpha_static_stall + (obj.alpha_ds0 - obj.steady.alpha_static_stall)*ramp.r/obj.r0;
+                    alpha_crit(k) = obj.steady.alpha_ss + (obj.alpha_ds0 - obj.steady.alpha_ss)*ramp.r/obj.r0;
                 end
             end
             

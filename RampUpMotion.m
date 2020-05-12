@@ -2,9 +2,6 @@ classdef RampUpMotion < AirfoilMotion
     properties
         alpha_continuous_grow
         i_continuous_grow
-        % experimental pitch angle evolutions
-        alpha_lag
-        analpha_lag
         % experimental dynamic stall angles
         alpha_CConset
         alpha_CLonset
@@ -20,13 +17,11 @@ classdef RampUpMotion < AirfoilMotion
         CNslope2
         % experimental parameters
         r % reduced pitch rate
-        f_pts
-        
+        f_pts     
     end
     methods
         % convenient constructor with name/value pair of any attribute of RampUpMotion
         function obj = RampUpMotion(varargin)
-%             obj@AirfoilMotion(varargin{:})
             p = inputParser;
             % Add name / default value pairs
             mco = ?RampUpMotion;
@@ -46,7 +41,7 @@ classdef RampUpMotion < AirfoilMotion
         end
         function isolateRamp(obj)
             dalpha = diff(obj.alpha);
-            i_end = find((abs(dalpha/obj.Ts)<1e-2) .* (obj.alpha(1:end-1)>10),ceil(1/obj.Ts));
+            i_end = find((abs(dalpha/obj.Ts)<1e-2) .* (obj.alpha(1:end-1)>10),ceil(5/obj.Ts)); %during 1s
             i_end = i_end(end);
             t_end = obj.t(i_end);
             fprintf('Data will be cutoff at %.2fs \n',t_end)
@@ -146,34 +141,6 @@ classdef RampUpMotion < AirfoilMotion
             [~,obj.i_CConset] = min(obj.CC);
             obj.alpha_CConset = obj.alpha(obj.i_CConset); % Sheng uses an inverted definition of CC
         end
-        function computeAlphaLag(obj,airfoil)
-            % computes the vector alpha_lag for an experimental time evolution of alpha
-            s = obj.t*obj.V/(airfoil.c/2);
-            DeltaS = mean(diff(s));
-            if ~isempty(obj.alpha) % compute alpha_lag from alpha using Eq.5
-                dalpha = diff(obj.alpha);
-                Dalpha = zeros(size(obj.alpha));
-                obj.alpha_lag = zeros(size(obj.alpha));
-                for k = 1:length(dalpha)
-                    Dalpha(k+1) = Dalpha(k)*exp(-DeltaS/airfoil.Talpha) + dalpha(k)*exp(-DeltaS/(2*airfoil.Talpha));
-                end
-                obj.alpha_lag = obj.alpha - Dalpha;
-                if ~isempty(obj.alpha_lag) % compute analpha_lag from alpha_lag 
-                    dalpha_lagdt = diff(obj.alpha_lag)./diff(obj.t);
-                    alphadot_lag = max(dalpha_lagdt);
-                    analpha_lag0 = lsqcurvefit(@(x,xdata) alphadot_lag*xdata+x,0,obj.t(dalpha_lagdt>=5),obj.alpha_lag(dalpha_lagdt>=5));
-                    obj.analpha_lag =  alphadot_lag*obj.t + analpha_lag0;
-                end
-            elseif ~isempty(obj.analpha) % compute analpha_lag from analpha
-                dalpha = diff(obj.analpha);
-                Dalpha = zeros(size(obj.analpha));
-                obj.analpha_lag = zeros(size(obj.analpha));
-                for k = 1:length(dalpha)
-                    Dalpha(k+1) = Dalpha(k)*exp(-DeltaS/airfoil.Talpha) + dalpha(k)*exp(-DeltaS/(2*airfoil.Talpha));
-                end
-                obj.analpha_lag = obj.analpha - Dalpha;
-            end
-        end
         function findModelOnset(obj,airfoil)
             % finds the Sheng-predicted dynamic stall angle for a specific
             % time-evolution of alpha
@@ -194,13 +161,24 @@ classdef RampUpMotion < AirfoilMotion
                 end
             end
         end
-        function plotCL(obj)
+        function computeLEseparation(obj,airfoil,Tp,alphamode)
+        end
+        function computeSepLag(obj,airfoil)
+            obj.computeAlphaLag(airfoil)
+            delta_alpha1 = airfoil.alpha_ds0 - airfoil.steady.alpha_ss; % for r>r0
+            obj.fp = seppoint(airfoil.steady,obj.alpha_lag - delta_alpha1);
+        end
+        function plotCL(obj,xaxis)
             figure
-            plot(obj.alpha,obj.CL)
+            if (~exist('xaxis','var') || strcmp(xaxis,'alpha'))
+                plot(obj.alpha,obj.CL)
+            elseif strcmp(xaxis,'convectime')
+                plot(obj.S,obj.CL)
+            end
             grid on
             xlabel('\alpha (°)')
             ylabel('C_L (-)')
-            title(obj.name)
+            title(sprintf('%s ($\\dot{\\alpha} = %.2f ^{\\circ}$/s)',obj.name,obj.alphadot),'interpreter','latex')
         end
         function plotCD(obj)
             figure
@@ -208,7 +186,7 @@ classdef RampUpMotion < AirfoilMotion
             grid on
             xlabel('\alpha (°)')
             ylabel('C_D (-)')
-            title(obj.name)
+            title(sprintf('%s ($\\dot{\\alpha} = %.2f ^{\\circ}$/s)',obj.name,obj.alphadot),'interpreter','latex')
         end
         function plotCN(obj)
             figure
@@ -220,7 +198,7 @@ classdef RampUpMotion < AirfoilMotion
             legend('Location','SouthEast')
             xlabel('\alpha (°)')
             ylabel('C_N (-)')
-            title(obj.name)
+            title(sprintf('%s ($\\dot{\\alpha} = %.2f ^{\\circ}$/s)',obj.name,obj.alphadot),'interpreter','latex')
         end
         function plotCNLag(obj)
             figure
