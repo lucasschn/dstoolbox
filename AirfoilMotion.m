@@ -137,7 +137,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
                 error('CL and CD must be defined to compute CN and CC.')
             end
         end
-        function BeddoesLeishman(obj,airfoil,Tf,Tv,alphamode)
+        function BeddoesLeishman(obj,airfoil,Tp,Tf,Tv,alphamode)
             airfoil.steady.fitKirchhoff()
             obj.computeAttachedFlow(airfoil,alphamode);
             obj.computeTEseparation(airfoil,Tf);
@@ -235,7 +235,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             
  
             obj.alphaf_rad = deg2rad(obj.alphaf);
-            delta_alpha1 = airfoil.alpha_ds0 - airfoil.steady.alpha_static_stall; % for r>r0
+            delta_alpha1 = airfoil.alpha_ds0 - airfoil.steady.alpha_ss; % for r>r0
             obj.fp = seppoint(airfoil.steady,obj.alpha_lag - delta_alpha1); % effective separation point
             
             Df=zeros(size(obj.fp));
@@ -339,9 +339,14 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             grid on
             title(sprintf('\\tau_1 = %.3f \\tau_2 = %.2f',obj.tau1,obj.tau2))
         end
-        function plotLB(obj)
+        function plotLB(obj,airfoil)
+            if isempty(obj.CN_LB)
+                obj.BeddoesLeishman(airfoil,NaN,0,0,'experimental')
+            end
             figure
-            plot(obj.alpha(1:length(obj.CN_LB)),obj.CN_LB)
+            plot(obj.alpha,obj.CN,'DisplayName','exp')
+            hold on
+            plot(obj.alpha(1:length(obj.CN_LB)),obj.CN_LB,'DisplayName','LB')
             grid on 
             xlabel('\alpha (°)')
             ylabel('C_N')
