@@ -172,11 +172,12 @@ classdef RampUpMotion < AirfoilMotion
             figure
             if (~exist('xaxis','var') || strcmp(xaxis,'alpha'))
                 plot(obj.alpha,obj.CL)
-            elseif strcmp(xaxis,'convectime')
+                xlabel('\alpha (°)')
+            elseif strcmp(xaxis,'convectime')                
                 plot(obj.S,obj.CL)
+                xlabel('t_c (-)')
             end
             grid on
-            xlabel('\alpha (°)')
             ylabel('C_L (-)')
             title(sprintf('%s ($\\dot{\\alpha} = %.2f ^{\\circ}$/s)',obj.name,obj.alphadot),'interpreter','latex')
         end

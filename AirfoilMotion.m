@@ -233,10 +233,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             
             % Kirchhoff law
             obj.CNk = Kirchhoff(airfoil.steady,airfoil.steady.alpha);
-            
             obj.computeSepLag(airfoil)
-            
-            
             
             Df=zeros(size(obj.fp));
             for n=2:length(obj.fp)
@@ -295,14 +292,15 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             % delay is the corresponding Talpha(r), r being the reduced
             % pitch rate of the ramp-up motion.
             obj.S = obj.t*obj.V/(airfoil.c/2);
-            Talpha = airfoil.Talpha;
-            obj.DeltaS = mean(diff(obj.S));
+            if isempty(obj.DeltaS)
+                obj.DeltaS = mean(diff(obj.S));
+            end
             if ~isempty(obj.alpha) % compute alpha_lag from alpha using Eq.5
                 dalpha = diff(obj.alpha);
                 obj.alpha_lag = zeros(size(obj.alpha));
                 Dalpha = zeros(size(obj.alpha));
                 for k = 1:length(dalpha)
-                    Dalpha(k+1) = Dalpha(k)*exp(-obj.DeltaS/Talpha) + dalpha(k)*exp(-obj.DeltaS/(2*Talpha));
+                    Dalpha(k+1) = Dalpha(k)*exp(-obj.DeltaS/airfoil.Talpha) + dalpha(k)*exp(-obj.DeltaS/(2*airfoil.Talpha));
                 end
                 obj.alpha_lag = obj.alpha - Dalpha;
                 % compute analpha_lag from alpha_lag
