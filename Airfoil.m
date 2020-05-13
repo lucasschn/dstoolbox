@@ -2,10 +2,12 @@ classdef Airfoil < handle
     properties
         name
         c
-        D1
+        fig % figure for plotting expfit, Talpha, etc.
         r
         alpha_ds
         Talpha
+        A
+        B
         r0 = 0.01 % reduced pitch rate at which linear fitting begins
         steady % corresponding steady curve
     end
@@ -26,30 +28,46 @@ classdef Airfoil < handle
         function b = b(obj)
             b = obj.c/2;
         end
-        function fig = computeTalpha(obj,varargin)
-            % computes Talpha based on a vector of reduced pitch rates r and
-            % corresponding dynamic stall angles alpha_ds. Talpha is the slope
-            % of the curve fitting alpha_ds as a function of r.
-            alpha_ss = obj.steady.alpha_static_stall;
+        function setExpfit(obj,A,B)
+            % method to set the fit from given data
+            obj.A = A;
+            obj.B = B;
+        end
+        function fitExpfit(obj)
+            % In Sheng 2006, the curve fitting alpha_ds as a function of r is
+            % linear. Here it is exponential.
+            alpha_ss = obj.steady.alpha_ss;
             alpha_ds_r = @(x,r) x(1)-(x(1)-alpha_ss)*exp(-x(2)*r);
-            % exponential fit
+            % compute the exponential fit
             xopt = lsqcurvefit(alpha_ds_r,[obj.alpha_ds(end) 1],obj.r,obj.alpha_ds,[0 0],[Inf Inf]);
+            obj.A = xopt(1);
+            obj.B = xopt(2);
+            % plot expfit
+            obj.fig = figure;
+            subplot(211)
+            plot(obj.r,obj.alpha_ds,'.','DisplayName','\alpha_{ds} (exp)','MarkerSize',20)
+            grid on
+            ylabel('\alpha_{ds} (°)','FontSize',20);
+            ax = gca;
+            ax.FontSize = 20;
+            hold on
+            plot(obj.r,alpha_ds_r(xopt,obj.r),'LineWidth',2,'DisplayName','exponential fit')
+        end
+        function computeTalpha(obj,varargin)
+            % computes Talpha based on a vector of reduced pitch rates r and
+            % corresponding dynamic stall angles alpha_ds.
+            
             % determination of Talpha so that alpha_lag(t_ds) = alpha_ss
             obj.Talpha = [obj.findTalpha(varargin{1}),...
                 obj.findTalpha(varargin{2}), obj.findTalpha(varargin{3}),...
                 obj.findTalpha(varargin{4}), obj.findTalpha(varargin{5}),...
-                obj.findTalpha(varargin{6})]; 
-            fig = obj.plotDS();
-            figure(fig)
-            subplot(211)
-            hold on
-            plot(obj.r,alpha_ds_r(xopt,obj.r),'LineWidth',2,'DisplayName','exponential fit')
+                obj.findTalpha(varargin{6})];
+            % plot Talpha and its fit on the lower graph
+            figure(obj.fig)
             subplot(212)
             plot(obj.r,obj.Talpha,'.','MarkerSize',20,'DisplayName','T_\alpha')
-            hold on 
-            A = xopt(1);
-            B = xopt(2);
-            plot(obj.r,pi/180*B*(A-alpha_ss)*exp(-B*obj.r),'DisplayName','fit for T_\alpha')
+            hold on
+            plot(obj.r,pi/180*obj.B*(obj.A-obj.steady.alpha_ss)*exp(-obj.B*obj.r),'DisplayName','fit for T_\alpha')
             xlabel('reduced pitch rate r (-)','FontSize',20);
             ylabel('T_\alpha','FontSize',20)
             grid on
@@ -57,13 +75,12 @@ classdef Airfoil < handle
         function [Talpha,t0] = findTalpha(obj,ramp)
             t0 = interp1(ramp.analpha,ramp.t,0);
             t_ds = ramp.t(ramp.i_CConset)-t0;
-            alpha_ss = obj.steady.alpha_static_stall;
             K = ramp.alphadot;
-            syms tau % dimensional time constant 
-            sol = solve(alpha_ss == K*(t_ds - tau*(1-exp(-t_ds/tau))),'Real',true,'IgnoreAnalyticConstraints',true);
+            syms tau % dimensional time constant
+            sol = solve(obj.steady.alpha_ss == K*(t_ds - tau*(1-exp(-t_ds/tau))),'Real',true,'IgnoreAnalyticConstraints',true);
             Talpha = 2*ramp.V/obj.c *  double(sol); % in adimensional time here
         end
-        function fig = Sheng(obj,varargin)
+        function Sheng(obj,varargin)
             %% extract r and alpha_ds from arguments
             % argument is a set of RampUpMotions
             obj.r = -ones(size(varargin));
@@ -86,11 +103,13 @@ classdef Airfoil < handle
             end
             
             % compute alpha_lag using Talpha and finds alpha_lagonset
-            fig = obj.computeTalpha(varargin{:});
+            obj.fitExpfit();
+            obj.computeTalpha(varargin{:});
             alpha_lag_ds = -ones(size(varargin));
             for k=1:nargin-1
                 ramp = varargin{k};
-                ramp.computeAlphaLag(obj);
+
+                ramp.computeAlphaLag(obj,interp1(obj.r,obj.Talpha,ramp.r));
                 %ramp.findModelOnset(obj); % alpha_lagonset = alpha_lag_ds only if Talpha is correct
                 % looking for the value of alpha_lag(alpha) at the point alpha_ds
                 if ramp.r >= obj.r0
@@ -103,28 +122,18 @@ classdef Airfoil < handle
                     end
                 end
             end
-            
-            fig = obj.plotSheng(fig,alpha_lag_ds);
+            obj.plotSheng(alpha_lag_ds);
             
         end
-        function fig = plotSheng(obj,fig,alpha_lag_ds)
-            figure(fig)
+        function plotSheng(obj,alpha_lag_ds)
+            figure(obj.fig)
             subplot(211)
             hold on
-%             plot(obj.r,obj.D1.*obj.r+obj.alpha_ds0,'DisplayName','Linear fitting','LineWidth',2)
-%             title(sprintf('%s ($T_{\\alpha} = %.2f$)',obj.name,obj.Talpha),'interpreter','latex','FontSize',20)
+            %             plot(obj.r,obj.D1.*obj.r+obj.alpha_ds0,'DisplayName','Linear fitting','LineWidth',2)
+            %             title(sprintf('%s ($T_{\\alpha} = %.2f$)',obj.name,obj.Talpha),'interpreter','latex','FontSize',20)
             plot(obj.r,alpha_lag_ds,'.','DisplayName','\alpha_{ds} (lagged)','MarkerSize',20)
-            plot(obj.r,ones(size(obj.r)).*obj.steady.alpha_static_stall,'--','DisplayName','\alpha_{ss}','LineWidth',2);
+            plot(obj.r,ones(size(obj.r)).*obj.steady.alpha_ss,'--','DisplayName','\alpha_{ss}','LineWidth',2);
             legend('FontSize',20,'Location','East')
-        end
-        function fig = plotDS(obj)
-            fig = figure;
-            subplot(211)
-            plot(obj.r,obj.alpha_ds,'.','DisplayName','\alpha_{ds} (exp)','MarkerSize',20)
-            grid on
-            ylabel('\alpha_{ds} (°)','FontSize',20);
-            ax = gca;
-            ax.FontSize = 20;
-        end
+        end     
     end
-    end
+end

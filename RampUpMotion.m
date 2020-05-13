@@ -162,6 +162,13 @@ classdef RampUpMotion < AirfoilMotion
                 end
             end
         end
+        function computeLEseparation(obj,airfoil,Tp,alphamode)
+        end
+        function computeSepLag(obj,airfoil)
+            Talpha = airfoil.findTalpha(obj);
+            obj.computeAlphaLag(airfoil,Talpha)
+            obj.fp = seppoint(airfoil.steady,obj.alpha_lag); % effective separation point
+        end
         function plotCL(obj,xaxis)
             figure
             if (~exist('xaxis','var') || strcmp(xaxis,'alpha'))

@@ -32,8 +32,6 @@ classdef AirfoilMotion < matlab.mixin.SetGet
         CNp
         alphaE
         alphaE_rad
-        % LE separation
-        CNprime
         % TE separation
         alphaf
         alphaf_rad
@@ -52,7 +50,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
         x
         alpha_shift
         CN_GK
-        %% Sheng 
+        %% Sheng
         alpha_lag
         analpha_lag
     end
@@ -184,7 +182,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             for n=2:length(ddalpha)
                 D(n) = D(n-1)*exp(-obj.Ts/Talpha)+(ddalpha(n)/obj.Ts)*exp(-obj.Ts/(2*Talpha));
             end
-            dalphadt = (dalpha(2:end) + dalpha(1:end-1))/(2*obj.Ts); % way smoother than Euler method (dalphadt = dalpha(1:end-1)/obj.Ts)!            
+            dalphadt = (dalpha(2:end) + dalpha(1:end-1))/(2*obj.Ts); % way smoother than Euler method (dalphadt = dalpha(1:end-1)/obj.Ts)!
             obj.CNI = 4*Talpha/obj.M*(dalphadt-D);
         end
         function computeCirculatoryLift(obj,airfoil,alphamode)
@@ -197,7 +195,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
                 otherwise
                     error('The type of alpha to be taken for computations has to be specified.')
             end
-        end        
+        end
         function computeExperimentalCirculatoryLift(obj,airfoil)
             deltaalpha = diff(obj.alpha_rad); % should be in degrees, but only radians work
             rule = 'mid-point';
@@ -228,23 +226,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
                     end
             end
             
-        end
-        function computeLEseparation(obj,airfoil,Tp,alphamode)
-            % Computes the delayed normal coefficient, CNprime, depending
-            % on the time constant Tp for a given airfoil undergoing the
-            % instanciated pitching motion.
-            obj.Tp = Tp;
-            Dp = zeros(size(obj.CNp));
-            for n=2:length(obj.CNp)
-                Dp(n) =  Dp(n-1)*exp(-obj.DeltaS/obj.Tp) + (obj.CNp(n)-obj.CNp(n-1))*exp(-obj.DeltaS/(2*obj.Tp));
-            end
-            switch alphamode
-                case 'analytical'
-                    obj.CNprime = airfoil.steady.slope*obj.analpha(1:length(Dp)) - Dp; % we pretend the flow is attached over the whole alpha-range
-                case 'experimental'
-                    obj.CNprime = airfoil.steady.slope*obj.alpha(1:length(Dp)) - Dp; % we pretend the flow is attached over the whole alpha-range
-            end 
-        end
+        end   
         function computeTEseparation(obj,airfoil,Tf)
             obj.Tf = Tf;
             obj.f = seppoint(airfoil.steady,airfoil.steady.alpha);
@@ -252,26 +234,26 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             % Kirchhoff law
             obj.CNk = Kirchhoff(airfoil.steady,airfoil.steady.alpha);
             
-            obj.alphaf = obj.CNprime/airfoil.steady.slope;
-            obj.alphaf_rad = deg2rad(obj.alphaf);
-            
-            obj.fp = seppoint(airfoil.steady,obj.alphaf); % effective separation point
+            obj.computeSepLag(airfoil)
             
             Df=zeros(size(obj.fp));
             for n=2:length(obj.fp)
                 Df(n) = Df(n-1)*exp(-obj.DeltaS/Tf) + (obj.fp(n)-obj.fp(n-1))*exp(-obj.DeltaS/(2*Tf));
             end
-            
             obj.fpp = obj.fp - Df;
             
             if length(obj.CNI)<length(obj.CNC)
-                obj.CNf = ((1+sqrt(obj.fpp))/2).^2.*obj.CNC(1:length(obj.CNI))+obj.CNI;
+                obj.CNf = ((1+sqrt(obj.fpp(1:length(obj.CNI))))/2).^2.*obj.CNC(1:length(obj.CNI))+obj.CNI;
             else
-                obj.CNf = ((1+sqrt(obj.fpp))/2).^2.*obj.CNC+obj.CNI(1:length(obj.CNC));
+                obj.CNf = ((1+sqrt(obj.fpp(1:length(obj.CNC))))/2).^2.*obj.CNC+obj.CNI(1:length(obj.CNC));
             end
             
             eta = 0.95;
-            obj.CCf = eta*airfoil.steady.slope*obj.alphaE(1:length(obj.fpp)).^2.*sqrt(obj.fpp);
+            if length(obj.fpp)<length(obj.alphaE)
+                obj.CCf = eta*airfoil.steady.slope*obj.alphaE(1:length(obj.fpp)).^2.*sqrt(obj.fpp);
+            else
+                obj.CCf = eta*airfoil.steady.slope*obj.alphaE.^2.*sqrt(obj.fpp(1:length(obj.alphaE)));
+            end
         end
         function computeDS(obj,Tv)
             % Computes the final Beddoes-Leishman predicted CN for the instanciated pitching motion, after
@@ -280,7 +262,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             obj.Tv = Tv;
             
             % vortex normal coeff
-            KN = (1+sqrt(obj.fpp)).^2/4;
+            KN = (1+sqrt(obj.fpp(1:min([length(obj.CNC),length(obj.fpp)])))).^2/4;
             Cv = obj.CNC(1:length(KN)).*(1-KN);
             
             obj.CNv=zeros(size(Cv));
@@ -289,7 +271,11 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             end
             
             % normal force coefficient
-            obj.CN_LB = obj.CNf + obj.CNv;
+            if length(obj.CNf) <= length(obj.CNv)
+                obj.CN_LB = obj.CNf + obj.CNv(1:length(obj.CNf));
+            else length(obj.CNf) > length(obj.CNv)
+                obj.CN_LB = obj.CNf(1:length(obj.CNv)) + obj.CNv;
+            end
         end
         function GomanKhrabrov(obj,steady,tau1,tau2)
             % Resample CNsteady to fit experimental unsteady alphas
@@ -309,13 +295,12 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             obj.x = lsim(sys,x0,obj.t(1:length(x0)));
             obj.CN_GK = steady.slope/4*(1+sqrt(obj.x)).^2+steady.CN0;
         end
-        function computeAlphaLag(obj,airfoil)
+        function computeAlphaLag(obj,airfoil,Talpha)
             % computes the delayed angle of attack alpha_lag w.r.t. the
             % experimental angle of attack alpha. The time constant for the
             % delay is the corresponding Talpha(r), r being the reduced
             % pitch rate of the ramp-up motion.
             obj.S = obj.t*obj.V/(airfoil.c/2);
-            Talpha = interp1(airfoil.r,airfoil.Talpha,obj.r);
             obj.DeltaS = mean(diff(obj.S));
             if ~isempty(obj.alpha) % compute alpha_lag from alpha using Eq.5
                 dalpha = diff(obj.alpha);
@@ -329,7 +314,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
                 dalpha_lagdt = diff(obj.alpha_lag)./diff(obj.t);
                 alphadot_lag = max(dalpha_lagdt);
                 analpha_lag0 = lsqcurvefit(@(x,xdata) alphadot_lag*xdata+x,0,obj.t(dalpha_lagdt>=5),obj.alpha_lag(dalpha_lagdt>=5));
-                obj.analpha_lag =  alphadot_lag*obj.t + analpha_lag0;   
+                obj.analpha_lag =  alphadot_lag*obj.t + analpha_lag0;
             elseif ~isempty(obj.analpha) % compute analpha_lag from analpha
                 dalpha = diff(obj.analpha);
                 obj.analpha_lag = zeros(size(obj.analpha));
@@ -381,7 +366,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
                 ylabel('C_C')
                 grid on
             end
-        end       
+        end
         function plotLB(obj)
             figure
             plot(obj.alpha(1:length(obj.CN)),obj.CN,'DisplayName','exp')
@@ -438,7 +423,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
         function plotSheng(obj,airfoil)
             figure
             plot(obj.rss,obj.alpha_ds,'.','DisplayName','\alpha_{ds} (exp)','MarkerSize',20)
-            hold on 
+            hold on
             plot(airfoil.r,airfoil.alpha_ds)
             grid on
             ylabel('\alpha_{ds} (°)','FontSize',20);
