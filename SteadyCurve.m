@@ -4,7 +4,7 @@ classdef SteadyCurve < handle
         alpha_rad
         CN
         CN0 = 0;
-        alpha_static_stall % denoted alpha_1 in Beddoes-Leishman
+        alpha_ss % denoted alpha_1 in Beddoes-Leishman
         f
         CNalpha % 1/deg
         slope % pre-stall slope in 1/deg
@@ -16,26 +16,26 @@ classdef SteadyCurve < handle
     end
     methods
         % constructor
-        function obj = SteadyCurve(alphaSteady,CNSteady,alpha_static_stall)
+        function obj = SteadyCurve(alphaSteady,CNSteady,alpha_ss)
             obj.alpha = alphaSteady;
             obj.alpha_rad = deg2rad(obj.alpha);
             obj.CN = CNSteady;
             obj.CNalpha = diff(obj.CN)./diff(obj.alpha); % in 1/deg
             if nargin < 3
-                obj.alpha_static_stall = StallAngle(obj);
+                obj.alpha_ss = StallAngle(obj);
             else
-                obj.alpha_static_stall = alpha_static_stall;
+                obj.alpha_ss = alpha_ss;
             end
             obj.computeSlope();
         end
-        function alpha_static_stall = StallAngle(obj)
+        function alpha_ss = StallAngle(obj)
             % Static stall angle
             dalpha = diff(obj.alpha);
             ialphass = 1;
             while (ialphass==1 || dalpha(ialphass-1)<0.01)
                 ialphass = find(obj.CNalpha(ialphass:end)<0,1)+ ialphass;
             end
-            alpha_static_stall=obj.alpha(ialphass);
+            alpha_ss=obj.alpha(ialphass);
         end
         function computeSlope(obj)
             % CN slope for attached flow. Should be around 2pi/beta
@@ -59,12 +59,12 @@ classdef SteadyCurve < handle
         end
         function fitKirchhoff(obj)
             obj.computeSlope();
-            stall_slope_minus = obj.CNalpha(find(obj.alpha<obj.alpha_static_stall,1,'last'));
-            stall_slope_plus = obj.CNalpha(find(obj.alpha>obj.alpha_static_stall,1,'first'));
-            S10 = 0.3*deg2rad(obj.alpha_static_stall)/(2*sqrt(0.7))*(((1+sqrt(0.7))/2)^2-stall_slope_minus/obj.slope_rad).^(-1);
-            S20 = 0.66*deg2rad(obj.alpha_static_stall)/(2*sqrt(0.7))*(((1+sqrt(0.7))/2)^2-stall_slope_plus/obj.slope_rad).^(-1);
-            opts = optimset('Display','off');
-            
+            stall_slope_minus = obj.CNalpha(find(obj.alpha<obj.alpha_ss,1,'last'));
+            stall_slope_plus = obj.CNalpha(find(obj.alpha>obj.alpha_ss,1,'first'));
+            S10 = 0.3*deg2rad(obj.alpha_ss)/(2*sqrt(0.7))*(((1+sqrt(0.7))/2)^2-stall_slope_minus/obj.slope_rad).^(-1);
+            S20 = 0.66*deg2rad(obj.alpha_ss)/(2*sqrt(0.7))*(((1+sqrt(0.7))/2)^2-stall_slope_plus/obj.slope_rad).^(-1);
+            opts = optimset('Display','off'); % replace off by iter for max. details
+
             Kfunc = @(x,alpha) Kirchhoff(obj,obj.alpha,x);
             
             [fitparams,res,~,exitflag] = lsqcurvefit(Kfunc,[S10 S20],obj.alpha,obj.CN,[0 0],[10 10],opts);
