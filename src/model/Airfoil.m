@@ -5,6 +5,8 @@ classdef Airfoil < handle
         fig % figure for plotting expfit, Talpha, etc.
         r
         alpha_ds
+        t_ds
+        t_ss
         Talpha
         A
         B
@@ -44,7 +46,7 @@ classdef Airfoil < handle
             obj.B = xopt(2);
             % plot expfit
             obj.fig = figure;
-            subplot(211)
+            subplot(311)
             plot(obj.r,obj.alpha_ds,'.','DisplayName','\alpha_{ds} (exp)','MarkerSize',20)
             grid on
             ylabel('\alpha_{ds} (°)','FontSize',20);
@@ -52,19 +54,21 @@ classdef Airfoil < handle
             ax.FontSize = 20;
             hold on
             plot(obj.r,alpha_ds_r(xopt,obj.r),'LineWidth',2,'DisplayName','exponential fit')
+            subplot(313)
+            plot(obj.r,obj.t_ds-obj.t_ss,'.','MarkerSize',20)
         end
         function computeTalpha(obj,varargin)
             % computes Talpha based on a vector of reduced pitch rates r and
             % corresponding dynamic stall angles alpha_ds.
             
             % determination of Talpha so that alpha_lag(t_ds) = alpha_ss
-            obj.Talpha = [obj.findTalpha(varargin{1}),...
-                obj.findTalpha(varargin{2}), obj.findTalpha(varargin{3}),...
-                obj.findTalpha(varargin{4}), obj.findTalpha(varargin{5}),...
-                obj.findTalpha(varargin{6})];
+            obj.Talpha = -ones(size(varargin));
+            for k = 1:length(varargin)
+                obj.Talpha(k) = obj.findTalpha(varargin{k});
+            end
             % plot Talpha and its fit on the lower graph
             figure(obj.fig)
-            subplot(212)
+            subplot(312)
             plot(obj.r,obj.Talpha,'.','MarkerSize',20,'DisplayName','T_\alpha')
             hold on
             plot(obj.r,pi/180*obj.B*(obj.A-obj.steady.alpha_ss)*exp(-obj.B*obj.r),'DisplayName','fit for T_\alpha')
@@ -80,54 +84,52 @@ classdef Airfoil < handle
             sol = solve(obj.steady.alpha_ss == K*(t_ds - tau*(1-exp(-t_ds/tau))),'Real',true,'IgnoreAnalyticConstraints',true);
             Talpha = 2*ramp.V/obj.c *  double(sol); % in adimensional time here
         end
-        function Sheng(obj,varargin)
+        function Sheng(obj,airfoil,varargin)
             %% extract r and alpha_ds from arguments
             % argument is a set of RampUpMotions
             obj.r = -ones(size(varargin));
             obj.alpha_ds = -ones(size(varargin));
-            for k=1:nargin-1 % first argument is self
+            obj.t_ss = -ones(size(varargin));
+            obj.t_ds = -ones(size(varargin));
+            for k=1:length(varargin)
                 ramp = varargin{k};
                 if isempty(ramp.r)
                     % compute it with alphadot
                     ramp.setPitchRate(obj);
                 end
-                if ramp.r>=obj.r0
-                    obj.r(k) = ramp.r;
-                    % Define experimental stall if necessary
-                    if isempty(ramp.i_CConset)
-                        ramp.findExpOnset();
-                    end
-                    obj.alpha_ds(k) = ramp.alpha_CConset;
+                obj.r(k) = ramp.r;
+                % Define experimental stall if necessary
+                if isempty(ramp.i_CConset)
+                    ramp.findExpOnset();
                 end
-                
+                obj.alpha_ds(k) = ramp.alpha_CConset;
+                obj.t_ss(k) = ramp.t(find(ramp.alpha>airfoil.steady.alpha_ss,1));
+                obj.t_ds(k) = ramp.t(ramp.i_CConset);             
             end
             
             % compute alpha_lag using Talpha and finds alpha_lagonset
             obj.fitExpfit();
             obj.computeTalpha(varargin{:});
             alpha_lag_ds = -ones(size(varargin));
-            for k=1:nargin-1
+            for k=1:length(varargin)
                 ramp = varargin{k};
-
                 ramp.computeAlphaLag(obj,interp1(obj.r,obj.Talpha,ramp.r));
                 %ramp.findModelOnset(obj); % alpha_lagonset = alpha_lag_ds only if Talpha is correct
                 % looking for the value of alpha_lag(alpha) at the point alpha_ds
-                if ramp.r >= obj.r0
-                    if isempty(ramp.alpha)
-                        alpha_lag_ds(k) = interp1(ramp.analpha,ramp.analpha_lag,obj.alpha_ds(k));
-                    elseif isempty(ramp.i_continuous_grow)
-                        alpha_lag_ds(k) = interp1(ramp.alpha,ramp.alpha_lag,obj.alpha_ds(k));
-                    else % if alpha_continuous_grow is defined
-                        alpha_lag_ds(k) = interp1(ramp.alpha_continuous_grow,ramp.alpha_lag(ramp.i_continuous_grow),obj.alpha_ds(k));
-                    end
+                if isempty(ramp.alpha)
+                    alpha_lag_ds(k) = interp1(ramp.analpha,ramp.analpha_lag,obj.alpha_ds(k));
+                elseif isempty(ramp.i_continuous_grow)
+                    alpha_lag_ds(k) = interp1(ramp.alpha,ramp.alpha_lag,obj.alpha_ds(k));
+                else % if alpha_continuous_grow is defined
+                    alpha_lag_ds(k) = interp1(ramp.alpha_continuous_grow,ramp.alpha_lag(ramp.i_continuous_grow),obj.alpha_ds(k));
                 end
             end
-            obj.plotSheng(alpha_lag_ds);
+            obj.plotSheng(alpha_lag_ds); 
             
         end
         function plotSheng(obj,alpha_lag_ds)
             figure(obj.fig)
-            subplot(211)
+            subplot(311)
             hold on
             %             plot(obj.r,obj.D1.*obj.r+obj.alpha_ds0,'DisplayName','Linear fitting','LineWidth',2)
             %             title(sprintf('%s ($T_{\\alpha} = %.2f$)',obj.name,obj.Talpha),'interpreter','latex','FontSize',20)

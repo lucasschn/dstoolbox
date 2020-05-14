@@ -107,9 +107,13 @@ classdef SteadyCurve < handle
         end          
         function plotKirchhoff(obj)
             figure
-            plot(obj.alpha,obj.CN,'DisplayName','data')
-            hold on
-            plot(obj.alpha,Kirchhoff(obj,obj.alpha),'DisplayName','Kirchhoff model')
+            plot(obj.alpha,obj.CN,'DisplayName','exp')
+            if isempty(obj.S1)
+                warning('Kirchhoff has not yet been fitted to this SteadyCurve .')
+            else
+                hold on
+                plot(obj.alpha,Kirchhoff(obj,obj.alpha),'DisplayName','Kirchhoff model')
+            end
             grid on
             legend('Location','Best')
             xlabel('\alpha (°)')
