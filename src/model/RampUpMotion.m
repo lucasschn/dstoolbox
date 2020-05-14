@@ -1,5 +1,12 @@
 classdef RampUpMotion < AirfoilMotion
     properties
+        % does not depend on the airfoil
+        % experimental parameters
+        r % reduced pitch rate
+        f_pts   
+        alphadot %°/s
+        
+        % depends on the airfoil
         alpha_continuous_grow
         i_continuous_grow
         % experimental dynamic stall angles
@@ -10,14 +17,7 @@ classdef RampUpMotion < AirfoilMotion
         i_CNonset
         % model outputs
         alpha_lagonset % corresponds to alpha'_ds
-        alphadot %°/s
         alpha_onset % modelled one
-        % Fitting parameters
-        CNslope1
-        CNslope2
-        % experimental parameters
-        r % reduced pitch rate
-        f_pts     
     end
     methods
         % convenient constructor with name/value pair of any attribute of RampUpMotion

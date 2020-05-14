@@ -3,7 +3,9 @@ clear all
 clc 
 set(0,'DefaultFigureWindowStyle','docked')
 run('/Users/lucas/src/codes_smarth/labbook.m')
-
+addpath('../src/model/')
+addpath('../src/common/')
+addpath('../src/lib/')
 %% Setting up the ramps
 
 c = [18,14,22,67,26,84,30,89,34,71,38,93,42,75,46,97,50];
@@ -53,12 +55,12 @@ end
 
 %% Running Sheng experiment
 airfoil = Airfoil('flatplate',0.15);
-static = load('data/static_flatplate');
+static = load('../data/static_flatplate');
 airfoil.steady = SteadyCurve(static.alpha,static.polarforces.CN,13);
 % Define alpha_ds0 & compute Talpha
 airfoil.Sheng(airfoil,ms012mpt1,ms010mpt1,ms013mpt1,ms025mpt1,ms014mpt1,ms034mpt1,ms015mpt1,ms116mpt1,...
     ms016mpt1,ms026mpt1,ms017mpt1,ms117mpt1,ms018mpt1,ms027mpt1,ms019mpt1,ms118mpt1,ms020mpt1);
-saveas(gcf,'fig/Sheng/ShengSH2019_dsr.png')
+saveas(gcf,'../fig/Sheng/ShengSH2019_dsr.png')
 % %% Add Sheng's predicted stall angles to the figures
 % for k=1:length(c)
 %     msname = sprintf('ms%03i',LB(c(k)).ms);

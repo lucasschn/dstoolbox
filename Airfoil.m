@@ -4,10 +4,10 @@ classdef Airfoil < handle
         c
         fig % figure for plotting expfit, Talpha, etc.
         r
+        Talpha
         alpha_ds
         t_ds
         t_ss
-        Talpha
         A
         B
         r0 = 0.01 % reduced pitch rate at which linear fitting begins
@@ -59,19 +59,27 @@ classdef Airfoil < handle
         end
         function computeTalpha(obj,varargin)
             % computes Talpha based on a vector of reduced pitch rates r and
-            % corresponding dynamic stall angles alpha_ds.
+            % corresponding dynamic stall angles alpha_ds. varargin is a
+            % collection of ramps.
             
             % determination of Talpha so that alpha_lag(t_ds) = alpha_ss
             obj.Talpha = -ones(size(varargin));
             for k = 1:length(varargin)
-                obj.Talpha(k) = obj.findTalpha(varargin{k});
+                ramp = varargin{k};
+                obj.Talpha(k) = obj.findTalpha(ramp);
+                obj.r(k) = ramp.r;
             end
+            
+            Talpha = @(x,r) 5*(1-exp(-r/x(1)).*cos(x(2)*r)) % cos without phase so that Talpha(0)=0
+            
+            xopt = lsqcurvefit(Talpha,[.04 80],obj.r,obj.Talpha);
+            
             % plot Talpha and its fit on the lower graph
             figure(obj.fig)
             subplot(312)
             plot(obj.r,obj.Talpha,'.','MarkerSize',20,'DisplayName','T_\alpha')
             hold on
-            plot(obj.r,pi/180*obj.B*(obj.A-obj.steady.alpha_ss)*exp(-obj.B*obj.r),'DisplayName','fit for T_\alpha')
+            plot(obj.r,Talpha(xopt,obj.r),'DisplayName','fit for T_\alpha')
             xlabel('reduced pitch rate r (-)','FontSize',20);
             ylabel('T_\alpha','FontSize',20)
             grid on
@@ -87,10 +95,6 @@ classdef Airfoil < handle
         function Sheng(obj,airfoil,varargin)
             %% extract r and alpha_ds from arguments
             % argument is a set of RampUpMotions
-            obj.r = -ones(size(varargin));
-            obj.alpha_ds = -ones(size(varargin));
-            obj.t_ss = -ones(size(varargin));
-            obj.t_ds = -ones(size(varargin));
             for k=1:length(varargin)
                 ramp = varargin{k};
                 if isempty(ramp.r)
