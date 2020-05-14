@@ -50,7 +50,7 @@ classdef SteadyCurve < handle
                 obj.slope_rad = obj.slope*180/pi;
             end
         end
-        function plot(obj)
+        function plotCN(obj)
             figure
             plot(obj.alpha,obj.CN)
             grid on
@@ -99,8 +99,12 @@ classdef SteadyCurve < handle
         function plotKirchhoff(obj)
             figure
             plot(obj.alpha,obj.CN,'DisplayName','data')
-            hold on
-            plot(obj.alpha,Kirchhoff(obj,obj.alpha),'DisplayName','Kirchhoff model')
+            if isempty(obj.S1)
+                 warning('Kirchhoff has not yet been fitted to this SteadyCurve .')
+            else
+                hold on
+                plot(obj.alpha,Kirchhoff(obj,obj.alpha),'DisplayName','Kirchhoff model')
+            end
             grid on
             legend('Location','Best')
             xlabel('\alpha (°)')
@@ -109,14 +113,14 @@ classdef SteadyCurve < handle
         function setCN0(obj,CN0)
             if nargin == 2
                 if isnan(CN0)
-                    error('CN= cannot be NaN.')
+                    error('CN0 cannot be NaN.')
                 else
                     obj.CN0 = CN0;
                 end
             elseif nargin == 1
                 obj.CN0 = interp1(obj.alpha,obj.CN,0);
             end
-                
+            fprintf('CN0 is equal to %.4f',obj.CN0)    
         end
         function computeSeparation(obj)
             % computes the experimental separation point using Kirchhoff
