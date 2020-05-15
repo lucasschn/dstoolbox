@@ -50,7 +50,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
         x
         alpha_shift
         CN_GK
-        %% Sheng 
+        %% Sheng
         alpha_lag
         analpha_lag
     end
@@ -182,7 +182,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             for n=2:length(ddalpha)
                 D(n) = D(n-1)*exp(-obj.Ts/Talpha)+(ddalpha(n)/obj.Ts)*exp(-obj.Ts/(2*Talpha));
             end
-            dalphadt = (dalpha(2:end) + dalpha(1:end-1))/(2*obj.Ts); % way smoother than Euler method (dalphadt = dalpha(1:end-1)/obj.Ts)!            
+            dalphadt = (dalpha(2:end) + dalpha(1:end-1))/(2*obj.Ts); % way smoother than Euler method (dalphadt = dalpha(1:end-1)/obj.Ts)!
             obj.CNI = 4*Talpha/obj.M*(dalphadt-D);
         end
         function computeCirculatoryLift(obj,airfoil,alphamode)
@@ -195,7 +195,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
                 otherwise
                     error('The type of alpha to be taken for computations has to be specified.')
             end
-        end        
+        end
         function computeExperimentalCirculatoryLift(obj,airfoil)
             deltaalpha = diff(obj.alpha_rad); % should be in degrees, but only radians work
             rule = 'mid-point';
@@ -239,7 +239,6 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             for n=2:length(obj.fp)
                 Df(n) = Df(n-1)*exp(-obj.DeltaS/Tf) + (obj.fp(n)-obj.fp(n-1))*exp(-obj.DeltaS/(2*Tf));
             end
-            
             obj.fpp = obj.fp - Df;
            
             n = min([length(obj.CNI),length(obj.CNC)]);
@@ -286,7 +285,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             obj.x = lsim(sys,x0,obj.t(1:length(x0)));
             obj.CN_GK = steady.slope/4*(1+sqrt(obj.x)).^2+steady.CN0;
         end
-        function computeAlphaLag(obj,airfoil)
+        function computeAlphaLag(obj,airfoil,Talpha)
             % computes the delayed angle of attack alpha_lag w.r.t. the
             % experimental angle of attack alpha. The time constant for the
             % delay is the corresponding Talpha(r), r being the reduced
@@ -300,7 +299,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
                 obj.alpha_lag = zeros(size(obj.alpha));
                 Dalpha = zeros(size(obj.alpha));
                 for k = 1:length(dalpha)
-                    Dalpha(k+1) = Dalpha(k)*exp(-obj.DeltaS/airfoil.Talpha) + dalpha(k)*exp(-obj.DeltaS/(2*airfoil.Talpha));
+                    Dalpha(k+1) = Dalpha(k)*exp(-obj.DeltaS/Talpha) + dalpha(k)*exp(-obj.DeltaS/(2*Talpha));
                 end
                 obj.alpha_lag = obj.alpha - Dalpha;
                 % compute analpha_lag from alpha_lag
@@ -308,7 +307,6 @@ classdef AirfoilMotion < matlab.mixin.SetGet
                 alphadot_lag = max(dalpha_lagdt);
                 analpha_lag0 = lsqcurvefit(@(x,xdata) alphadot_lag*xdata+x,0,obj.t(dalpha_lagdt>=5),obj.alpha_lag(dalpha_lagdt>=5));
                 obj.analpha_lag =  alphadot_lag*obj.t + analpha_lag0;
-                
             elseif ~isempty(obj.analpha) % compute analpha_lag from analpha
                 dalpha = diff(obj.analpha);
                 obj.analpha_lag = zeros(size(obj.analpha));
@@ -360,7 +358,19 @@ classdef AirfoilMotion < matlab.mixin.SetGet
                 ylabel('C_C')
                 grid on
             end
-        end        
+        end
+        function plotLB(obj)
+            figure
+            plot(obj.alpha(1:length(obj.CN)),obj.CN,'DisplayName','exp')
+            hold on
+            plot(obj.alpha(1:length(obj.CN_LB)),obj.CN_LB,'DisplayName','LB')
+            xlabel('\alpha (°)')
+            ylabel('C_N')
+            grid on
+            legend('Location','NorthEast','FontSize',20)
+            ax = gca;
+            ax.FontSize = 20;
+        end
         function plotGK(obj)
             figure
             plot(obj.alpha(1:length(obj.CN_GK)),obj.CN_GK,'LineWidth',2)
@@ -368,18 +378,6 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             ylabel('C_N')
             grid on
             title(sprintf('\\tau_1 = %.3f \\tau_2 = %.2f',obj.tau1,obj.tau2))
-        end
-        function plotLB(obj,airfoil)
-            if isempty(obj.CN_LB)
-                obj.BeddoesLeishman(airfoil,NaN,0,0,'experimental')
-            end
-            figure
-            plot(obj.alpha,obj.CN,'DisplayName','exp')
-            hold on
-            plot(obj.alpha(1:length(obj.CN_LB)),obj.CN_LB,'DisplayName','LB')
-            grid on 
-            xlabel('\alpha (°)')
-            ylabel('C_N')
         end
         function plotAlphas(obj)
             figure
@@ -417,7 +415,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
         function plotSheng(obj,airfoil)
             figure
             plot(obj.rss,obj.alpha_ds,'.','DisplayName','\alpha_{ds} (exp)','MarkerSize',20)
-            hold on 
+            hold on
             plot(airfoil.r,airfoil.alpha_ds)
             grid on
             ylabel('\alpha_{ds} (°)','FontSize',20);

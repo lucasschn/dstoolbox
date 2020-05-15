@@ -3,10 +3,18 @@ clear all
 clc 
 set(0,'DefaultFigureWindowStyle','docked')
 run('/Users/lucas/src/codes_smarth/labbook.m')
-
+addpath('../src/model/')
+addpath('../src/common/')
+addpath('../src/lib/')
 %% Setting up the ramps
 
-c = [18,14,22,67,68,69,70,26,27,28,29,84,85,86,87,30,89];
+model='expfit';
+switch model
+    case 'sheng'
+        c = [18,14,22,67,68,69,70,26,27,28,29,84,85,86,87,30,89];
+    case 'expfit'
+        c = [18,14,22,67,26,84,30,89,34,71,38,93,42,75,46,97,50];
+end
 
 for k=1:length(c)
     data = load(loadmat(LB(c(k)).ms,LB(c(k)).mpt),'raw','inert','avg','zero');
@@ -52,11 +60,21 @@ end
 
 %% Running Sheng experiment
 airfoil = Airfoil('flatplate',0.15);
-static = load('static_flatplate');
-airfoil.steady = SteadyCurve(static.alpha,static.Cn,14);
+static = load('../data/static_flatplate');
+airfoil.steady = SteadyCurve(static.alpha,static.CN,13);
 % Define alpha_ds0 & compute Talpha
-airfoil.Sheng(airfoil,ms012mpt1,ms010mpt1,ms013mpt1,ms025mpt1,ms025mpt2,ms025mpt3,ms025mpt4,ms014mpt1,ms014mpt2,ms014mpt3,ms014mpt4,ms034mpt1,ms034mpt2,ms034mpt3,ms034mpt4,ms015mpt1,ms116mpt1);
-saveas(gcf,'fig/Sheng/ShengSH2019_dsr.png')
+switch model
+    case 'sheng'
+    airfoil.Sheng(airfoil,ms012mpt1,ms010mpt1,ms013mpt1,ms025mpt1,ms025mpt2,ms025mpt3,ms025mpt4,ms014mpt1,ms014mpt2,ms014mpt3,ms014mpt4,ms034mpt1,ms034mpt2,ms034mpt3,ms034mpt4,ms015mpt1,ms116mpt1);
+    case 'expfit'
+    airfoil.Sheng(airfoil,ms012mpt1,ms010mpt1,ms013mpt1,ms025mpt1,ms014mpt1,ms034mpt1,ms015mpt1,ms116mpt1,...
+    ms016mpt1,ms026mpt1,ms017mpt1,ms117mpt1,ms018mpt1,ms027mpt1,ms019mpt1,ms118mpt1,ms020mpt1);
+    A = airfoil.A;
+    B = airfoil.B;
+    save('expfit_flatplate','A','B')
+    figure(airfoil.fig)
+end
+saveas(gcf,'../fig/Sheng/alpha_ds_r.png')
 %% Add Sheng's predicted stall angles to the figures
 for k=1:length(c)
     msname = sprintf('ms%03impt%i',LB(c(k)).ms,LB(c(k)).mpt);
@@ -64,6 +82,3 @@ for k=1:length(c)
     hold on
     evalin('base',sprintf('plot(%s.alpha_lagonset*ones(2,1),fig%d.CurrentAxes.YLim,''b--'')',msname,k));
 end
-
-figure(airfoil.fig)
-saveas(airfoil.fig,'fig/Sheng/alpha_ds_r','png')

@@ -3,6 +3,7 @@ classdef SteadyCurve < handle
         alpha
         alpha_rad
         CN
+        CL
         CN0 = 0;
         alpha_ss % denoted alpha_1 in Beddoes-Leishman
         f
@@ -54,8 +55,16 @@ classdef SteadyCurve < handle
             figure
             plot(obj.alpha,obj.CN)
             grid on
-            xlabel('\alpha (°)')
+            xlabel('\alpha (ï¿½)')
             ylabel('C_N')
+            axis([0 Inf 0 Inf])
+        end
+        function plotCL(obj)
+            figure
+            plot(obj.alpha,obj.CL)
+            grid on
+            xlabel('\alpha (ï¿½)')
+            ylabel('C_L')
         end
         function fitKirchhoff(obj)
             obj.computeSlope();
@@ -64,7 +73,6 @@ classdef SteadyCurve < handle
             S10 = 0.3*deg2rad(obj.alpha_ss)/(2*sqrt(0.7))*(((1+sqrt(0.7))/2)^2-stall_slope_minus/obj.slope_rad).^(-1);
             S20 = 0.66*deg2rad(obj.alpha_ss)/(2*sqrt(0.7))*(((1+sqrt(0.7))/2)^2-stall_slope_plus/obj.slope_rad).^(-1);
             opts = optimset('Display','off'); % replace off by iter for max. details
-
             Kfunc = @(x,alpha) Kirchhoff(obj,obj.alpha,x);
             
             [fitparams,res,~,exitflag] = lsqcurvefit(Kfunc,[S10 S20],obj.alpha,obj.CN,[0 0],[10 10],opts);
@@ -98,16 +106,16 @@ classdef SteadyCurve < handle
         end          
         function plotKirchhoff(obj)
             figure
-            plot(obj.alpha,obj.CN,'DisplayName','data')
+            plot(obj.alpha,obj.CN,'DisplayName','exp')
             if isempty(obj.S1)
-                 warning('Kirchhoff has not yet been fitted to this SteadyCurve .')
+                warning('Kirchhoff has not yet been fitted to this SteadyCurve .')
             else
                 hold on
                 plot(obj.alpha,Kirchhoff(obj,obj.alpha),'DisplayName','Kirchhoff model')
             end
             grid on
             legend('Location','Best')
-            xlabel('\alpha (°)')
+            xlabel('\alpha (ï¿½)')
             ylabel('C_N')
         end
         function setCN0(obj,CN0)
@@ -118,9 +126,9 @@ classdef SteadyCurve < handle
                     obj.CN0 = CN0;
                 end
             elseif nargin == 1
-                obj.CN0 = interp1(obj.alpha,obj.CN,0);
+                obj.CN0 = interp1(obj.alpha,obj.CN,0,'linear','extrap');
             end
-            fprintf('CN0 is equal to %.4f',obj.CN0)    
+            fprintf('CN0 is equal to %.4f',obj.CN0)
         end
         function computeSeparation(obj)
             % computes the experimental separation point using Kirchhoff

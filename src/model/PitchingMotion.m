@@ -121,6 +121,26 @@ classdef PitchingMotion < AirfoilMotion
             [X,Y] = obj.computeDuhamel(deltaalpha,rule);
             obj.CNC = airfoil.steady.slope*(reshape(obj.analpha(1:length(X)),size(X))-X-Y); % alpha is in degrees, slope is in 1/deg
         end
+        function computeLEseparation(obj,airfoil,Tp,alphamode)
+            % Computes the delayed normal coefficient, CNprime, depending
+            % on the time constant Tp for a given airfoil undergoing the
+            % instanciated pitching motion.
+            obj.Tp = Tp;
+            Dp = zeros(size(obj.CNp));
+            for n=2:length(obj.CNp)
+                Dp(n) =  Dp(n-1)*exp(-obj.DeltaS/obj.Tp) + (obj.CNp(n)-obj.CNp(n-1))*exp(-obj.DeltaS/(2*obj.Tp));
+            end
+            switch alphamode
+                case 'analytical'
+                    obj.CNprime = airfoil.steady.slope*obj.analpha(1:length(Dp)) - Dp; % we pretend the flow is attached over the whole alpha-range
+                case 'experimental'
+                    obj.CNprime = airfoil.steady.slope*obj.alpha(1:length(Dp)) - Dp; % we pretend the flow is attached over the whole alpha-range
+            end
+        end
+        function computeSepLag(obj,airfoil)
+            obj.alphaf = obj.CNprime/airfoil.steady.slope;
+            obj.fp = seppoint(airfoil.steady,obj.alphaf);
+        end
         function plotAttachedLift(obj,airfoil)
             figure;
             plot(airfoil.steady.alpha,airfoil.steady.CN,'x')

@@ -43,9 +43,8 @@ airfoil.steady.setCN0(interp1(airfoil.steady.alpha,airfoil.steady.CN,0,'linear',
 airfoil.steady.fitKirchhoff();
 airfoil.steady.plotKirchhoff(); 
 
-
 %% Define Beddoes-Leishman model
-Tp = 1.7;
+Tp = 3;
 Tf = 3;
 Tv = 6;
 pitching.BeddoesLeishman(airfoil,Tp,Tf,Tv,'analytical');

@@ -1,5 +1,12 @@
 classdef RampUpMotion < AirfoilMotion
     properties
+        % does not depend on the airfoil
+        % experimental parameters
+        r % reduced pitch rate
+        f_pts   
+        alphadot %ï¿½/s
+        
+        % depends on the airfoil
         alpha_continuous_grow
         i_continuous_grow
         % experimental dynamic stall angles
@@ -10,14 +17,7 @@ classdef RampUpMotion < AirfoilMotion
         i_CNonset
         % model outputs
         alpha_lagonset % corresponds to alpha'_ds
-        alphadot %°/s
         alpha_onset % modelled one
-        % Fitting parameters
-        CNslope1
-        CNslope2
-        % experimental parameters
-        r % reduced pitch rate
-        f_pts     
     end
     methods
         % convenient constructor with name/value pair of any attribute of RampUpMotion
@@ -124,7 +124,8 @@ classdef RampUpMotion < AirfoilMotion
         end
         function findExpOnset(obj)
             % finds experimental dynamic stall onset for a specific ramp-up
-            % experiment
+            % experiment. Is then used in Sheng algorithm to define the
+            % vector alpha_ds.
 %             obj.CNslope1 = lsqcurvefit(@(x,xdata) x*xdata,0,obj.alpha(obj.alpha<15),obj.CN(obj.alpha<15));
 %             err = abs(obj.CN - obj.CNslope1*obj.alpha);
 %             i_CNonset = find(err>1e-2);
@@ -143,16 +144,16 @@ classdef RampUpMotion < AirfoilMotion
         end
         function findModelOnset(obj,airfoil)
             % finds the Sheng-predicted dynamic stall angle for a specific
-            % time-evolution of alpha
-            obj.computeAlphaLag(airfoil);
-            i_lagonset = find(obj.analpha_lag>airfoil.alpha_ds0,1);
+            % time-evolution of alpha. Predicts alpha_onset from
+            % alpha_lagonset from previously defined alpha_ds0.
+            i_lagonset = find(obj.alpha_lag>airfoil.alpha_ds0,1);
             if isempty(i_lagonset)
                 warning('The airfoil "%s" does not show stall in the experiment %s.',airfoil.name,obj.name)
             else
                 if ~isempty(obj.alpha)
                 obj.alpha_lagonset = obj.alpha(i_lagonset);
                 obj.alpha_onset = interp1(obj.alpha_lag(obj.i_continuous_grow),obj.alpha_continuous_grow,obj.alpha_lagonset);
-                elseif ~isempty(obj.analpha)
+                elseif ~isempty(obj.analpha) % if alpha is empty
                 obj.alpha_lagonset = obj.analpha(i_lagonset);
                 [c,ia] = unique(obj.analpha_lag);
                 obj.alpha_onset = interp1(c,obj.analpha(ia),obj.alpha_lagonset);
@@ -163,16 +164,21 @@ classdef RampUpMotion < AirfoilMotion
         end
         function computeLEseparation(obj,airfoil,Tp,alphamode)
         end
-        function computeSepLag(obj,airfoil)
+        function computeSepLagSheng(obj,airfoil)
             obj.computeAlphaLag(airfoil)
             delta_alpha1 = airfoil.alpha_ds0 - airfoil.steady.alpha_ss; % for r>r0
             obj.fp = seppoint(airfoil.steady,obj.alpha_lag - delta_alpha1);
+        end
+        function computeSepLagExpfit(obj,airfoil)
+            Talpha = airfoil.findTalpha(obj);
+            obj.computeAlphaLag(airfoil,Talpha)
+            obj.fp = seppoint(airfoil.steady,obj.alpha_lag); % effective separation point
         end
         function plotCL(obj,xaxis)
             figure
             if (~exist('xaxis','var') || strcmp(xaxis,'alpha'))
                 plot(obj.alpha,obj.CL)
-                xlabel('\alpha (°)')
+                xlabel('\alpha (ï¿½)')
             elseif strcmp(xaxis,'convectime')                
                 plot(obj.S,obj.CL)
                 xlabel('t_c (-)')
@@ -185,7 +191,7 @@ classdef RampUpMotion < AirfoilMotion
             figure
             plot(obj.alpha,obj.CD)
             grid on
-            xlabel('\alpha (°)')
+            xlabel('\alpha (ï¿½)')
             ylabel('C_D (-)')
             title(sprintf('%s ($\\dot{\\alpha} = %.2f ^{\\circ}$/s)',obj.name,obj.alphadot),'interpreter','latex')
         end
@@ -197,7 +203,7 @@ classdef RampUpMotion < AirfoilMotion
             %plot(obj.alpha,obj.alpha*obj.CNslope2 + obj.CNslope2,'--','DisplayName','2nd part fit')
             grid on
             legend('Location','SouthEast')
-            xlabel('\alpha (°)')
+            xlabel('\alpha (ï¿½)')
             ylabel('C_N (-)')
             title(sprintf('%s ($\\dot{\\alpha} = %.2f ^{\\circ}$/s)',obj.name,obj.alphadot),'interpreter','latex')
         end
@@ -215,7 +221,7 @@ classdef RampUpMotion < AirfoilMotion
             end
             grid on
             legend('Location','SouthEast')
-            xlabel('\alpha (°)')
+            xlabel('\alpha (ï¿½)')
             ylabel('C_N (-)')
             title(obj.name)
         end
@@ -225,7 +231,7 @@ classdef RampUpMotion < AirfoilMotion
             hold on
             plot(obj.alpha_CConset,min(obj.CC),'rx')
             grid on
-            xlabel('\alpha (°)')
+            xlabel('\alpha (ï¿½)')
             ylabel('C_C (-)')
             title(sprintf('%s ($\\dot{\\alpha} = %.2f ^{\\circ}$/s)',obj.name,obj.alphadot),'interpreter','latex')
         end
@@ -234,28 +240,6 @@ classdef RampUpMotion < AirfoilMotion
             if ~isempty(obj.alpha_CConset)
                 plot(obj.t(obj.i_CConset),obj.alpha_CConset,'rx','DisplayName','\alpha_{ds,CC}')
             end  
-        end
-        function plotAlphaLag(obj)
-            figure
-            if ~isempty(obj.alpha)
-                plot(obj.t,obj.alpha,'DisplayName','\alpha')
-                hold on
-                plot(obj.t,obj.alpha_lag,'DisplayName','\alpha''')
-            end
-            if ~isempty(obj.analpha)
-                plot(obj.t,obj.analpha,'--','DisplayName','ideal \alpha')
-                hold on
-                plot(obj.t,obj.analpha_lag,'--','DisplayName','ideal \alpha''')
-            end
-            if ~isempty(obj.i_CConset)
-                plot(obj.t(obj.i_CConset),obj.alpha_CConset,'rx','DisplayName','\alpha_{ds,CC}')
-                hold on
-                plot(obj.t(obj.i_CConset),obj.alpha_lag(obj.i_CConset),'bx','DisplayName','\alpha''_{ds,CC}')
-            end
-            grid on
-            xlabel('t (s)')
-            ylabel('\alpha')
-            legend('Location','SouthEast')
         end
         function plotPitchRate(obj)
             figure
