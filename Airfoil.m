@@ -36,9 +36,8 @@ classdef Airfoil < handle
             % corresponding dynamic stall angles alpha_ds. Talpha is the slope
             % of the curve fitting alpha_ds as a function of r.
             obj.pr = polyfit(r(r>=obj.r0),alpha_ds(r>=obj.r0),1);
-            D1 = obj.pr(1); % deg
             obj.alpha_ds0 = obj.pr(2);
-            obj.Talpha = pi/180*D1; % rad
+            obj.Talpha = pi/180*obj.pr(1); % deg; % rad
             obj.pl = [(polyval(obj.pr,obj.r0)-obj.steady.alpha_ss)/obj.r0 obj.steady.alpha_ss];
             Talpha = obj.Talpha;
             alpha_ds0 = obj.alpha_ds0;
