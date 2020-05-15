@@ -58,7 +58,7 @@ classdef PitchingMotion < AirfoilMotion
             if isempty(varargin)
                 [obj.mean_rad,obj.amp_rad,obj.f_pts,obj.phi]=findSinus(obj.alpha_rad);
                 [obj.t,obj.Ts] = findTime(obj,airfoil.c);
-                obj.omega = 2*pi*obj.f_pts/obj.Ts; % rev/si si/time   
+                obj.omega = 2*pi*obj.f_pts/obj.Ts; % rev/si si/time
             else
                 obj.mean_rad = varargin{1};
                 obj.amp_rad = varargin{2};
@@ -121,24 +121,9 @@ classdef PitchingMotion < AirfoilMotion
             [X,Y] = obj.computeDuhamel(deltaalpha,rule);
             obj.CNC = airfoil.steady.slope*(reshape(obj.analpha(1:length(X)),size(X))-X-Y); % alpha is in degrees, slope is in 1/deg
         end
-        function computeLEseparation(obj,airfoil,Tp,alphamode)
-            % Computes the delayed normal coefficient, CNprime, depending
-            % on the time constant Tp for a given airfoil undergoing the
-            % instanciated pitching motion.
-            obj.Tp = Tp;
-            Dp = zeros(size(obj.CNp));
-            for n=2:length(obj.CNp)
-                Dp(n) =  Dp(n-1)*exp(-obj.DeltaS/obj.Tp) + (obj.CNp(n)-obj.CNp(n-1))*exp(-obj.DeltaS/(2*obj.Tp));
-            end
-            switch alphamode
-                case 'analytical'
-                    obj.CNprime = airfoil.steady.slope*obj.analpha(1:length(Dp)) - Dp; % we pretend the flow is attached over the whole alpha-range
-                case 'experimental'
-                    obj.CNprime = airfoil.steady.slope*obj.alpha(1:length(Dp)) - Dp; % we pretend the flow is attached over the whole alpha-range
-            end
-        end
         function computeSepLag(obj,airfoil)
-            obj.alphaf = obj.CNprime/airfoil.steady.slope;
+            obj.alphaf = obj.CNprime/airfoil.steady.slope; % effective separation point
+            obj.alphaf_rad = deg2rad(obj.alphaf);
             obj.fp = seppoint(airfoil.steady,obj.alphaf);
         end
         function plotAttachedLift(obj,airfoil)
@@ -152,12 +137,7 @@ classdef PitchingMotion < AirfoilMotion
             ylabel('C_N')
             grid on
             title('Lift attached flow')
-        end
-        function computeSepLag(obj,airfoil)
-            obj.alphaf = obj.CNprime/airfoil.steady.slope; % effective separation point
-            obj.alphaf_rad = deg2rad(obj.alphaf);
-            obj.fp = seppoint(airfoil.steady,obj.alphaf); 
-        end
+        end        
         function plotStallOnset(obj,airfoil)
             CN_static_stall = interp1(airfoil.steady.alpha,airfoil.steady.CN,airfoil.steady.alpha_static_stall);
             figure
@@ -173,7 +153,7 @@ classdef PitchingMotion < AirfoilMotion
             switch xaxis
                 case 'alpha'
                     plot(obj.alpha(1:length(obj.CN)),obj.CN,'DisplayName','exp')
-                    hold on 
+                    hold on
                     plot(obj.alpha(1:length(obj.CN_LB)),obj.CN_LB,'DisplayName','LB')
                     xlabel('\alpha (°)')
                 case 'convectime'
@@ -182,7 +162,7 @@ classdef PitchingMotion < AirfoilMotion
                     plot(obj.S(obj.t < 1/obj.freq),obj.CN_LB(obj.t < 1/obj.freq),'DisplayName','LB')
                     xlabel('t_c (-)')
             end
-            grid on 
+            grid on
             legend('Location','NorthEast','FontSize',20)
             ylabel('C_N')
             ax = gca;
