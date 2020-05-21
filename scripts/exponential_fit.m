@@ -18,9 +18,9 @@ airfoil.steady = SteadyCurve(static.alpha,static.CN,13);
 c = [18,14,22,67,26,84,30,89,34,71,38,93,42,75,46,97,50];
 
 for k=1:length(c)
-    data = load(loadmat(LB(c(k)).ms,LB(c(k)).mpt),'raw','inert','avg','zero');
-    raw = data.raw;
     if LB(c(k)).ms >= 13 && LB(c(k)).ms < 100
+        data = load(loadmat(LB(c(k)).ms,LB(c(k)).mpt),'raw','inert','avg','zero');
+        raw = data.raw;
         inert = data.inert;
         inert.alpha = raw.alpha(raw.t>=0);
         msname = sprintf('ms%03impt%i',LB(c(k)).ms,LB(c(k)).mpt);
@@ -30,6 +30,8 @@ for k=1:length(c)
         Cl = inert.Cl;
         Cd = inert.Cd;
     else
+        data = load(loadmat(LB(c(k)).ms,LB(c(k)).mpt),'raw','avg','zero');
+        raw = data.raw;
         msname = sprintf('ms%03impt%i',LB(c(k)).ms,LB(c(k)).mpt);
         assignin('base',msname,RampUpMotion('alpha',raw.alpha,'t',raw.t,'V',LB(c(k)).U));
         evalin('base',sprintf('%s.setName()',msname))
@@ -54,15 +56,13 @@ for k=1:length(c)
     Cd_fff = filter(b,a,Cd_ff);
     ramp.setCL(Cl_fff);
     ramp.setCD(Cd_fff);
-    %     ramp.setCL(Cl_fff);
-    %     ramp.setCD(Cd_fff);
+    %     ramp.setCL(Cl);
+    %     ramp.setCD(Cd);
     ramp.computeAirfoilFrame();
     ramp.isolateRamp();
     % Define stall
     ramp.findExpOnset();
     ramp.setPitchRate(airfoil);
-    
-    evalin('base',sprintf('fig%d = %s.plotCC();',k,msname));
 end
 
 %% Running Sheng experiment

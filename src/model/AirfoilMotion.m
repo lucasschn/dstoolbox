@@ -305,7 +305,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
                 % compute analpha_lag from alpha_lag
                 dalpha_lagdt = diff(obj.alpha_lag)./diff(obj.t);
                 alphadot_lag = max(dalpha_lagdt);
-                opts = optimset('Display','off');
+                opts = optimset('Diagnostics','off','Display','off');
                 analpha_lag0 = lsqcurvefit(@(x,xdata) alphadot_lag*xdata+x,0,obj.t(dalpha_lagdt>=5),obj.alpha_lag(dalpha_lagdt>=5),[],[],opts);
                 obj.analpha_lag =  alphadot_lag*obj.t + analpha_lag0;
             elseif ~isempty(obj.analpha) % compute analpha_lag from analpha
@@ -441,7 +441,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
                 %plot(obj.t(obj.i_CConset),obj.alpha_lag(obj.i_CConset),'bx','DisplayName','\alpha''_{ds,CC}')
             end
             plot(obj.t(obj.i_CConset),airfoil.steady.alpha_static_stall,'x','DisplayName','\alpha_{ss}')
-            [Talpha,t0] = airfoil.findTalpha(obj);
+            load('../../expfit_flatplate')
             plot(obj.t,obj.alphadot*(obj.t-t0-Talpha*(1-exp(-(obj.t-t0)/Talpha))),'--','DisplayName','ideal ramp response')
             grid on
             xlabel('t (s)')

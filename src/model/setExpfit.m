@@ -32,7 +32,7 @@ end
 alpha_ds_r = @(x,r) x(1)-(x(1)-alpha_ss)*exp(-x(2)*r);
 
 % compute the exponential fit
-opts = optimset('Display','off');
+opts = optimset('Diagnostics','off','Display','off');
 xopt = lsqcurvefit(alpha_ds_r,[alpha_ds(end) 1],r,alpha_ds,[0 0],[Inf Inf],opts);
 
 A = xopt(1);

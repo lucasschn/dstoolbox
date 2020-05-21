@@ -108,7 +108,8 @@ classdef RampUpMotion < AirfoilMotion
                 obj.alphadot = max(dalphadt); % deg/s
             end
             if ~isempty(obj.alpha)
-                analpha0 = lsqcurvefit(@(x,xdata) obj.alphadot*xdata+x,0,obj.t(dalphadt>=5),obj.alpha(dalphadt>=5));
+                opts = optimset('Diagnostics','off','Display','off');
+                analpha0 = lsqcurvefit(@(x,xdata) obj.alphadot*xdata+x,0,obj.t(dalphadt>=5),obj.alpha(dalphadt>=5),[],[],opts);
             else
                 analpha0 = 0;
             end
