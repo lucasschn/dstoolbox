@@ -1,17 +1,17 @@
-cclassdef RampUpMotion < AirfoilMotion
+classdef RampUpMotion < AirfoilMotion
     properties
         % does not depend on the airfoil
         % experimental parameters
         r % reduced pitch rate
         f_pts   
-        alphadot %�/s
+        alphadot %°/s
         
         % depends on the airfoil
         alpha_continuous_grow
         i_continuous_grow
         % experimental dynamic stall angles
         alpha_CConset
-        alpha_CLonset
+        alpha_CNonset
         % their indices
         i_CConset
         i_CNonset
@@ -141,6 +141,8 @@ cclassdef RampUpMotion < AirfoilMotion
             % onset based on CC curve
             [~,obj.i_CConset] = min(obj.CC);
             obj.alpha_CConset = obj.alpha(obj.i_CConset); % Sheng uses an inverted definition of CC
+            [~,obj.i_CNonset] = max(obj.CN);
+            obj.alpha_CNonset = obj.alpha(obj.i_CNonset);
         end
         function findModelOnset(obj,airfoil)
             % finds the Sheng-predicted dynamic stall angle for a specific
@@ -198,9 +200,6 @@ cclassdef RampUpMotion < AirfoilMotion
         function plotCN(obj)
             figure
             plot(obj.alpha,obj.CN,'DisplayName','exp')
-            hold on 
-            plot(obj.alpha,obj.alpha*obj.CNslope1,'--','DisplayName','1st part fit')
-            %plot(obj.alpha,obj.alpha*obj.CNslope2 + obj.CNslope2,'--','DisplayName','2nd part fit')
             grid on
             legend('Location','SouthEast')
             xlabel('\alpha (�)')
@@ -226,12 +225,12 @@ cclassdef RampUpMotion < AirfoilMotion
             title(obj.name)
         end
         function fig = plotCC(obj)
-            fig = figure;
+            fig = figure('name',sprintf('r=%.3f',obj.r));
             plot(obj.alpha,obj.CC)
             hold on
             plot(obj.alpha_CConset,min(obj.CC),'rx')
             grid on
-            xlabel('\alpha (�)')
+            xlabel('\alpha (°)')
             ylabel('C_C (-)')
             title(sprintf('%s ($\\dot{\\alpha} = %.2f ^{\\circ}$/s)',obj.name,obj.alphadot),'interpreter','latex')
         end

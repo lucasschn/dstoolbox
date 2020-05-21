@@ -305,7 +305,8 @@ classdef AirfoilMotion < matlab.mixin.SetGet
                 % compute analpha_lag from alpha_lag
                 dalpha_lagdt = diff(obj.alpha_lag)./diff(obj.t);
                 alphadot_lag = max(dalpha_lagdt);
-                analpha_lag0 = lsqcurvefit(@(x,xdata) alphadot_lag*xdata+x,0,obj.t(dalpha_lagdt>=5),obj.alpha_lag(dalpha_lagdt>=5));
+                opts = optimset('Display','off');
+                analpha_lag0 = lsqcurvefit(@(x,xdata) alphadot_lag*xdata+x,0,obj.t(dalpha_lagdt>=5),obj.alpha_lag(dalpha_lagdt>=5),[],[],opts);
                 obj.analpha_lag =  alphadot_lag*obj.t + analpha_lag0;
             elseif ~isempty(obj.analpha) % compute analpha_lag from analpha
                 dalpha = diff(obj.analpha);

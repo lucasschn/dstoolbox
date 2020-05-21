@@ -1,0 +1,46 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage[framed,numbered,autolinebreaks]{mcode}
+
+\begin{document}
+
+\section*{Goman-Khrabrov}
+
+The objective is to rewrite our differential equation in the form of a state-space model : 
+
+\begin{eqnarray}
+\dot{x} = Ax+Bu \\
+y = Cx+Du
+\end{eqnarray}
+
+\noindent $u$ is the /textit{input} to the system, $y$ is the \textit{output} of the system and $x$ is the \textit{state}. In Goman-Khrabrov, it is convenient to define the state as the lagged separation point. Let's show that
+\begin{equation}
+\tau_1 \frac{dx}{dt} + x = x_0(\alpha-\tau_2 \dot{\alpha})
+\end{equation}
+can be rewritten 
+\begin{equation}
+\Leftrightarrow \dot{x} = \frac{-1}{\tau_1}x +\frac{1}{\tau_1}u
+\end{equation}
+\noindent with $u=x_0(\alpha-\tau_2 \dot{\alpha})$. We now can identify $A=\frac{-1}{\tau_1}$ and $B=\frac{1}{\tau_1}$. Let's define the output of the system as being directly $x$. This yields:
+
+\begin{equation}
+y = x = Cx+Du \Rightarrow C=1, D=0
+\end{equation}
+
+To obtain the evolution of $x$ in time in Matlab, the Control System Toolbox is useful. The command \mcode{sys = ss(A,B,C,D)} creates an object \texttt{sys} of type \textit{Continuous state-space model} that can then be simulated using \mcode{x = lsim(sys,u,t)}, where the vector \texttt{u} is the input to the system and \texttt{t} is the time vector. The output, \texttt{x} is the time evolution of the lagged separation point $x$.
+
+\section*{Example}
+ 
+\begin{lstlisting}
+alpha_lag = alpha-tau2*alphadot;
+u = alpha_lag; 
+u(u<min(steady.alpha)) = min(steady.alpha); % lagged angle cannot be smaller than the minimal angle we have static data for
+u(u>max(steady.alpha)) = max(steady.alpha); % lagged angle cannot be bigger than the maximum angle we have static data for
+x0 = interp1(steady.alpha_rad,steady.fexp,u); % x(alpha) evaluated in lagged alpha
+
+sys = ss(-1/tau1,1/tau1,1,0);  % creation the state-space model using A=-1/tau1, B=1/tau1, C=1, D=0
+pitching.x = lsim(sys,x0,pitching.t); % simulation of the state space model using the time vector we have for this specific motion
+pitching.CN_GK = steady.slope/4*(1+sqrt(pitching.x)).^2+steady.CN0;  % computing CN predicted by GK model using Kirchhoff equation
+\end{lstlisting}
+
+\end{document}
