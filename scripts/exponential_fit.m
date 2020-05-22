@@ -30,7 +30,7 @@ for k=1:length(c)
         Cl = inert.Cl;
         Cd = inert.Cd;
     else
-        data = load(loadmat(LB(c(k)).ms,LB(c(k)).mpt),'raw','avg','zero');
+        data = load(loadmat(LB(c(k)).ms,LB(c(k)).mpt),'raw');
         raw = data.raw;
         msname = sprintf('ms%03impt%i',LB(c(k)).ms,LB(c(k)).mpt);
         assignin('base',msname,RampUpMotion('alpha',raw.alpha,'t',raw.t,'V',LB(c(k)).U));

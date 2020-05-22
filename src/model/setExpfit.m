@@ -16,14 +16,14 @@ t_ds = -ones(size(varargin));
 for k=1:length(varargin)
     ramp = varargin{k};
     r(k) = ramp.r; 
-    obj.t_ss(k) = ramp.t(find(ramp.alpha>alpha_ss,1));
+    t_ss(k) = ramp.t(find(ramp.alpha>alpha_ss,1));
     if ramp.alpha_CConset > alpha_ss
         alpha_ds(k) = ramp.alpha_CConset;
-        obj.t_ds(k) = ramp.t(ramp.i_CConset);
-    elseif ramp.alpha_CNonset > alpha_ss
-        warning('DS was based on CN for r=%.3f',ramp.r)
-        alpha_ds(k) = ramp.alpha_CConset;
-        obj.t_ds(k) = ramp.t(ramp.i_CConset);
+        t_ds(k) = ramp.t(ramp.i_CConset);
+    elseif ramp.alpha_CLonset > alpha_ss
+        warning('DS was based on CL for r=%.3f',ramp.r)
+        alpha_ds(k) = ramp.alpha_CLonset;
+        t_ds(k) = ramp.t(ramp.i_CLonset);
     else
         error('The dynamic stall angle is lower than the static stall angle.')
     end
@@ -53,4 +53,7 @@ hold on
 plot(r,alpha_ds_r(xopt,r),'LineWidth',2,'DisplayName','exponential fit')
 subplot(313)
 plot(r,t_ds-t_ss,'.','MarkerSize',20)
+xlabel('r (-)')
+ylabel('\Delta t_{ds} (s)')
+grid on
 end

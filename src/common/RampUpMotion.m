@@ -11,10 +11,10 @@ classdef RampUpMotion < AirfoilMotion
         i_continuous_grow
         % experimental dynamic stall angles
         alpha_CConset
-        alpha_CNonset
+        alpha_CLonset
         % their indices
         i_CConset
-        i_CNonset
+        i_CLonset
         % model outputs
         alpha_lagonset % corresponds to alpha'_ds
         alpha_onset % modelled one
@@ -142,8 +142,8 @@ classdef RampUpMotion < AirfoilMotion
             % onset based on CC curve
             [~,obj.i_CConset] = min(obj.CC);
             obj.alpha_CConset = obj.alpha(obj.i_CConset); % Sheng uses an inverted definition of CC
-            [~,obj.i_CNonset] = max(obj.CN);
-            obj.alpha_CNonset = obj.alpha(obj.i_CNonset);
+            [~,obj.i_CLonset] = max(obj.CL);
+            obj.alpha_CLonset = obj.alpha(obj.i_CLonset);
         end
         function findModelOnset(obj,airfoil)
             % finds the Sheng-predicted dynamic stall angle for a specific
@@ -181,11 +181,15 @@ classdef RampUpMotion < AirfoilMotion
             figure
             if (~exist('xaxis','var') || strcmp(xaxis,'alpha'))
                 plot(obj.alpha,obj.CL)
-                xlabel('\alpha (�)')
+                hold on
+                plot(obj.alpha_CLonset,max(obj.CL),'rx')
+                xlabel('\alpha (°)')
             elseif strcmp(xaxis,'convectime')                
                 plot(obj.S,obj.CL)
+                hold on
+                plot(obj.S(obj.i_CLonset),max(obj.CL),'rx')
                 xlabel('t_c (-)')
-            end
+            end      
             grid on
             ylabel('C_L (-)')
             title(sprintf('%s ($\\dot{\\alpha} = %.2f ^{\\circ}$/s)',obj.name,obj.alphadot),'interpreter','latex')
@@ -203,7 +207,7 @@ classdef RampUpMotion < AirfoilMotion
             plot(obj.alpha,obj.CN,'DisplayName','exp')
             grid on
             legend('Location','SouthEast')
-            xlabel('\alpha (�)')
+            xlabel('\alpha (°)')
             ylabel('C_N (-)')
             title(sprintf('%s ($\\dot{\\alpha} = %.2f ^{\\circ}$/s)',obj.name,obj.alphadot),'interpreter','latex')
         end
@@ -240,7 +244,7 @@ classdef RampUpMotion < AirfoilMotion
             if ~isempty(obj.alpha_CConset)
                 plot(obj.t(obj.i_CConset),obj.alpha_CConset,'rx','DisplayName','\alpha_{ds,CC}')
             end  
-            title(sprintf('%s ($\\dot{\\alpha}$ = %.2f \degree/s)',obj.name,obj.alphadot),'interpreter','latex')
+            title(sprintf('%s ($\\dot{\\alpha}$ = %.2f \\degree/s)',obj.name,obj.alphadot),'interpreter','latex')
         end
         function plotPitchRate(obj)
             figure

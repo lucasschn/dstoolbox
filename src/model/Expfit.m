@@ -20,9 +20,10 @@ if ~isempty(ramp.i_CConset)
     if ramp.alpha_CConset > alpha_ss
         t_ds = ramp.t(ramp.i_CConset)-t0;
         alpha_ds = ramp.alpha_CConset;
-    elseif ramp.alpha_CNonset > alpha_ss
-        t_ds = ramp.t(ramp.i_CNonset)-t0;
-        alpha_ds = ramp.alpha_CNonset;
+    elseif ramp.alpha_CLonset > alpha_ss
+        warning('CL was used to define DS for r=%.3f',ramp.r)
+        t_ds = ramp.t(ramp.i_CLonset)-t0;
+        alpha_ds = ramp.alpha_CLonset;
     else
         error('The dynamic stall angle is lower than the static stall angle.')
     end
