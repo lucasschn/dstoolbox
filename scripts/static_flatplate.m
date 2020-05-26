@@ -13,7 +13,7 @@ rho = 1000;
 U = 0.5;
 
 
-load('data/2019_SH/20191009/loads/ms115mpt001.mat');
+load('../data/2019_SH/20191009/loads/ms115mpt001.mat');
 fdata = [out(2).t out(2).forces(:,1) out(2).forces(:,2)];
 [t_NI, helpi_NI] = unique(fdata(:,1)); % time vector for the force data
 calib.fx = mean(fdata(helpi_NI,2));
@@ -24,7 +24,7 @@ Cn = zeros(1,n);
 Cl = zeros(1,n);
 Cd = zeros(1,n);
 for k=1:n
-    load(sprintf('data/2019_SH/20191009/loads/ms116mpt%03.0f.mat',k))
+    load(sprintf('../data/2019_SH/20191009/loads/ms116mpt%03.0f.mat',k))
     alpha(k) = motangle.angle.position;
     fdata = [out(2).t out(2).forces(:,1) out(2).forces(:,2)];
     [t_NI, helpi_NI] = unique(fdata(:,1)); % time vector for the force data

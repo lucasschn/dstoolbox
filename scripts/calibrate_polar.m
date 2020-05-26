@@ -29,11 +29,11 @@ auto_home = false; % do you wish to use the result of the interpolation to go ho
 saveplot = false; % do you wish to save a pdf of your figure?
 savepolar = true; % do you wish to save the data to plot your polar?
 if savepolar == 1
-polarname = 'static_flatplate'; % what is the file name for your polar data?
+polarname = 'static_flatplate5'; % what is the file name for your polar data?
 end
 
 % name of files
-polardata = 'ms121mpt001'; % data for the polar you wish to plot
+polardata = 'ms121mpt005'; % data for the polar you wish to plot
 forceoffsetdata = 'calibration_mpt'; % data with your non-hydrodynamic 
 % force offset (LC offset, inertial forces, buoyancy etc.)
 
@@ -42,7 +42,7 @@ param.chord = 0.15;         % chorch length in m
 param.span = 0.6;           % span in m
 
 % fluid data
-param.Uinf = 0.33;          % free stream velocity in m/s
+param.Uinf = 0.5;          % free stream velocity in m/s
 param.rho = 1000;           % density in kg/m^3
 param.mu =  10^-3;          % dynamic viscosity in N s/m^2            
 param.nu = param.mu/param.rho;       % kinematic viscosity in m^2/s
@@ -84,12 +84,16 @@ else
 end
 %% PROCESS POLAR
 load(fullfile(polarfolder,polardata))
-denom = 0.5.*param.rho.*(param.Uinf).^2.*param.chord.*param.span;
+qA = 0.5.*param.rho.*(param.Uinf).^2.*param.chord.*param.span;
 F1_0 = interp1([force_offset.alpha],[force_offset.F1],[out.alpha],'linear','extrap');
 F2_0 = interp1([force_offset.alpha],[force_offset.F2],[out.alpha],'linear','extrap');
 MZ_0 = interp1([force_offset.alpha],[force_offset.MZ],[out.alpha],'linear','extrap');
 alpha = [out.alpha];
 n = length(alpha);
+
+F1 = NaN(size(alpha));
+F2 = NaN(size(alpha));
+MZ = NaN(size(alpha));
 
 for i = 1:n
     F1(i) = mean(out(i).forces(:,1))-F1_0(i);
@@ -98,12 +102,12 @@ for i = 1:n
 end
 FX = (sind(LCangle).*F1 - cosd(LCangle).*F2);
 FY = -(cosd(LCangle).*F1 + sind(LCangle).*F2);
-clear F1 F2
+
 Lift = - FX.*sind(alpha) + FY.*cosd(alpha);
 Drag = FX.*cosd(alpha) + FY.*sind(alpha);
-CLift = Lift./denom;
-CDrag = Drag./denom;
-CNormal = FY./denom;
+CLift = Lift./qA;
+CDrag = Drag./qA;
+CNormal = FY./qA;
 if savepolar == 1
     polarforces.FX = FX;
     polarforces.FY = FY;
@@ -225,5 +229,3 @@ if find_alpha0
         f = msgbox(sprintf('The blade was brought to alpha_0, try to record data and check whether lift values are approximately 0.'));
     end 
 end
-
-
