@@ -35,6 +35,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
         % TE separation
         alphaf
         alphaf_rad
+        CNprime
         CNk
         f
         fp
@@ -142,7 +143,19 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             airfoil.steady.fitKirchhoff()
             obj.computeAttachedFlow(airfoil,alphamode);
             obj.computeLEseparation(airfoil,Tp,alphamode);
-            obj.computeTEseparation(airfoil,Tf);
+            obj.computeTEseparation(airfoil,Tf,'BL');
+            obj.computeDS(Tv);
+        end
+        function BLSheng(obj,airfoil,Tf,Tv,alphamode)
+            airfoil.steady.fitKirchhoff()
+            obj.computeAttachedFlow(airfoil,alphamode);
+            obj.computeTEseparation(airfoil,Tf,'BLSheng');
+            obj.computeDS(Tv);
+        end
+        function BLexpfit(obj,airfoil,Tf,Tv,alphamode)
+            airfoil.steady.fitKirchhoff()
+            obj.computeAttachedFlow(airfoil,alphamode);
+            obj.computeTEseparation(airfoil,Tf,'BLSheng with expfit');
             obj.computeDS(Tv);
         end
         function computeAttachedFlow(obj,airfoil,alphamode)
@@ -227,26 +240,61 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             end
             
         end
-        function computeTEseparation(obj,airfoil,Tf)
+        function computeLEseparation(obj,airfoil,Tp,alphamode)
+            % Computes the delayed normal coefficient, CNprime, depending
+            % on the time constant Tp for a given airfoil undergoing the
+            % instanciated pitching motion.
+            obj.Tp = Tp;
+            Dp = zeros(size(obj.CNp));
+            for n=2:length(obj.CNp)
+                Dp(n) =  Dp(n-1)*exp(-obj.DeltaS/obj.Tp) + (obj.CNp(n)-obj.CNp(n-1))*exp(-obj.DeltaS/(2*obj.Tp));
+            end
+            switch alphamode
+                case 'analytical'
+                    obj.CNprime = airfoil.steady.slope*obj.analpha(1:length(Dp)) - Dp; % we pretend the flow is attached over the whole alpha-range
+                case 'experimental'
+                    obj.CNprime = airfoil.steady.slope*obj.alpha(1:length(Dp)) - Dp; % we pretend the flow is attached over the whole alpha-range
+            end
+        end
+        function computeTEseparation(obj,airfoil,Tf,model)
             obj.Tf = Tf;
             obj.f = seppoint(airfoil.steady,airfoil.steady.alpha);
             
             % Kirchhoff law
-            obj.CNk = Kirchhoff(airfoil.steady,airfoil.steady.alpha);
-            obj.computeSepLag(airfoil)
+            obj.CNk = kirchhoff(airfoil.steady,airfoil.steady.alpha);
+            obj.computeSepLag(airfoil,model)
             
             Df=zeros(size(obj.fp));
             for n=2:length(obj.fp)
                 Df(n) = Df(n-1)*exp(-obj.DeltaS/Tf) + (obj.fp(n)-obj.fp(n-1))*exp(-obj.DeltaS/(2*Tf));
             end
             obj.fpp = obj.fp - Df;
-           
+            
             n = min([length(obj.CNI),length(obj.CNC)]);
+            % TODO: Replace Kirchhoff model by interpolation of experimental 
+            % static curve
             obj.CNf = ((1+sqrt(obj.fpp(1:n)))/2).^2.*obj.CNC(1:n)+obj.CNI(1:n);
-
+            
             eta = 0.95;
             
             obj.CCf = eta*airfoil.steady.slope*obj.alphaE(1:n).^2.*sqrt(obj.fpp(1:n));
+        end
+        function computeSepLag(obj,airfoil,model)
+            switch model
+                case 'BL'
+                    obj.alphaf = obj.CNprime/airfoil.steady.slope; % effective separation point
+                    obj.alphaf_rad = deg2rad(obj.alphaf);
+                    obj.fp = seppoint(airfoil.steady,obj.alphaf);
+                case 'BLSheng'
+                    load(sprintf('linfit_%s.mat',airfoil.name),'Talpha','alpha_ds0');
+                    obj.computeAlphaLag(airfoil,Talpha)
+                    delta_alpha1 = alpha_ds0 - airfoil.steady.alpha_ss; % for r>r0
+                    obj.fp = seppoint(airfoil.steady,obj.alpha_lag - delta_alpha1);
+                case 'BLSheng with expfit'
+                    [~,Talpha] = Expfit(airfoil,obj);
+                    obj.computeAlphaLag(airfoil,Talpha)
+                    obj.fp = seppoint(airfoil.steady,obj.alpha_lag); % effective separation point
+            end
         end
         function computeDS(obj,Tv)
             % Computes the final Beddoes-Leishman predicted CN for the instanciated pitching motion, after

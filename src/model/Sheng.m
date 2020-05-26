@@ -1,8 +1,8 @@
-function Sheng(ramp,airfoil)
+function Sheng(airfoil,ramp)
 % Loads linfit variables from a previous execution of setLifit.
 
 load(sprintf('linfit_%s.mat',airfoil.name));
-ramp.computeAlphaLag(airfoil,Talpha),
+ramp.computeAlphaLag(airfoil,Talpha)
 
 alpha_ss = airfoil.steady.alpha_ss;
 alpha_ds = ramp.alpha_CConset;

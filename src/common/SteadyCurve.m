@@ -4,7 +4,7 @@ classdef SteadyCurve < handle
         alpha_rad
         CN
         CL
-        CN0 = 0;
+        alpha0 = 0; % alpha0 = alpha(CN=0)
         alpha_ss % denoted alpha_1 in Beddoes-Leishman
         f
         CNalpha % 1/deg
@@ -36,7 +36,7 @@ classdef SteadyCurve < handle
             while (ialphass==1 || dalpha(ialphass-1)<0.01)
                 ialphass = find(obj.CNalpha(ialphass:end)<0,1)+ ialphass;
             end
-            obj.alpha_ss=obj.alpha(ialphass);
+            obj.alpha_ss = obj.alpha(ialphass);
         end
         function computeSlope(obj)
             % CN slope for attached flow. Should be around 2pi/beta
@@ -55,7 +55,7 @@ classdef SteadyCurve < handle
             figure
             plot(obj.alpha,obj.CN)
             grid on
-            xlabel('\alpha (�)')
+            xlabel('\alpha (°)')
             ylabel('C_N')
             axis([0 Inf 0 Inf])
         end
@@ -63,7 +63,7 @@ classdef SteadyCurve < handle
             figure
             plot(obj.alpha,obj.CL)
             grid on
-            xlabel('\alpha (�)')
+            xlabel('\alpha (°)')
             ylabel('C_L')
         end
         function fitKirchhoff(obj)
@@ -73,7 +73,7 @@ classdef SteadyCurve < handle
             S10 = 0.3*deg2rad(obj.alpha_ss)/(2*sqrt(0.7))*(((1+sqrt(0.7))/2)^2-stall_slope_minus/obj.slope_rad).^(-1);
             S20 = 0.66*deg2rad(obj.alpha_ss)/(2*sqrt(0.7))*(((1+sqrt(0.7))/2)^2-stall_slope_plus/obj.slope_rad).^(-1);
             opts = optimset('Display','off'); % replace off by iter for max. details
-            Kfunc = @(x,alpha) Kirchhoff(obj,obj.alpha,x);
+            Kfunc = @(x,alpha) kirchhoff(obj,obj.alpha,x);
             
             [fitparams,res,~,exitflag] = lsqcurvefit(Kfunc,[S10 S20],obj.alpha,obj.CN,[0 0],[10 10],opts);
             
@@ -111,30 +111,30 @@ classdef SteadyCurve < handle
                 warning('Kirchhoff has not yet been fitted to this SteadyCurve .')
             else
                 hold on
-                plot(obj.alpha,Kirchhoff(obj,obj.alpha),'DisplayName','Kirchhoff model')
+                plot(obj.alpha,kirchhoff(obj,obj.alpha),'DisplayName','Kirchhoff model')
             end
             grid on
             legend('Location','Best')
-            xlabel('\alpha (�)')
+            xlabel('\alpha (°)')
             ylabel('C_N')
         end
-        function setCN0(obj,CN0)
+        function setCalpha0(obj,alpha0)
             if nargin == 2
-                if isnan(CN0)
-                    error('CN0 cannot be NaN.')
+                if isnan(alpha0)
+                    error('alpha0 cannot be NaN.')
                 else
-                    obj.CN0 = CN0;
+                    obj.alpha0 = alpha0;
                 end
             elseif nargin == 1
-                obj.CN0 = interp1(obj.alpha,obj.CN,0,'linear','extrap');
+                obj.alpha0 = interp1(obj.CN,obj.alpha,0,'linear','extrap');
             end
-            fprintf('CN0 is equal to %.4f',obj.CN0)
+            fprintf('alpha0 is equal to %.4f \n',obj.alpha0)
         end
         function computeSeparation(obj)
-            % computes the experimental separation point using Kirchhoff
-            % model
-            obj.fexp = max([zeros(size(obj.CN)),min([ones(size(obj.CN)), (2*sqrt((obj.CN-obj.CN0)./(obj.slope*obj.alpha))-1).^2],[],2)],[],2);
-            
+            % computes the experimental separation point using inverted Kirchhof model,
+            % ref: Leishman, Principles of Helicopter Aerodynamics 2nd Ed., eq. 7.106 page 405
+            unbounded_fexp = (2*sqrt(obj.CN./(obj.slope*(obj.alpha - obj.alpha0)))-1).^2; 
+            obj.fexp = max([zeros(size(obj.CN)),min([ones(size(obj.CN)), unbounded_fexp],[],2)],[],2);
         end
     end
 end

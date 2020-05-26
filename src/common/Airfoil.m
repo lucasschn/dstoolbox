@@ -8,9 +8,6 @@ classdef Airfoil < handle
         c
         % Sheng 2008
         r0 % reduced pitch rate for bilinear transition  
-        alpha_ds0
-        pr
-        pl
     end
     methods
         % Unique constructor with airfoil's name and chord length. Airfoil

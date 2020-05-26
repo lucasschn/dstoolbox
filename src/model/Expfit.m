@@ -8,8 +8,14 @@ function [alpha_lag_ds,Talpha] = Expfit(airfoil,ramp)
 % initialization of the vectors
 
 % abreviations
-r = ramp.r;
-alpha_ss = airfoil.steady.alpha_ss;
+if isempty(ramp.r)
+    error('Reduced pitch rate is not determined.')
+elseif isempty(airfoil.steady.alpha_ss)
+    error('Static stall angle is not determined.')
+else
+    r = ramp.r;
+    alpha_ss = airfoil.steady.alpha_ss;
+end
 
 % define shape of exponential fit
 alpha_ds_r = @(x,r) x(1)-(x(1)-alpha_ss)*exp(-x(2)*r);
@@ -28,15 +34,25 @@ if ~isempty(ramp.i_CConset)
         error('The dynamic stall angle is lower than the static stall angle.')
     end
 else % rely on the expfit
-    load('expfit_%s',airfoil.name)
+    load(sprintf('expfit_%s',airfoil.name),'A','B')
     alpha_ds = alpha_ds_r([A B],r);
-    t_ds = alpha_ds/ramp.alpha_dot + t0;
+    t_ds = alpha_ds/ramp.alphadot + t0;
 end
 
+if isempty(alpha_ss)
+    error('Static stall angle is not determined.')
+elseif isempty(ramp.alphadot)
+    error('Pitch rate is not determined.')
+elseif isempty(t_ds)
+    error('DS time is not determined.')
+elseif isempty(ramp.V)
+    error('Inflow velocity is not determined.')
+else
 % determination of Talpha so that alpha_lag(t_ds) = alpha_ss
 syms tau % dimensional time constant
 sol = solve(alpha_ss == ramp.alphadot*(t_ds - tau*(1-exp(-t_ds/tau))),tau,'Real',true,'IgnoreAnalyticConstraints',true);
 Talpha = 2*ramp.V/airfoil.c*double(sol); % in adimensional time here
+end
 
 % compute alpha_lag using Talpha and finds alpha_lagonset
 if ~isempty(Talpha)

@@ -10,7 +10,7 @@ addpath('../src/lib/')
 %% Define the airfoil and the associated steady curve
 
 airfoil = Airfoil('flatplate',0.15);
-static = load('../data/static_flatplate');
+static = load('../static_flatplate');
 airfoil.steady = SteadyCurve(static.alpha,static.CN,13);
 
 %% Setting up the ramps
@@ -88,7 +88,7 @@ subplot(311)
 % how not to create a new legend entry every time?
 plot(r,alpha_lag_ds,'.','DisplayName','\alpha_{ds} (lagged)','MarkerSize',20)
 plot(r,ones(size(r)).*alpha_ss,'--','DisplayName','\alpha_{ss}','LineWidth',2);
-legend('FontSize',20,'Location','East')
+legend('FontSize',20,'Location','SouthEast')
 % plot Talpha and its fit on the lower graph
 subplot(312)
 plot(r,Talpha,'.','MarkerSize',20,'DisplayName','T_\alpha')
