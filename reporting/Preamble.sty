@@ -1,0 +1,187 @@
+% Template by Todd C. Harris
+%%%%%%%%%%%%%%%%%%%%%%%%%%%% Document + Text Formatting %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage[a4paper,top=3cm, bottom=3cm, left=2.5cm, right=2.5cm]{geometry}
+\usepackage{parskip}
+\setlength{\parindent}{0cm}
+\usepackage{microtype} % improves typography or something idk
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[australian,british]{babel}
+\usepackage{soul} % strikeout text
+\usepackage{times}
+\usepackage{subfiles}
+\usepackage{emptypage}
+\usepackage{xspace} % for spaces after custom commands
+\usepackage{tocloft}
+\usepackage{mathtools}
+\usepackage[table]{xcolor}
+\usepackage{lipsum}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Bibliography %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage[backend=biber,sorting=alphabetic,urldate=long,style=numeric-comp]{biblatex}
+% recommend style=numeric-comp or style=authoryear-comp
+\addbibresource{bibliography.bib}
+\usepackage[breaklinks=true,linktocpage=true]{hyperref} % adds hyperlinks to references
+\setcounter{biburllcpenalty}{7000}
+\setcounter{biburlucpenalty}{8000}
+\usepackage{url}
+\usepackage{csquotes}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Symbols + Math %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{amsmath} % extensive math options
+\usepackage{amsfonts}
+\usepackage{nicefrac} 
+\usepackage{amssymb}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Figures %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{graphicx}
+\graphicspath{{../fig/}}
+\usepackage{float}
+\usepackage[figuresright]{rotating} %sidewaysfigure
+\usepackage{subcaption}
+\usepackage{pdfpages}
+\usepackage{wrapfig}
+%\usepackage{floatflt}
+\usepackage{caption}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Tables + Lists %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{array}
+\usepackage{booktabs} 
+\usepackage{enumitem}
+\usepackage{multicol}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Section Summary Environment %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{newfloat}
+\definecolor{darkorange}{HTML}{724209}
+\definecolor{lightorange}{HTML}{f7ce9d}
+\definecolor{verylightorange}{HTML}{fbe6ce}
+\definecolor{darkblue}{RGB}{31,78,120}
+\definecolor{lightblue}{RGB}{221,235,247}
+\definecolor{puce}{HTML}{513b41}
+\definecolor{tifblue}{HTML}{c8f4f9}
+\definecolor{lightbluegrey}{RGB}{230,240,255}
+\definecolor{darkgrey}{RGB}{50,50,50}
+\definecolor{darkgreen}{RGB}{27,64,74}
+\definecolor{lightgreen}{RGB}{233,245,211}
+
+\DeclareFloatingEnvironment[placement=H]{frameenv} %separate from figure for endfloat compatibility
+\usepackage[framemethod=TikZ]{mdframed}
+\newenvironment{summary}{
+    \begin{frameenv} 
+    \begin{mdframed}[roundcorner=10pt,backgroundcolor=lightgreen,linecolor=darkgreen,%
+                     linewidth=4pt,innertopmargin=10px,innerbottommargin=10px]
+}{
+    \end{mdframed}\end{frameenv}
+}
+
+\newenvironment{invsummary}{
+    \begin{frameenv} 
+    \begin{mdframed}[roundcorner=10pt,backgroundcolor=darkgreen,%
+                     linewidth=0pt,innertopmargin=10px,innerbottommargin=10px]
+    \color{lightgreen}
+}{
+    \end{mdframed}\end{frameenv}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Figures %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
+%\usepackage[nomarkers,nolists]{endfloat}
+%\DeclareDelayedFloatFlavor{sidewaysfigure}{figure}
+%\renewcommand{\efloatseparator}{\mbox{}}
+
+\captionsetup{textfont={sf,md,small,color=darkgreen},labelfont={bf,sc,color=darkgreen},labelsep=newline,justification=centerlast}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Page headers %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\usepackage{fancyhdr} % I can't remember the reason why I avoided this package
+\usepackage{titleps}
+  \newpagestyle{main}{
+    \setheadrule{.55pt}%
+    \sethead{}%     odd-left
+            {\small\scshape Chapter \thechapter \ -- \chaptertitle}%   odd-center
+            {}%  odd-right
+    \setfoot{}%
+            {\thepage}%
+            {}%
+  }
+  \newpagestyle{numberonly}{
+    \sethead{}%     odd-left
+            {}%   odd-center
+            {}%  odd-right
+    \setfoot{}%
+            {\thepage}%
+            {}%
+  }
+  \pagestyle{main}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Clear to left page %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\makeatletter
+\newcommand*{\cleartoleftpage}{%
+  \clearpage
+    \if@twoside
+    \ifodd\c@page
+      \hbox{}\newpage
+      \if@twocolumn
+        \hbox{}\newpage
+      \fi
+    \fi
+  \fi
+}
+\makeatother
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Notation shortenings %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newcommand{\alphadot}{\dot{\alpha}} 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Section / Chapter fonts %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\usepackage{sectsty}
+\allsectionsfont{\bfseries\scshape\color{darkgreen}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Fancy Quotes %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\definecolor{quotemark}{gray}{0.7}
+\makeatletter
+\def\fquote{%
+    \@ifnextchar[{\fquote@i}{\fquote@i[]}%]
+           }%
+\def\fquote@i[#1]{%
+    \def\tempa{#1}%
+    \@ifnextchar[{\fquote@ii}{\fquote@ii[]}%]
+                 }%
+\def\fquote@ii[#1]{%
+    \def\tempb{#1}%
+    \@ifnextchar[{\fquote@iii}{\fquote@iii[]}%]
+                      }%
+\def\fquote@iii[#1]{%
+    \def\tempc{#1}%
+    \vspace{1em}%
+    \noindent%
+    \begin{list}{}{%
+         \setlength{\leftmargin}{0.1\textwidth}%
+         \setlength{\rightmargin}{0.1\textwidth}%
+                  }%
+         \item[]%
+         \begin{picture}(0,0)%
+         \put(-15,-5){\makebox(0,0){\scalebox{3}{\textcolor{quotemark}{``}}}}%
+         \end{picture}%
+         \begingroup\itshape}%
+ 
+ \def\endfquote{%
+ \endgroup\par%
+ \makebox[0pt][l]{%
+ \hspace{0.8\textwidth}%
+ \begin{picture}(0,0)(0,0)%
+ \put(15,15){\makebox(0,0){%
+ \scalebox{3}{\color{quotemark}''}}}%
+ \end{picture}}%
+ \ifx\tempa\empty%
+ \else%
+    \ifx\tempc\empty%
+       \ifx\tempb\empty
+           \hfill\rule{130pt}{0.5pt}\\\mbox{}\hfill\tempa%
+       \else
+           \hfill\rule{130pt}{0.5pt}\\\mbox{}\hfill\tempa\\\mbox{}\hfill\tempb%
+%   \else%
+%      \hfill\rule{130pt}{0.5pt}\\\mbox{}\hfill\tempa,\ \emph{\tempb},\ \tempc%
+   \fi\fi\par%
+   \vspace{1em}%
+ \end{list}%
+ }%
+ \makeatother

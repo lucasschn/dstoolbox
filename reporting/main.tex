@@ -1,0 +1,62 @@
+\documentclass[11pt]{report}
+\usepackage{Preamble} % see file Preamble.sty
+
+\begin{document}
+
+\begin{titlepage}
+    \newgeometry{margin=3cm}
+	\centering
+    \includegraphics[width=0.5\linewidth]{Images/epfl.png}\\[0.25cm] 	% University Logo
+    \textsc{\LARGE École Polytechnique Fédérale de Lausanne}\\ \vspace{\fill}
+    \textbf{\textsc{\fontsize{50}{50}\selectfont Report}}\\ \vspace{\fill}		
+	\textsc{\LARGE EPFL Coursework}\\[0.4cm]
+	\rule{\linewidth}{0.2 mm} \\[0.5 cm]
+	Lucas Schneeberger \\[2cm] \today
+\end{titlepage}
+\restoregeometry
+
+\thispagestyle{numberonly}
+
+\begin{summary}
+\section*{Abstract}
+
+You can choose colours in the preamble
+
+\lipsum[1]
+\end{summary}
+
+\begin{invsummary}
+Here's another environment for really highlighting bits of information
+
+\lipsum[2]
+\end{invsummary}
+
+\begin{fquote}[One or two arguments][Be sure not to leave a space before the text]Here's an environment for fancy quotations. \lipsum[3]
+\end{fquote}
+
+\tableofcontents
+
+\chapter{Introduction}
+\subfile{1-Introduction}
+
+\chapter{Methods}
+\subfile{2-Methods}
+
+\chapter{Results}
+\subfile{3-Results}
+
+\chapter{Discussion}
+\subfile{4-Discussion}
+
+\chapter{Conclusion}
+\subfile{5-Conclusion}
+
+\chapter{Nomenclature}
+\subfile{6-Nomenclature}
+
+\printbibliography
+
+\chapter{Annexes}
+\subfile{7-Annexes}
+
+\end{document}
