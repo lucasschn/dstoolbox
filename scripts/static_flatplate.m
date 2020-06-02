@@ -4,7 +4,7 @@ clc
 set(0,'DefaultFigureWindowStyle','docked')
 run('/Users/lucas/src/codes_smarth/labbook.m')
 % fy is normal to the airfoil, pointing downwards, fx is parallel to the
-% airfoil's chord.
+% airfoil's chord
 
 n = 26;
 c = 0.15; % chord length
@@ -12,7 +12,8 @@ s = 0.6; % span
 rho = 1000;
 U = 0.5;
 
-
+% /!\ ms115 is an old static curve with alpha<25, higher AoA are missing.
+% Use claibrate_polar.m instead.
 load('../data/2019_SH/20191009/loads/ms115mpt001.mat');
 fdata = [out(2).t out(2).forces(:,1) out(2).forces(:,2)];
 [t_NI, helpi_NI] = unique(fdata(:,1)); % time vector for the force data

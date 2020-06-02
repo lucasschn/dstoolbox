@@ -2,8 +2,10 @@ close all
 clear all
 clc
 set(0,'DefaultFigureWindowStyle','docked')
-run('data/2008_simcos/matlab/labbook.m')
-
+run('../data/2008_simcos/matlab/labbook.m')
+addpath('../src/model/')
+addpath('../src/common/')
+addpath('../src/lib/')
 %% flow parameters
 V = 50; %m/s
 Re = 9.2e5; % chord as characteristic length
@@ -16,11 +18,13 @@ M = 0.14;
 
 airfoil = Airfoil('OA209',0.3);
 %airfoil.steady = SteadyCurve(static_data(:,1),static_data(:,2));
-load('static_corr')
+load('../static_corr')
 airfoil.steady = SteadyCurve(mA,mCl_corr);
+airfoil.steady.plotCN()
+saveas(gcf,'../fig/static_OA209','png')
+
 %% Dynamic data
 nr=13;
-
 data = load(pressuredata(nr));
 
 
@@ -30,7 +34,7 @@ for k=1:length(data.Cl)
     CD(k) = sum(data.Cp(k,:)*data.xk);
 end
 
-load('dynamic_corr')
+load('../dynamic_corr')
 % assuming CL = CN
 pitching = PitchingMotion('alpha',Alpha,'CN',Cl_corr.*cosd(Alpha),'k',LB(nr).k,'freq',LB(nr).fosc,'V',50,'Ts',1/LB(nr).FS);
 pitching.setSinus(airfoil,deg2rad(LB(nr).alpha_0),deg2rad(LB(nr).alpha_1),LB(nr).fosc*2*pi);

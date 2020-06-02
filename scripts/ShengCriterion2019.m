@@ -11,7 +11,7 @@ addpath('../src/lib/')
 
 airfoil = Airfoil('flatplate',0.15);
 airfoil.r0 = 0.04;
-static = load('../data/static_flatplate');
+static = load('../static_flatplate');
 airfoil.steady = SteadyCurve(static.alpha,static.CN,14);
 
 %% Setting up the ramps

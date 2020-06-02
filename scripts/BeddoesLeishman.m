@@ -2,10 +2,13 @@ close all
 clear all
 clc
 set(0,'DefaultFigureWindowStyle','docked')
-addpath('plot_dir/')
+addpath('../plot_dir/')
+addpath('../src/model/')
+addpath('../src/common/')
+addpath('../src/lib/')
 %% Static data
 
-data = load('naca0012');
+data = load('../naca0012');
 data = data.naca0012;
 
 naca0012 = Airfoil('naca0012',0.1);
@@ -16,6 +19,8 @@ Re = M*a*naca0012.c/nu;
 
 % Look at OpenJetCorr if using simcos data
 naca0012.steady = SteadyCurve(data.alpha_st,data.CN_st);
+naca0012.steady.plotCN()
+saveas(gcf,'../fig/static_naca0012','png')
 
 %% Dynamic data
 
@@ -32,7 +37,7 @@ pitching.setCNsteady(naca0012.steady)
 % model parameters
 % naca0012.steady.fitKirchhoff();
 naca0012.steady.computeSlope();
-naca0012.steady.setCN0();
+naca0012.steady.setAlpha0();
 naca0012.steady.fitKirchhoff();
 naca0012.steady.plotKirchhoff();
 Tp = [1];

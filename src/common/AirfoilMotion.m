@@ -13,6 +13,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
         CN
         CC
         % experimental parts
+        CNsteady
         Ts
         t
         S % convective time
@@ -110,6 +111,29 @@ classdef AirfoilMotion < matlab.mixin.SetGet
                 obj.name = inputname(1);
             end
         end
+        function setCN(obj,CN)
+            if length(CN)==length(obj.alpha)
+                obj.CN = CN;
+            else
+                error('CN and alpha must be of same length.')
+            end
+        end
+        function setCNsteady(obj,varargin)
+            % Sets the static CN value for each time step. Pass a StedayCurve as an argument to automatically compute
+            % the static CN for each angle of attack alpha(t) of the
+            % current AirfoilMotion. Provide a vector describing CN(t) to
+            % manually set the static CN values for each alpha(t).
+            if isa(varargin{1},'SteadyCurve')
+                steady = varargin{1};
+                obj.CNsteady = interp1(steady.alpha,steady.CN,obj.alpha);
+            else
+                if length(varargin{1})==length(obj.alpha)
+                    obj.CNsteady = varargin{1};
+                else
+                    error('CN and alpha must be of same length. Provide a SteadyCurve object for resampling.')
+                end
+            end
+        end
         function beta = beta(obj)
             if obj.M < 1
                 beta = sqrt(1-obj.M^2);
@@ -144,7 +168,14 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             obj.computeAttachedFlow(airfoil,alphamode);
             obj.computeLEseparation(airfoil,Tp,alphamode);
             obj.computeTEseparation(airfoil,Tf,'BL');
-            obj.computeDS(Tv);
+            obj.computeDS(airfoil,Tv);
+        end
+        function BLBangga(obj,airfoil,Tp,Tf,Tv,alphamode)
+            obj.setCNsteady(airfoil.steady)
+            obj.computeAttachedFlow(airfoil,alphamode);
+            obj.computeLEseparation(airfoil,Tp,alphamode);
+            obj.computeTEseparation(airfoil,Tf,'BLBangga');
+            obj.computeDS(airfoil,Tv);
         end
         function BLSheng(obj,airfoil,Tf,Tv,alphamode)
             airfoil.steady.fitKirchhoff()
@@ -253,7 +284,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
                 case 'analytical'
                     obj.CNprime = airfoil.steady.slope*obj.analpha(1:length(Dp)) - Dp; % we pretend the flow is attached over the whole alpha-range
                 case 'experimental'
-                    obj.CNprime = airfoil.steady.slope*obj.alpha(1:length(Dp)) - Dp; % we pretend the flow is attached over the whole alpha-range
+                    obj.CNprime = obj.CNp - Dp; % we pretend the flow is attached over the whole alpha-range
             end
         end
         function computeTEseparation(obj,airfoil,Tf,model)
@@ -262,6 +293,8 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             
             % Kirchhoff law
             obj.CNk = kirchhoff(airfoil.steady,airfoil.steady.alpha);
+            
+            % Here a model for fp is selected
             obj.computeSepLag(airfoil,model)
             
             Df=zeros(size(obj.fp));
@@ -271,10 +304,10 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             obj.fpp = obj.fp - Df;
             
             n = min([length(obj.CNI),length(obj.CNC)]);
-            % TODO: Replace Kirchhoff model by interpolation of experimental 
+            % TODO: Replace Kirchhoff model by interpolation of experimental
             % static curve
-            obj.CNf = ((1+sqrt(obj.fpp(1:n)))/2).^2.*obj.CNC(1:n)+obj.CNI(1:n);
-            
+            obj.CNf = airfoil.steady.slope*((1+sqrt(obj.fpp(1:n)))/2).^2.*(obj.alphaE(1:n)-airfoil.steady.alpha0)+obj.CNI(1:n);
+            % seems like CNss goes to CNk value but I don't know why
             eta = 0.95;
             
             obj.CCf = eta*airfoil.steady.slope*obj.alphaE(1:n).^2.*sqrt(obj.fpp(1:n));
@@ -285,6 +318,19 @@ classdef AirfoilMotion < matlab.mixin.SetGet
                     obj.alphaf = obj.CNprime/airfoil.steady.slope; % effective separation point
                     obj.alphaf_rad = deg2rad(obj.alphaf);
                     obj.fp = seppoint(airfoil.steady,obj.alphaf);
+                case 'BLBangga'
+                    obj.alphaf = obj.CNprime/airfoil.steady.slope; % effective separation point
+                    obj.alphaf_rad = deg2rad(obj.alphaf);
+                    n = min([length(obj.alphaf),length(obj.CNsteady)]);
+                    % Bangga 2020, Eq. 33
+                    visc_ratio = obj.CNsteady(1:n)./(airfoil.steady.slope*(obj.alphaf(1:n)-airfoil.steady.alpha0inv)); % here the zero-lift AoA for inviscid flow is needed.                    
+                    if any(visc_ratio<0)
+                        error('Viscous ratio cannot be negative.')
+                    elseif any(visc_ratio>1)
+                        error('Viscous ratio cannot be bigger than 1.')
+                    else
+                        obj.fp = (2*sqrt(visc_ratio)-1).^2;
+                    end
                 case 'BLSheng'
                     load(sprintf('linfit_%s.mat',airfoil.name),'Talpha','alpha_ds0');
                     obj.computeAlphaLag(airfoil,Talpha)
@@ -296,20 +342,38 @@ classdef AirfoilMotion < matlab.mixin.SetGet
                     obj.fp = seppoint(airfoil.steady,obj.alpha_lag); % effective separation point
             end
         end
-        function computeDS(obj,Tv)
+        function computeDS(obj,airfoil,Tv)
             % Computes the final Beddoes-Leishman predicted CN for the instanciated pitching motion, after
             % having computed the attached-flow behavior and both TE and LE
             % separation with the homolog methods.
             obj.Tv = Tv;
             
             % vortex normal coeff
-            KN = (1+sqrt(obj.fpp)).^2/4;
+            KN = 1/4*(1+sqrt(obj.fpp)).^2;
             n = min([length(obj.CNC),length(KN)]);
             Cv = obj.CNC(1:n).*(1-KN(1:n));
-            
+            CNcrit = airfoil.steady.CN(airfoil.steady.alpha_ss);
+            dt = mean(diff(obj.t));
+            dalpha = diff(obj.alpha);
+            tau_v = zeros(size(obj.t));
+            % Following Bangga 2020, Eq. 35
+            for k = 1:length(obj.S)-1
+                if obj.CNprime > CNcrit
+                    tau_v(k) = tau_v(k-1)+0.45*dt/airfoil.c*obj.V;
+                elseif dalpha(k) >= 0
+                    tau_v(k) = 0;
+                else
+                    tau_v(k) = tau_v(k-1);
+                end
+            end
+            Tvl = 6;
             obj.CNv=zeros(size(Cv));
-            for n=2:length(Cv)
-                obj.CNv(n) = obj.CNv(n-1)*exp(-obj.DeltaS/Tv) + (Cv(n)-Cv(n-1))*exp(-obj.DeltaS/(2*Tv));
+            for k=2:length(Cv)
+                if tau_v(k) < Tvl
+                    obj.CNv(k) = obj.CNv(k-1)*exp(-obj.DeltaS/Tv) + (Cv(k)-Cv(k-1))*exp(-obj.DeltaS/(2*Tv));
+                else
+                    obj.CNv(k) = obj.CNv(k-1)*exp(-obj.DeltaS/Tv);
+                end
             end
             n = min([n,length(obj.CNf)]);
             % normal force coefficient
@@ -408,12 +472,20 @@ classdef AirfoilMotion < matlab.mixin.SetGet
                 grid on
             end
         end
-        function plotLB(obj)
+        function plotLB(obj,mode)
             figure
-            plot(obj.alpha(1:length(obj.CN)),obj.CN,'DisplayName','exp')
-            hold on
-            plot(obj.alpha(1:length(obj.CN_LB)),obj.CN_LB,'DisplayName','LB')
-            xlabel('\alpha (°)')
+            switch mode
+                case 'alpha'
+                    plot(obj.alpha(1:length(obj.CN)),obj.CN,'DisplayName','exp')
+                    hold on
+                    plot(obj.alpha(1:length(obj.CN_LB)),obj.CN_LB,'DisplayName','LB')
+                    xlabel('\alpha (°)')
+                case 'convectime'
+                    plot(obj.S(1:length(obj.CN)),obj.CN,'DisplayName','exp')
+                    hold on
+                    plot(obj.S(1:length(obj.CN_LB)),obj.CN_LB,'DisplayName','LB')
+                    xlabel('t_c (-)')
+            end
             ylabel('C_N')
             grid on
             legend('Location','NorthEast','FontSize',20)
@@ -460,6 +532,16 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             if save
                 saveas(gcf,'fig/f_curves.png')
             end
+        end
+        function plotStallOnset(obj,airfoil)
+            CN_static_stall = interp1(airfoil.steady.alpha,airfoil.steady.CN,airfoil.steady.alpha_ss);
+            figure
+            plot(obj.alpha(1:length(obj.CNprime)),obj.CNprime,'DisplayName','CN''')
+            hold on
+            plot(obj.alpha,CN_static_stall*ones(size(obj.alpha)),'r--','DisplayName','C_N critical')
+            grid on
+            xlabel('\alpha (°)')
+            ylabel('C_N''')
         end
         function plotSheng(obj,airfoil)
             figure

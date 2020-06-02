@@ -3,6 +3,7 @@ classdef SteadyCurve < handle
         alpha
         alpha_rad
         CN
+        CNinv
         CL
         alpha0 = 0; % alpha0 = alpha(CN=0)
         alpha_ss % denoted alpha_1 in Beddoes-Leishman
@@ -18,18 +19,21 @@ classdef SteadyCurve < handle
     methods
         % constructor
         function obj = SteadyCurve(alphaSteady,CNSteady,alpha_ss)
-            obj.alpha = alphaSteady;
+            obj.alpha = reshape(alphaSteady,[length(alphaSteady),1]);
             obj.alpha_rad = deg2rad(obj.alpha);
-            obj.CN = CNSteady;
+            obj.CN = reshape(CNSteady,[length(CNSteady),1]);            
             obj.CNalpha = diff(obj.CN)./diff(obj.alpha); % in 1/deg
             if nargin < 3
-                StallAngle(obj);
+                obj.computeStallAngle()
             else
                 obj.alpha_ss = alpha_ss;
             end
-            obj.computeSlope();
+            obj.computeSlope()
+            obj.setAlpha0()
+            obj.fitKirchhoff()
+            obj.computeSeparation()
         end
-        function StallAngle(obj)
+        function computeStallAngle(obj)
             % Static stall angle
             dalpha = diff(obj.alpha);
             ialphass = 1;
@@ -43,6 +47,8 @@ classdef SteadyCurve < handle
             % converted to degrees. 
             CNslopes = obj.CNalpha(obj.alpha<10); % 1/deg
             if isempty(CNslopes)
+                % assume inviscid thin airfoil
+                warning('The steady curve contains no angle of attack below 10 degrees. An inviscid thin airfoil is assumed to determine the pre-stall slope.')
                 obj.slope_rad = 2*pi; %1/rad
                 obj.slope = obj.slope_rad*pi/180; %1/deg
             else
@@ -50,6 +56,7 @@ classdef SteadyCurve < handle
                 obj.slope = sum(diff(alphaslopes).*CNslopes)/sum(diff(alphaslopes)); % mean weighted by the distance between two successive alphas
                 obj.slope_rad = obj.slope*180/pi;
             end
+            obj.CNinv = obj.slope*obj.alpha;
         end
         function plotCN(obj)
             figure
@@ -67,16 +74,21 @@ classdef SteadyCurve < handle
             ylabel('C_L')
         end
         function fitKirchhoff(obj)
-            obj.computeSlope();
+            % Defines parameters for inital conditions (which is a very
+            % good guess of the optimal value)
             stall_slope_minus = obj.CNalpha(find(obj.alpha<obj.alpha_ss,1,'last'));
             stall_slope_plus = obj.CNalpha(find(obj.alpha>obj.alpha_ss,1,'first'));
             S10 = 0.3*deg2rad(obj.alpha_ss)/(2*sqrt(0.7))*(((1+sqrt(0.7))/2)^2-stall_slope_minus/obj.slope_rad).^(-1);
             S20 = 0.66*deg2rad(obj.alpha_ss)/(2*sqrt(0.7))*(((1+sqrt(0.7))/2)^2-stall_slope_plus/obj.slope_rad).^(-1);
+            
+            % Optimizes S1,S2 so that the normal coefficient modelled with seppoint and Kirchhoff 
+            % equals the experimental static CN
             opts = optimset('Display','off'); % replace off by iter for max. details
             Kfunc = @(x,alpha) kirchhoff(obj,obj.alpha,x);
-            
             [fitparams,res,~,exitflag] = lsqcurvefit(Kfunc,[S10 S20],obj.alpha,obj.CN,[0 0],[10 10],opts);
             
+            % Displays a message and assigns optimal params depending on
+            % the solutation flag
             switch(exitflag)
                 case 1
                     disp('lsqcurvefit converged to a solution.')
@@ -107,18 +119,19 @@ classdef SteadyCurve < handle
         function plotKirchhoff(obj)
             figure
             plot(obj.alpha,obj.CN,'DisplayName','exp')
+            hold on 
+            plot(obj.alpha,obj.CNinv,'DisplayName','inviscid')
             if isempty(obj.S1)
                 warning('Kirchhoff has not yet been fitted to this SteadyCurve .')
             else
-                hold on
                 plot(obj.alpha,kirchhoff(obj,obj.alpha),'DisplayName','Kirchhoff model')
             end
             grid on
-            legend('Location','Best')
+            legend('Location','SouthEast')
             xlabel('\alpha (°)')
             ylabel('C_N')
         end
-        function setCalpha0(obj,alpha0)
+        function setAlpha0(obj,alpha0)
             if nargin == 2
                 if isnan(alpha0)
                     error('alpha0 cannot be NaN.')
@@ -131,10 +144,46 @@ classdef SteadyCurve < handle
             fprintf('alpha0 is equal to %.4f \n',obj.alpha0)
         end
         function computeSeparation(obj)
+            obj.f = seppoint(obj,obj.alpha); 
+            if size(obj.alpha) == size(obj.CN)
+                [~,imax] = max(size(obj.CN));
+                if imax == 2
+                    obj.alpha = reshape(obj.alpha,[length(obj.alpha), 1]);
+                    obj.CN = reshape(obj.CN,[length(obj.CN), 1]);
+                end
+            else
+                error('alpha and CN vectors must have the same orientation.')
+            end
             % computes the experimental separation point using inverted Kirchhof model,
             % ref: Leishman, Principles of Helicopter Aerodynamics 2nd Ed., eq. 7.106 page 405
-            unbounded_fexp = (2*sqrt(obj.CN./(obj.slope*(obj.alpha - obj.alpha0)))-1).^2; 
+            unbounded_fexp = (2*sqrt(obj.CN./(obj.slope*(obj.alpha - obj.alpha0)))-1).^2;
             obj.fexp = max([zeros(size(obj.CN)),min([ones(size(obj.CN)), unbounded_fexp],[],2)],[],2);
+            disp('fexp = ')
+            disp(obj.fexp)
+            disp('CN = ')
+            disp(obj.CN)
         end
+        function plotSeparation(obj)
+            if isempty(obj.fexp)
+                obj.computeSeparation()
+            end
+            figure
+            plot(obj.alpha,obj.fexp,'DisplayName','f_{exp}')
+            hold on 
+            plot(obj.alpha,obj.f,'DisplayName','f')          
+            grid on 
+            xlabel('\alpha (°)')
+            ylabel('x/c (-)')
+        end
+        function plotViscousRatio(obj)
+            figure
+            % must be f here because fexp is computed by inverted Kirchhoff
+            % model
+            plot(obj.f,obj.CN./obj.CNinv,'LineWidth',1,'DisplayName','visc. ratio')
+            axis([0 1 0 1])
+            grid on
+            xlabel('f (x/c)')
+            ylabel('\kappa (-)')
+        end     
     end
 end

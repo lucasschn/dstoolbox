@@ -1,6 +1,5 @@
 classdef PitchingMotion < AirfoilMotion
     properties
-        CNsteady
         mean_rad
         amp_rad
         freq
@@ -63,26 +62,7 @@ classdef PitchingMotion < AirfoilMotion
             end
             obj.k = obj.omega*airfoil.c/(2*obj.V);
             obj.rt = obj.k*obj.amp_rad*cos(obj.omega*obj.t);
-        end
-        function setCN(obj,CN)
-            if length(CN)==length(obj.alpha)
-                obj.CN = CN;
-            else
-                error('CN and alpha must be of same length.')
-            end
-        end
-        function setCNsteady(obj,varargin)
-            if isa(varargin{1},'SteadyCurve')
-                steady = varargin{1};
-                obj.CNsteady = interp1(steady.alpha,steady.CN,obj.alpha);
-            else
-                if length(varargin{1})==length(obj.alpha)
-                    obj.CNsteady = varargin{1};
-                else
-                    error('CN and alpha must be of same length. Provide a SteadyCurve object for resampling.')
-                end
-            end
-        end
+        end     
         function computeAnalyticalImpulsiveLift(obj,Talpha)
             % analytical alphas in degrees
             danalpha_rad = diff(obj.analpha_rad);
@@ -115,16 +95,6 @@ classdef PitchingMotion < AirfoilMotion
             grid on
             title('Lift attached flow')
         end        
-        function plotStallOnset(obj,airfoil)
-            CN_static_stall = interp1(airfoil.steady.alpha,airfoil.steady.CN,airfoil.steady.alpha_static_stall);
-            figure
-            plot(obj.alpha(1:length(obj.CNprime)),obj.CNprime,'DisplayName','CN''')
-            hold on
-            plot(obj.alpha,CN_static_stall*ones(size(obj.alpha)),'r--','DisplayName','C_N critical')
-            grid on
-            xlabel('\alpha (°)')
-            ylabel('C_N''')
-        end
         function plotLB(obj,xaxis)
             figure
             switch xaxis
