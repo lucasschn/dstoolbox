@@ -18,10 +18,10 @@ airfoil.steady = SteadyCurve(static.alpha,static.CN,14);
 
 c = [18,14,22,67,68,69,70,26,27,28,29,84,85,86,87,30,89];
 
-for k=1:length(c)
-    data = load(loadmat(LB(c(k)).ms,LB(c(k)).mpt),'raw','inert','avg','zero');
-    raw = data.raw;
+for k=1:length(c)    
     if LB(c(k)).ms >= 13 && LB(c(k)).ms < 100
+        data = load(loadmat(LB(c(k)).ms,LB(c(k)).mpt),'raw','inert','avg','zero');
+        raw = data.raw;
         inert = data.inert;
         inert.alpha = raw.alpha(raw.t>=0);
         msname = sprintf('ms%03impt%i',LB(c(k)).ms,LB(c(k)).mpt);
@@ -31,6 +31,8 @@ for k=1:length(c)
         Cl = inert.Cl;
         Cd = inert.Cd;
     else
+        data = load(loadmat(LB(c(k)).ms,LB(c(k)).mpt),'raw');
+        raw = data.raw;
         msname = sprintf('ms%03impt%i',LB(c(k)).ms,LB(c(k)).mpt);
         assignin('base',msname,RampUpMotion('alpha',raw.alpha,'t',raw.t,'V',LB(c(k)).U));
         evalin('base',sprintf('%s.setName()',msname))
