@@ -1,32 +1,16 @@
 \section{Initialization of the separation function parameters for lest squares optimization}
 
-The separation point position can be described as a function of the pitch angle. In most cases, this function is injective. This assumption is shown to fail at moderate Reynolds numbers as shown in \autocite{tank_possibility_2017}. However, in the range of Reynolds numbers considered by Leishman and Beddoes, this assumption is made. In the Beddoes-Leishman model presented in \autocite{leishman_semi-empirical_1989}, the following equation is used: 
-
-\begin{equation}
-f(\alpha) = 
-     \begin{cases}
-       1-0.3\exp(\frac{\alpha-\alpha_1}{S_1}), &\quad \alpha < \alpha_{ss}\\
-        0.04+0.66\exp(\frac{\alpha_1-\alpha}{S_2}). &\quad \alpha > \alpha_{ss}\\
-     \end{cases}
-\label{eq:seppoint}
-\end{equation}
-
-\noindent $S_1$ and $S_2$ are fitting parameters that characterize the abruptness of the stall. These parameters are optimized for the normal coefficient given by the Kirchhoff model (described in Eq. \eqref{eq:k irchhoff} using the result of Eq. \eqref{eq:seppoint} as an argument.  This modelled $C_N$ is then fitted to the experiment normal coefficient in a least squares sense. In order to give meaningful initialization value to the parameters $S_1$ and $S_2$ for the optimization process, it is useful to consider the derivative of Eq. \eqref{eq:seppoint}, shown below:
+In order to give meaningful initialization value to the parameters $S_1$ and $S_2$ of Equation \eqref{eq:seppoint} for the optimization process described in section \ref{section:kirchhoff}, it is useful to consider the derivative of the separation point function with respect to $\alpha$, shown below:
 
 \begin{equation} 
-f'(\alpha) = 
+\frac{df}{d\alpha} = 
      \begin{cases}
-       -\frac{0.3}{S_1}\exp(\frac{\alpha-\alpha_{ss}}{S_1},) &\quad \alpha < \alpha_{ss}\\
+       -\frac{0.3}{S_1}\exp(\frac{\alpha-\alpha_{ss}}{S_1},) &\quad \alpha \leq \alpha_{ss}\\
         -\frac{0.66}{S_2}\exp(\frac{\alpha_{ss}-\alpha}{S_2}) &\quad \alpha > \alpha_{ss}\\
      \end{cases}
 \end{equation}
 
-Let us now recall the Kirchhoff model for trailing edge separation:
-\begin{equation}
-C_N (\alpha) = C_ {N_{\alpha}} \left(\frac{1+\sqrt{f}}{2}\right)^2 \alpha
-\end{equation}
-
-\noindent where $C_{N_\alpha}$ is the static lift curve slope in the pre-stall regime. By taking its derivative with respect to the angle of attack
+By taking its derivative with respect to the angle of attack
 
 \begin{equation}
 \frac{dC_N}{d\alpha} = C_{N_{\alpha}} \left[\left(\frac{1+\sqrt{f}}{2}\right)^2+\frac{f'(\alpha)}{2f}\alpha \right]

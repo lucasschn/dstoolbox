@@ -1,6 +1,4 @@
-Most studies about dynamic stall consider airfoils describing a pitching motion, i.e. the evolution of the angle of attack in time is a sinusoidal curve and the hinge is at the quarter chord. The reason this is the application to helicopters, where a forward motion makes the blades undergo a sinusoidally varying angle of attack. However, the influence of the unsteadiness is easier to asses when the pitching velocity is constant. That lead the present study to use ramp-up motions, i.e. the evolution of the angle of attack in time is a ramp. 
-
-A collection of ramps was considered with the reduced pitch rate $r$ varying from ... to ... . The experimental time evolution of the pitch angle was then used as an input to the Beddoes-Leishman model, the Goman-Khrabrov model, the original Sheng-BL model and the Sheng-BL model with exponential fit. These four models are detailed in the sections below. 
+Most early studies about dynamic stall consider airfoils describing a pitching motion, i.e. the evolution of the angle of attack in time is a sinusoidal curve and the hinge is at the quarter chord. The reason this is the application to helicopters, where a forward motion makes the blades undergo a sinusoidally varying angle of attack. However, the influence of the unsteadiness is easier to asses when the pitching velocity is constant. That lead the present study to use ramp-up motions, i.e. the evolution of the angle of attack in time is a ramp. 
 
 \section{Static characteristics}
 
@@ -8,22 +6,28 @@ The dynamic stall properties are best defined as the sum of static stall propert
 
 \subsection{NACA0012}
 
-\begin{figure}[h]
+The NACA0012 airfoil has been repeatedly taken as an example for dynamic stall studies. Indeed, in Beddoes work (\cite{beddoes_representation_1983}, \cite{leishman_semi-empirical_1989}) NACA 0012 alongside with NACA 23012 was chosen. In Sheng's work (\cite{sheng_new_2006}, \cite{sheng_improved_2007}), several airfoils are compared but the NACA 0012 is always present.
+
+A good explanation of the difficulties encountered when determining the static properties of the airfoil NACA 0012 at moderate Reynolds number (Re between $10^4$ and $10^5$) is given in \cite{tank_possibility_2017}.
+
+\begin{wrapfigure}{r}{10cm}
 \centering
-\includegraphics[width=0.5\linewidth]{static_naca0012.png}
+\includegraphics[width=10cm]{static_naca0012.png}
 \caption{Normal coefficient curve for airfoil NACA0012, in steady-state from angles of attack from $\alpha=-5 \deg$ to $17 \deg$}
 \label{fig:static_flatplate}
-\end{figure}
+\end{wrapfigure}
 
 
 \subsection{OA209}
-% check wrapfigure
-\begin{figure}[h]
+
+The ONERA OA209 airfoil was used in \cite{mulleners_onset_2010}. This airfoil exhibits smooth stall properties, caused by progressive trailing edge separation.
+
+\begin{wrapfigure}{r}{10cm}
 \centering
-\includegraphics[width=0.5\linewidth]{static_OA209.png}
-\caption{Normal coefficient curve for airfoil OA209, in steady-state from angles of attack from $\alpha=-5 \deg$ to $30 \deg$}
+\includegraphics[width=10cm]{static_OA209.png}
+\caption{Normal coefficient curve for airfoil OA209, in steady-state from angles of attack from $\alpha=3 \deg$ to $24 \deg$}
 \label{fig:static_flatplate}
-\end{figure}
+\end{wrapfigure}
 
 \subsection{Modified flatplate airfoil}
 
@@ -31,28 +35,75 @@ The static properties of the modified flatplate airfoil were determined experime
 
 After calibration was done, the static loads were measured at $Re=7.5\cdot10^4$. The measurements were taken from an angle of attack eof $-5 \deg$ to $30 \deg$ with a step of $1 \deg$ in between measurement point. The signal coming from the load cell was average for 10s in order to yield a single force at each pitch position. The series was repeated five times and the normal coefficient value was then averaged to a single one for each angle of attack. 
 
-\begin{figure}[h]
+\begin{wrapfigure}{r}{10cm}
 \centering
-\includegraphics[width=0.5\linewidth]{static_flatplate.png}
-\caption{Normal coefficient curve for the modified flat plate airfoil, in steady-state from angles of attack from $\alpha=3 \deg$ to $24 \deg$}
+\includegraphics[width=10cm]{static_flatplate.png}
+\caption{Normal coefficient curve for the modified flat plate airfoil, in steady-state from angles of attack from $\alpha=-5 \deg$ to $30 \deg$}
 \label{fig:static_flatplate}
-\end{figure}
+\end{wrapfigure}
+
+\subsection{Modelling of the static charateristics}
+\label{section:kirchhoff}
+
+% see p. 10 of Beddoes 1983
+Beddoes introduced in \cite{beddoes_representation_1983} what he called the \textit{Kirchhoff flow approximation}. This model gave a relationship for the angle of attack, the separation point and the normal coefficient.
+
+The separation point is described as a function of the angle of attack $\alpha$ by the following expression : 
+
+\begin{equation}
+	f(\alpha) = 
+		\begin{cases}
+		1-0.3\exp(\frac{\alpha-\alpha_{ss}}{S_1}), &\quad \alpha \leq \alpha_{ss}\\
+		0.04+0.66\exp(\frac{\alpha_{ss}-\alpha}{S_2}). &\quad \alpha > \alpha_{ss}\\
+		\end{cases}
+	\label{eq:seppoint}
+\end{equation}
+
+\noindent $S_1$ and $S_2$ are fitting parameters that characterize the abruptness of the stall. These parameters are optimized for the normal coefficient given by the Kirchhoff model (described in Eq. \eqref{eq:k irchhoff} using the result of Eq. \eqref{eq:seppoint} as an argument. This modelled $C_N$ is finally fitted to the experiment normal coefficient in a least squares sense thanks to the Matlab command \texttt{lsqcurvefit}.
+
+Originally, $\alpha_{ss}$ in Eq. \ref{eq:seppoint} is denoted by $\alpha_1$ and is added to the paramteres to be optimized. However, this parameter is often found to be very close to the static stall angle $\alpha_ss$. As a result, it was replaced by the experimentally observed static stall angle. 
+
+The approximation for the normal coefficient as a function of the boundary layer separation location and $\alpha$ is the following: 
+
+\begin{equation}
+	C_N (\alpha) = C_ {N_{\alpha}} \left(\frac{1+\sqrt{f}}{2}\right)^2 \alpha
+	\label{eq:kirchhoff}
+\end{equation}
+
+\noindent where $C_{N_\alpha}$ is the static lift curve slope in the pre-stall regime. This model can sometimes be problematic, as discussed in section \ref{LSB}.
+
+\iffalse
+\begin{tikzpicture}[
+	nonterminal/.style={
+		% The shape:
+		rectangle,
+		% The size:
+		minimumsize=6mm,
+		% The border: 
+		very thick,
+		draw=black,
+		% The filling:
+		color=white,						
+	}]
+	\node [nonterminal] {\alpha}
+\end{tikzpicture}
+\fi
 
 \section{Dynamic stall model}
 
 \subsection{Beddoes-Leishman model}
 
-The original Beddoes-Leishman is best explained in \autocite{tank_possibility_2017}. However, for the convenience of referring to equations numbers in the following sections, a brief overview is provided in this one. 
+The original Beddoes-Leishman is best explained in \autocite{tank_possibility_2017}. However, for the convenience of referring to equation numbers in the following sections, a brief overview is provided in this one. 
 
 \subsubsection{Attached flow behavior}
 
-The attached regime is defined as the angles of attack for which the boundary layer follows the airfoil curvature without exhibiting separation, typically between -10 and 10 degrees. The force under this conditions is the sum of two components, the circulatory and the impulsive lift: 
+The attached regime is defined as the angles of attack for which the boundary layer follows the airfoil curvature without exhibiting separation, typically between -10 and 10 degrees. The force under this conditions is a linear function of the angle of attack and is the sum of two components, the circulatory and the impulsive lift: 
 
 \begin{equation}
 C_N = C_N^C + C_N^I
 \end{equation}
 
-\noindent where
+\noindent where the circulatory force is related to the added circulation due to a sudden deflection
 
 \begin{equation}
 C_N^C = C_{N_\alpha} \alpha_{E}
@@ -71,7 +122,7 @@ C_{N}^{I}=\frac{4 K_{\alpha} T_{l}}{M}\left(\frac{\Delta \alpha}{\Delta t}-D\rig
 \label{eq:impulsive}
 \end{equation}
 
- The circulatory term is related to the added circulation due to a sudden deflection and the impulsive term corresponds to the pressure difference caused by the mass displacement. The impulsive term is also called \texttt{added mass} in an aeroelasticity context.
+ The impulsive term corresponds to the pressure difference caused by the mass displacement. It is also called \texttt{added mass} in an aeroelasticity context.
 
 \subsubsection{Leading edge separation}
 
@@ -97,7 +148,7 @@ f(\alpha)=\left\{\begin{array}{ll}
 \label{eq:seppoint}
 \end{equation}
 
-In Equation \eqref{eq:seppoint}, $S_1$ and $S_2$ are constants controlling the abruptness of stall. They are optimized in a least-square sense so that the experimental static normal coefficient is as close as possible to the one computed using Kirchhoff model, i.e. Eq \eqref{eq:seppoint} \& \eqref{eq:kirchhoff}. 
+In Eq. \eqref{eq:seppoint}, $S_1$ and $S_2$ are constants controlling the abruptness of stall. They are optimized in a least-square sense so that the experimental static normal coefficient is as close as possible to the one computed using Kirchhoff model, i.e. Eq. \eqref{eq:seppoint} \& \eqref{eq:kirchhoff}. 
 
 \begin{equation}
 C_{N} = C_{N_{\alpha}}\left(\frac{1+\sqrt{f}}{2}\right)^{2} \alpha_{E}+C_{N}^{I}

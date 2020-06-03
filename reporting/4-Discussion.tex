@@ -2,10 +2,13 @@
 
 % TODO: Discuss the inadequacy of Kirchhoff model for our flatplate airfoil.
 
-\section{LSB}
+\section{Laminar Separation Bubble}
+\label{LSB}
 
 It can be seen from the PIV measurements that a laminar separation bubble (LSB) forms on the leadind edge of the modified flat plate for angles of attack between $\alpha=$ and $\alpha=$. One can then ask what is the pertinence of defining $f(\alpha)$ attributing a unique boundary layer separation point to each angle of attack. Indeed, in the case of a LSB, the boundary layer is separated at some early location but reattaches downstream. If the early separation point is retained as $f$, the resulting lift will not be the same as if the boundary layer does not reattach later. 
 
-
 \section{Static model}
-The Kirchhoff model is inapplicable to the modified flat plate airfoil, most likely due to the presence of the laminar separation bubble. Indeed, we observe a sudden drop in lift when the separation bubble disappears that cannot be represented by Kirchhoff model. As a result, the ratio between the separated and attached $C_N$ is clearly not represented well by $0.25(1+\sqrt{f})^2$, as shown in Figure \ref{•}.
+
+In all the presented models, the separation point position is described as an angle of attack in some form similar to Equation \eqref{eq:seppoint}. In most cases, this function is injective. This assumption is shown to fail at moderate Reynolds numbers as shown in \autocite{tank_possibility_2017}. However, in the range of Reynolds numbers considered by Leishman and Beddoes, this assumption is made. In the Beddoes-Leishman model presented in \autocite{leishman_semi-empirical_1989}, Equation \eqref{eq:seppoint} is used.
+
+Indeed, the Kirchhoff model is inapplicable to the modified flat plate airfoil, most likely due to the presence of the laminar separation bubble. Indeed, we observe a sudden drop in lift when the separation bubble disappears that cannot be represented by Kirchhoff model. As a result, the ratio between the separated and attached $C_N$ is clearly not represented well by $0.25(1+\sqrt{f})^2$, as shown in Figure \ref{•}.
