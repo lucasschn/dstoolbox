@@ -181,13 +181,13 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             airfoil.steady.fitKirchhoff()
             obj.computeAttachedFlow(airfoil,alphamode);
             obj.computeTEseparation(airfoil,Tf,'BLSheng');
-            obj.computeDS(Tv);
+            obj.computeDS(airfoil,Tv);
         end
         function BLexpfit(obj,airfoil,Tf,Tv,alphamode)
             airfoil.steady.fitKirchhoff()
             obj.computeAttachedFlow(airfoil,alphamode);
             obj.computeTEseparation(airfoil,Tf,'BLSheng with expfit');
-            obj.computeDS(Tv);
+            obj.computeDS(airfoil,Tv);
         end
         function computeAttachedFlow(obj,airfoil,alphamode)
             obj.S = 2*obj.V*obj.t/airfoil.c;
@@ -352,13 +352,13 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             KN = 1/4*(1+sqrt(obj.fpp)).^2;
             n = min([length(obj.CNC),length(KN)]);
             Cv = obj.CNC(1:n).*(1-KN(1:n));
-            CNcrit = airfoil.steady.CN(airfoil.steady.alpha_ss);
+            CNcrit = airfoil.steady.CN(airfoil.steady.alpha == airfoil.steady.alpha_ss);
             dt = mean(diff(obj.t));
             dalpha = diff(obj.alpha);
             tau_v = zeros(size(obj.t));
-            % Following Bangga 2020, Eq. 35
-            for k = 1:length(obj.S)-1
-                if obj.CNprime > CNcrit
+            % Following Bangga 2020, Eq. 35 (first tau is always zero, last two points have no CNprime defined)
+            for k = 2:length(obj.S)-2
+                if obj.CNprime(k) > CNcrit
                     tau_v(k) = tau_v(k-1)+0.45*dt/airfoil.c*obj.V;
                 elseif dalpha(k) >= 0
                     tau_v(k) = 0;
@@ -489,6 +489,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             ylabel('C_N')
             grid on
             legend('Location','NorthEast','FontSize',20)
+            title(obj.name)
             ax = gca;
             ax.FontSize = 20;
         end
