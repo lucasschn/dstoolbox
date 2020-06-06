@@ -1,52 +1,19 @@
-Most early studies about dynamic stall consider airfoils describing a pitching motion, i.e. the evolution of the angle of attack in time is a sinusoidal curve and the hinge is at the quarter chord. The reason this is the application to helicopters, where a forward motion makes the blades undergo a sinusoidally varying angle of attack. However, the influence of the unsteadiness is easier to asses when the pitching velocity is constant. That lead the present study to use ramp-up motions, i.e. the evolution of the angle of attack in time is a ramp. 
+In this chapter, the LB model described in \cite{leishman_semi-empirical} and some of its variations based on contributions from Sheng \cite{sheng_modified_2008} and Bangga \cite{bangga_improved_2020} are exposed. A innovative varation of Sheng's model is also presented. 
 
-\section{Static characteristics}
+In the second section, the origin of the experimental data is mentioned and for the EPFL data, the experimental setup is briefly explained.
 
-The dynamic stall properties are best defined as the sum of static stall properties and a correction due to the unsteady motion. Following this approach, it is then obvious that in order to have a accurate prediction for the dynamic loads, the static data must be reliable. 
+\section{Dynamic stall modeling}
 
-\subsection{NACA0012}
+As any successful dynamic stall model is made two things: a robust prediction of the static airfoil characteriostics andf a correction due to the unsteadiness of the flow, this chapter will be split in two parts. First the static properties of the NACA 0012, the ONERA OA 209 and a flatplate with modified 
 
-The NACA0012 airfoil has been repeatedly taken as an example for dynamic stall studies. Indeed, in Beddoes work (\cite{beddoes_representation_1983}, \cite{leishman_semi-empirical_1989}) NACA 0012 alongside with NACA 23012 was chosen. In Sheng's work (\cite{sheng_new_2006}, \cite{sheng_improved_2007}), several airfoils are compared but the NACA 0012 is always present.
+Thanks to the indicial formulation adopted by Beddoes since the beginning of his dynamic stall model, the model is suitable for any arbitrary time evolution of the angle of attack. However, most early validation experiments about dynamic stall consider airfoils undergoing a pitching motion, where the evolution of the angle of attack in time is a sinusoidal curve and the pitch axis is at the quarter chord. This is due to the application to helicopters, where a forward motion makes the blades undergo a sinusoidally varying angle of attack. However, the influence of the unsteadiness is easier to asses when the pitching velocity is constant. That lead the present study to use ramp-up motions, i.e. $\alpha(t)$ is a ramp.
 
-A good explanation of the difficulties encountered when determining the static properties of the airfoil NACA 0012 at moderate Reynolds number (Re between $10^4$ and $10^5$) is given in \cite{tank_possibility_2017}.
-
-\begin{wrapfigure}{r}{10cm}
-\centering
-\includegraphics[width=10cm]{static_naca0012.png}
-\caption{Normal coefficient curve for airfoil NACA0012, in steady-state from angles of attack from $\alpha=-5 \deg$ to $17 \deg$}
-\label{fig:static_flatplate}
-\end{wrapfigure}
-
-
-\subsection{OA209}
-
-The ONERA OA209 airfoil was used in \cite{mulleners_onset_2010}. This airfoil exhibits smooth stall properties, caused by progressive trailing edge separation.
-
-\begin{wrapfigure}{r}{10cm}
-\centering
-\includegraphics[width=10cm]{static_OA209.png}
-\caption{Normal coefficient curve for airfoil OA209, in steady-state from angles of attack from $\alpha=3 \deg$ to $24 \deg$}
-\label{fig:static_flatplate}
-\end{wrapfigure}
-
-\subsection{Modified flatplate airfoil}
-
-The static properties of the modified flatplate airfoil were determined experimentally. The load cell was calibrated with no inflow velocity to compensate for the load cell offset, inertial and  buoyancy forces. The calibration test was run for 10s and the signal was averaged to a single calibration value for each axis. This value is then subtracted from the signals during experiments. The calibration procedure is repeated every day so that the calibration values are valid only on the same day, as external perturbations such as atmospheric pressure might change from one day to another. 
-
-After calibration was done, the static loads were measured at $Re=7.5\cdot10^4$. The measurements were taken from an angle of attack eof $-5 \deg$ to $30 \deg$ with a step of $1 \deg$ in between measurement point. The signal coming from the load cell was average for 10s in order to yield a single force at each pitch position. The series was repeated five times and the normal coefficient value was then averaged to a single one for each angle of attack. 
-
-\begin{wrapfigure}{r}{10cm}
-\centering
-\includegraphics[width=10cm]{static_flatplate.png}
-\caption{Normal coefficient curve for the modified flat plate airfoil, in steady-state from angles of attack from $\alpha=-5 \deg$ to $30 \deg$}
-\label{fig:static_flatplate}
-\end{wrapfigure}
 
 \subsection{Modelling of the static charateristics}
 \label{section:kirchhoff}
 
 % see p. 10 of Beddoes 1983
-Beddoes introduced in \cite{beddoes_representation_1983} what he called the \textit{Kirchhoff flow approximation}. This model gave a relationship for the angle of attack, the separation point and the normal coefficient.
+Beddoes introduced in \cite{beddoes_representation_1983} what he called the \textit{Kirchhoff flow approximation}\footnote{This model is sometimes also called \textit{Kirchhoff-Helmholtz model}}. This model gave a relationship for the angle of attack, the separation point and the normal coefficient. According to Beddoes in \cite{beddoes_representation_1983}, this methodology can also be applied to the forward progress of adverse pressure gradients with $f$ representing the location of no wall shear stress. This model can sometimes be problematic, as discussed in section \ref{LSB}.
 
 The separation point is described as a function of the angle of attack $\alpha$ by the following expression : 
 
@@ -59,9 +26,9 @@ The separation point is described as a function of the angle of attack $\alpha$ 
 	\label{eq:seppoint}
 \end{equation}
 
-\noindent $S_1$ and $S_2$ are fitting parameters that characterize the abruptness of the stall. These parameters are optimized for the normal coefficient given by the Kirchhoff model (described in Eq. \eqref{eq:k irchhoff} using the result of Eq. \eqref{eq:seppoint} as an argument. This modelled $C_N$ is finally fitted to the experiment normal coefficient in a least squares sense thanks to the Matlab command \texttt{lsqcurvefit}.
+The form of this function is actually worth some considerations. It is a piecewise defined function, starting at $f=1$ for $\alpha=0\deg$ and with the transition between the two parts happening at $\alpha=\alpha_{ss}$ and $f=0.7$ by construction. The function admits a horizontal asymptot for $\alpha \rightarrow \infty$ at the value of the first term of the function for $\alpha > \alpha_{ss}$, i.e. 0.04. The factor in front of the exponential is $f(\alpha_{ss})-f(\alpha \rightarrow \infty)=0.7-0.04=0.66$. The constants $S_1$ and $S_2$ are fitting parameters that characterize the abruptness of the stall, through controlling the rate of the negative exponential increase of the first part and the positive exponential decay of the second part. These parameters are optimized in a least-squares sense for the normal coefficient given by the Kirchhoff model (described in Eq. \eqref{eq:kirchhoff} using the result of Eq. \eqref{eq:seppoint} as an argument. This modelled $C_N$ is finally fitted to the experiment normal coefficient in a least squares sense thanks to the Matlab command \texttt{lsqcurvefit}.
 
-Originally, $\alpha_{ss}$ in Eq. \ref{eq:seppoint} is denoted by $\alpha_1$ and is added to the paramteres to be optimized. However, this parameter is often found to be very close to the static stall angle $\alpha_ss$. As a result, it was replaced by the experimentally observed static stall angle. 
+Originally, $\alpha_{ss}$ in Eq. \ref{eq:seppoint} is denoted by $\alpha_1$ and is added to the paramteres to be optimized. However, this parameter is often found to be very close to the static stall angle $\alpha_{ss}$, as mentioned in Leishman \& Beddoes paper \cite{leishman_semi-empirical_1989}. As a result, it was replaced by the experimentally observed static stall angle. 
 
 The approximation for the normal coefficient as a function of the boundary layer separation location and $\alpha$ is the following: 
 
@@ -70,7 +37,7 @@ The approximation for the normal coefficient as a function of the boundary layer
 	\label{eq:kirchhoff}
 \end{equation}
 
-\noindent where $C_{N_\alpha}$ is the static lift curve slope in the pre-stall regime. This model can sometimes be problematic, as discussed in section \ref{LSB}.
+\noindent where $C_{N_\alpha}$ is the static lift curve slope in the pre-stall regime. By comparing Beddoes \cite{beddoes_representation_1983} and Leishman \& Beddoes, it can be seen that this expression is used indifferently for $C_N$ and $C_L$.
 
 \iffalse
 \begin{tikzpicture}[
@@ -88,8 +55,6 @@ The approximation for the normal coefficient as a function of the boundary layer
 	\node [nonterminal] {\alpha}
 \end{tikzpicture}
 \fi
-
-\section{Dynamic stall model}
 
 \subsection{Beddoes-Leishman model}
 
@@ -110,9 +75,9 @@ C_N^C = C_{N_\alpha} \alpha_{E}
 \label{eq:circulatory}
 \end{equation}
 
-\noindent where $C_{N_\alpha}$ is the slope of the $C_N(\alpha)$ polar curve in the pre-stall regime and with the effective angle of attack $\alpha_E = \alpha - X - Y$, where $X$, $Y$ are deficiency functions obtained with a mid-point approximation of the Duhamel's integral, as explained in \autocite{leishman_principles_2000}:
+\noindent where $C_{N_\alpha}$ is the slope of the $C_N(\alpha)$ polar curve in the pre-stall regime and with the effective angle of attack $\alpha_E = \alpha - X - Y$, where $X$, $Y$ are deficiency functions obtained with a mid-point approximation of the Duhamel's integral, as explained in \autocite{leishman_principles_2006}:
 
-\begin{eqnarray}{l}
+\begin{eqnarray}
 X(n)= & X(n-1) \exp \left(-b_{1} \beta^{2} \Delta S\right)+A_{1} \Delta \alpha \exp \left(-b_{1} \beta^{2} \Delta S / 2\right) \\
 Y(n)= & Y(n-1) \exp \left(-b_{2} \beta^{2} \Delta S\right)+A_{2} \Delta \alpha \exp \left(-b_{2} \beta^{2} \Delta S / 2\right)
 \end{eqnarray}
@@ -126,10 +91,16 @@ C_{N}^{I}=\frac{4 K_{\alpha} T_{l}}{M}\left(\frac{\Delta \alpha}{\Delta t}-D\rig
 
 \subsubsection{Leading edge separation}
 
+According to Niven \& Galbraith \cite{niven_modelling_1997}, stall onset can occur in pure subsonic conditions either by leading edge separation or trailing edge separation. Any general model for dynamic stall must therefore include both. 
+
+Leading edge separation is known to occur when the pressure at leading edge goes down to a critical pressure, depending on the Mach number (see Evans \& Mort correlation in \cite{sheng_new_2006}). Additionally, in \cite{leishman_semi-empirical_1989}, Leishman \& Beddoes make the assumption the pressure distribution is directly related to the normal force coefficient. Simultaneously, the undsteadiness of the flow induces a delay in the boundary layer and therefore pressure gradients are delayed with respect to the steady case. Therefore, a first-order lag is applied to the normal coefficient to define $C_N^{\prime}$:
+
 \begin{equation}
 \frac{C_N^{\prime}(s)}{C_N(s)} = \frac{1}{1+T_p s}
-\label{•}  
+\label{eq:cnprime_laplace}  
 \end{equation}
+
+The above equation is in Laplace domain. A numerical solution in time domain is given in Section \ref{section:duhamel}. $C_N^{\prime}$ controls the onset of stall by being a direct measure of the pressure distribution on the airfoil and is used to define the effective angle of attack $\alpha_f$ in the following manner:
 
 \begin{equation}
 \alpha_f = \frac{C_N^{\prime}}{C_{N_\alpha}}
@@ -137,25 +108,8 @@ C_{N}^{I}=\frac{4 K_{\alpha} T_{l}}{M}\left(\frac{\Delta \alpha}{\Delta t}-D\rig
 \end{equation}
 
 \subsubsection{Trailing edge separation}
-As the angle of attack increases, stall is approached. Depending on the airfoil shape, stall can occur through progressive separation of the boundary layer from the trailing edge towards the fore. This phenomenon can be modeled thanks to the equations presented in this section. 
-The position of the boundary layer separation $f$ is a function of the angle of attack, and the relation between the two is usually difficult to find experimentally. However, Beddoes suggests in \autocite{beddoes_representation_1983} to model $f(\alpha)$ using the following relationship:
 
-\begin{equation}
-f(\alpha)=\left\{\begin{array}{ll}
-1-0.3 \exp \left(\frac{\alpha-\alpha_{ss}}{S_{1}}\right), & \alpha \leq \alpha_{ss} \\
-0.04+0.66 \exp \left(\frac{\alpha_{ss}-\alpha}{S_{2}}\right), & \alpha >\alpha_{ss}
-\end{array}\right.
-\label{eq:seppoint}
-\end{equation}
-
-In Eq. \eqref{eq:seppoint}, $S_1$ and $S_2$ are constants controlling the abruptness of stall. They are optimized in a least-square sense so that the experimental static normal coefficient is as close as possible to the one computed using Kirchhoff model, i.e. Eq. \eqref{eq:seppoint} \& \eqref{eq:kirchhoff}. 
-
-\begin{equation}
-C_{N} = C_{N_{\alpha}}\left(\frac{1+\sqrt{f}}{2}\right)^{2} \alpha_{E}+C_{N}^{I}
-\label{eq:kirchhoff}
-\end{equation}
-
-$S1$ and $S2$ are then reused to compute the delayed separation point $f^{\prime}$ from the efficient angle of attack $\alpha_f$:
+As the angle of attack increases, stall is approached. Depending on the airfoil shape, stall can occur through progressive separation of the boundary layer from the trailing edge forwards, as already presented in Section \ref{section:kirchhoff}. Optimal $S1$ and $S2$ from equation \eqref{eq:seppoint} are then reused to compute the delayed separation point $f^{\prime}$ from the efficient angle of attack $\alpha_f$:
 
 \begin{equation}
 f^{\prime}(\alpha)=\left\{\begin{array}{ll}
@@ -164,14 +118,13 @@ f^{\prime}(\alpha)=\left\{\begin{array}{ll}
 \end{array}\right.
 \end{equation}
 
-A first order lag is then applied to $f^{\prime}$ to compute $f^{\prime}$ via $T_f$. 
+A first order lag is then applied to $f^{\prime}$ to compute $f^{\prime \prime}$ via $T_f$. 
 
 \begin{equation}
 \frac{f^{\prime \prime (s)}}{f^{\prime} (s)} = \frac{1}{1 + T_f s}
-\label{•}
 \end{equation}
 
-And the modified-Kirchhoff normal coefficient is computed using Kirchhoff relationship \eqref{eq:kirchoff} applied to $f^{\prime \prime}$. 
+And the modified-Kirchhoff normal coefficient $C_N^f$ is computed using Kirchhoff relationship \eqref{eq:kirchhoff} applied to $f^{\prime \prime}$ for the circulatory part, summed with the impulsive contribution.
 
 \begin{equation}
 	C_{N}^{f}=C_{N_{\alpha}}\left(\frac{1+\sqrt{f^{\prime \prime}}}{2}\right)^{2} \alpha_{E}+C_{N}^{I}\label{eq:mod_kirchoff}
@@ -179,17 +132,48 @@ And the modified-Kirchhoff normal coefficient is computed using Kirchhoff relati
 
 \subsubsection{Dynamic stall and vortex shedding}
 
+The phenomenon of dynamic stall is well known for inducing a leading edge vortex (LEV) \cite{mccroskey_dynamic_1976},\cite{mulleners_onset_2010},\cite{mulleners_dynamic_2013}. The LEV participates in increasing the lift until a certain time after ultrapassing of the static stall angle, after which the vortex is shed into the wake. The vortex lift follows the implementation of Bangga et al. \cite{bangga_improved_2020}:
+
+\begin{equation}
+	C_{N}^{v}(n)=
+	\begin{cases}
+		C_{N}^{v}(n-1) \exp \left(-\frac{\Delta t_c}{T_{v}}\right)+\left[C_{v}(n)-C_{v}(n-1)\right] \exp \left(-\frac{\Delta t_c}{2 T_{v}}\right), & \text{if } 0<\tau_v<T_{vl} \\
+		C_{N}^{v}(n-1) \exp \left(-\frac{\Delta t_c}{T_{v}}\right), & \text{otherwise} \\
+	\end{cases}	
+	\label{eq:}
+\end{equation}
+
+\noindent where $\tau_v$ is the adimensional vortex time, defined as follows: 
+
+\begin{equation}
+	\tau_{v}(n)=\left\{\begin{array}{ll}
+		\tau_{v}(n-1)+0.45 \frac{\Delta t}{c} V, & \text { if } \quad C_N^{\prime}>C_{N}^{CRIT} \\
+		0, & \text { if } \quad C_N^{\prime}<C_{N}^{CRIT} \quad \text { and } \quad \Delta \alpha_{n} \geq 0 \\
+		\tau_{v}(n-1), & \text { otherwise }
+		\end{array}\right.
+\end{equation}
+
+\noindent where $C_N^{CRIT}=C_N(\alpha_{ss})$, the normal coefficient at stall in the static case. 
 
 \subsection{Sheng criterion}
+\label{section:sheng_criterion}
 
-Sheng defines the lagged angle of attack, $\alpha'$ as
+Sheng et al. observe in their 2006 article \cite{sheng_new_2006} that the dynamic stall criterion introduced by Beddoes \& Leishman does not work well for low Mach numbers ($M<0.3$). They instead define a new stall criterion based 
+on a lagged angle of attack, $\alpha'$. They first establish a linear relationship between the dynamic stall angle $\alpha_{ds}$ and the reduced pitch rate $r$. 
+
+\begin{equation}
+	\alpha_{ds}(r) = T_\alpha r+\alpha_{ds,0}
+	\label{eq:linfit}
+\end{equation}
+
+\noindent and then define the lagged angle of attack $\alpha'$ as:
 
 \begin{equation}
 \Delta \alpha' = \Delta \alpha\left[1-e^{-t_c/T_\alpha} \right]
 \label{eq:alpha_lag}
 \end{equation}
 
-\noindent with $t_c=tc/U_{\infty}$, the convective time, and the stall criterion for an airfoil in ramp-up motion as 
+\noindent with $t_c=t \cdot c/U_{\infty}$, the convective time and $T_\alpha$ the slope of the linear fit in Equation \ref{eq:linfit}. The stall criterion for an airfoil in ramp-up motion is therefore: 
 
 \begin{equation}
 \alpha' > \alpha_{crit}
@@ -201,32 +185,28 @@ In Sheng's article, $\alpha_{crit}$ varies with $r$.
 \begin{equation}
 \alpha_{crit} =
 \begin{cases}
-\alpha_{ds0}, &\quad \text{if} r \geq r_0 \\
-\alpha_{ds0} + (\alpha_{ds0}-\alpha_{ss}) \frac{r}{r_0}, &\quad \text{if} r < r_0 \\
+\alpha_{ds0}, &\quad \text{if} \quad r \geq r_0 \\
+\alpha_{ds0} + (\alpha_{ds0}-\alpha_{ss}) \frac{r}{r_0}, &\quad \text{if} \quad r < r_0 \\
 \end{cases}
 \end{equation}
 
-\noindent with $r_0$ generally around 0.01.
+\noindent with $r_0$ generally around 0.01. In order to integrate this criterion in the LB dynamic stall model, $\alpha'$ is used a replacement for $\alpha_f$ to define the delayed separation point $f^{\prime}$. As in Leishman \& Beddoes \cite{leishman_semi-empirical_1989}, $f^{\prime \prime}$ is then computed from $f^{\prime}$ and $C_N^f$ is found using Kirchhoff model, using Eq. \eqref{eq:mod_kirchoff}. 
 
 \subsection{Modified Sheng Criterion}
 
-The time at static stall angle $t_{ss}$ is defined as the time $t$ at which the airfoil passes the static stall angle $\alpha_{ss}$.
+The time at static stall angle $t_{ss}$ is defined as the time $t$ at which the airfoil reaches the static stall angle $\alpha_{ss}$.
 
 \begin{equation}
 \alpha_{ss} = \alpha(t_{ss})
 \end{equation}
 
 \begin{equation}
-t_{ds} = t_{ss} +  \Delta t_1 + \Delta t_2
-\end{equation}
-
-\begin{equation}
-\alpha_{ds} = \alpha(t_{ds})
+	\alpha_{ds} = \alpha(t_{ds})
 \end{equation}
 
 \subsubsection{Exponential fit of the dynamic stall angle}
 
-In \autocite{sheng_new_2006},  Sheng et al. define $\alpha_{crit}$ equal to  $\alpha_{ds,0}$, the y-intercept of the linear fitting of $\alpha_{ds}(r)$. They then define a  $T_\alpha$ constant with respect to the reduced pitch rate $r$ from the slope of the linear fitting. However, it has been noticed that the range of validity of this hypothesis is restrained to $0.01<r<0.05$. Our goal in allowing $T_\alpha$ to vary with $r$ is to improve the range of validity of the stall prediction method. 
+Since observations from Mulleners \& Raffel \cite{mulleners_onset_2010}, \cite{mulleners_onset_2012}, \cite{mulleners_dynamic_2013} and Sheng et al. \cite{sheng_new_2006}, \cite{} were restricted to $r<0.05$, it appears necessary to investigate what happens for higher pitch rates. From experimental observation, it has been noticed that the dynamic stall angle tends to reach a plateau for $r>0.05$, as shown in Figure  \ref{fig:alphads_r}. This lead to the modification of Sheng criterion with an exponential fit for $\alpha_{ds}(r)$. 
 
 \begin{figure}[h]
 \centering
@@ -235,42 +215,40 @@ In \autocite{sheng_new_2006},  Sheng et al. define $\alpha_{crit}$ equal to  $\a
 \label{fig:alphads_r}
 \end{figure}
 
-It has been seen from ramp-up experiments that the dynamic stall angle increases a lot with an increase in $r$ at small $r$ and only a little with $\Delta r$ at higher $r$. It even becomes constant at high $r$, as shown in Figure \ref{fig:alphads_r}. based on this observation, we use an exponential fit to identify the dependency between the dynamic stall angle $\alpha_{ds}$ and $r$ of the form: 
+Based on this observation, we use an exponential fit to identify the dependency between the dynamic stall angle $\alpha_{ds}$ and $r$ of the form: 
 
 \begin{equation}
 \alpha_{ds}(r) = A-(A-\alpha_{ss})e^{-Br} = A(1-e^{-Br})+\alpha_{ss}e^{-Br}
 \label{eq:alpha_ds_r}
 \end{equation}
 
-\noindent where the value of $A$ defines the plateau ($r \rightarrow \infty$) and the limit as $r \rightarrow 0$ is equal to $\alpha_{ss}$. $B$ is the rate of increase in between these two limits. The main remaining challenge now is to find a way to express $T_\alpha$ as a function of $r$ from these two coefficients $A$ and $B$.
+\noindent where the value of $A$ defines the plateau ($r \rightarrow \infty$). The formulation is consistan with the static observatio, since the limit as $r \rightarrow 0$ (static case) is equal to $\alpha_{ss}$. The variable $B$ is the rate of increase in between these two limits. This observation must now be adapted to Sheng's formulation to integrate it in a modified LB model. In order to do so, the remainin remaining challenge is to find a way to express $T_\alpha$ as a function of $r$ from these two coefficients $A$ and $B$.
 
-\subsubsection{Expression for the delay time constant}
-
-% TODO: This is not the case anymore since alpha_crit is not the same for Sheng's model and mine
-In order to be a good generalization of Sheng's original method, the new $T_\alpha$ needs to take the value predicted by Sheng somewhere in the range of validity $0.01<r<0.05$. For the given example, this means $T_\alpha$ should pass around  4.6 in this range.
-We know from the section about first order LTI systems that if the ideal angle of attack describes a motion such that 
-
- 
-\begin{equation}
-\alpha(t) = \alphadot(t-t_0)
-\end{equation}
-
-\noindent then the lagged angle attack will be of the form:
+\subsubsection{Expression for the pitch angle delay constant}
+As the slope of $\alpha_ds(r)$ is not anymore constant, $T_\alpha$ has to be allowed to vary with $r$. To find a suitable equation to compute the necessary $T_{\alpha}$, the response to a ramp imput $\alpha(t) = \alphadot(t-t_0)$ is investigated. 
+We know from Section \ref{section:ramp_input} that the lagged angle attack will be of the form:
 
 \begin{equation}
 \alpha'(t) = \alphadot\left[t- \tau(1-e^{-t/ \tau})\right]
 \end{equation}
 
-\noindent $\tau$ being the equivalent of $T_\alpha$ but in time domain. In other words, $T_\alpha = \frac{\tau c}{2U_\infty}$.
+\noindent $\tau$ being the dimensional equivalent of $T_\alpha$ in time domain. In other words, $T_\alpha = \tau c/(2V)$.
 
-Evaluating this function at $t=t_{ds}$ and remembering the stall criterion presented in Equation \eqref{eq:stall_criterion}, we obtain : 
+Evaluating this function at $t=t_{ds}$ and choosing $\alpha_{crit}=\alpha_{ss}$ in Equation \eqref{eq:stall_criterion}, we obtain : 
 
 \begin{equation}
 \alpha'(t_{ds}) = \alphadot\left[t_{ds} - \tau(1-e^{-t_{ds} / \tau})\right] = \alpha_{ss}
 \label{eq:alpha_ds_tau}
 \end{equation}
 
-This equation can be solved for $\tau$ if the static properties of the airfoil and the time of dynamic stall $t_{ds}$ are known.
+If the static properties of the airfoil and the time of dynamic stall $t_{ds}$ are known, this equation can be solved with a numerical solver for $\tau$, as shown on Figure \ref{fig:Talpha_r}.
+
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=\textwidth]{Sheng/Talpha_r.png}
+	\caption{$T_\alpha$ as a function of $r$}
+	\label{fig:Talpha_r}
+\end{figure}
 
 \subsubsection{Algorithm for pitch-rate-dependent time constant}
 
@@ -282,10 +260,77 @@ This equation can be solved for $\tau$ if the static properties of the airfoil a
 \item When $\alpha' > \alpha_{crit}$, the stall criterion is attained and dynamic stall can be considered to have started. 
 \end{enumerate}
 
-\subsubsection{Modified Beddoes-Leishman}
+\subsubsection{Modified Leishman-Beddoes}
 
-Once $\alpha'$ has been obtained through the above-described procedure, it can be used to define the delayed separation point $f'$ in Beddoes-Leishman model.   
+As already mentioned in Section \ref{section:sheng_criterion}, once $\alpha'$ has been obtained through the above-described procedure, it can be used to define the delayed separation point $f'$ in LB model.   
 
-\subsection{Switching model}
+\section{Experimental setup}
 
-All models up to now were based on a superposition of different components to normal force. It is therefore interesting to look at the performances of a model based on a switching between submodels. The switch would be triggered by the attainment of the stall and reattachment criterion.
+% TODO: decide which static characteristics to be presented depending on the airfoil characteristics
+
+The present work makes use of three different datasets. One is the sinusoidally pitching NACA 0012 airfoil of Leishman \& Beddoes taken from \cite{leishman_semi-empirical_1989}. Another one is the also sinusoidally pitching ONERA OA209 airfoil from Mulleners \& Raffel in \cite{mulleners_dynamic_2013} from the SIMCOS testing facility. Finally, the last dataset is the ramp-up motions of a flat plate from Henne et al. presented in \cite{henne_dynamic_2018} from the SHARX water channel at EPFL. Therefore, the static and charactestics of the three involved airfoils will be presented, followed by a brief description of the experimental conditions for the dynamic data.
+
+\begin{tabular}{|c|c|c|c|c|c|c|}
+	Authors & Facility, Location & Airfoil & Motion type & Re & M& Fluid \\
+	\hline
+	Leishman \& Beddoes & A.R.A., Bedford, UK & NACA 0012 & pitching & $4\cdot10^6$ & 0.4 & air \\
+	% TODO: find the test location for the SIMCOS project
+	Mulleners \& Raffel & SIMCOS, Göttingen, Germany & OA209 & pitching & $9.2 \cdot 10^5$ & 0.14 & air \\
+	Henne et al. & SHARX, Lausanne, Switzerland & flat plate & ramp-up & $7.5 \cdot 10^4$ & $\approx 0$ & water \\
+\end{tabular}
+
+\subsection{Static characteristics}
+
+The dynamic stall properties are best defined as the sum of static stall properties and a correction due to the unsteady motion. With this approach, it becomes then obvious that to have a accurate prediction for the dynamic loads, the static data must be reliable. 
+
+\subsubsection{NACA 0012}
+
+The NACA 0012 airfoil has been repeatedly taken as an example for dynamic stall studies. Indeed, in Beddoes work (\cite{beddoes_representation_1983}, \cite{leishman_semi-empirical_1989}) NACA 0012 alongside with NACA 23012 was chosen. In Sheng's work (\cite{sheng_new_2006}, \cite{sheng_improved_2007}), several airfoils are compared but the NACA 0012 is always present. NACA 0012 is also taken as an example in more recent works such as the one from Rocchio et al. \cite{rocchio_simple_2020}.
+
+A good explanation of the difficulties encountered when determining the static properties of the airfoil NACA 0012 at moderate Reynolds number (Re between $10^4$ and $10^5$) is given in \cite{tank_possibility_2017}.
+
+\begin{wrapfigure}{r}{10cm}
+    \centering
+    \includegraphics[width=10cm]{static_naca0012.png}
+    \caption{Normal coefficient curve for airfoil NACA 0012, in steady-state from angles of attack from $\alpha=-5 \deg$ to $17 \deg$}
+    \label{fig:static_flatplate}
+\end{wrapfigure}
+
+\subsubsection{OA209}
+
+The ONERA OA209 airfoil was used in \cite{mulleners_onset_2010}. This airfoil exhibits smooth stall properties, caused by progressive trailing edge separation.
+
+\begin{wrapfigure}{r}{10cm}
+    \centering
+    \includegraphics[width=10cm]{static_OA209.png}
+    \caption{Normal coefficient curve for airfoil OA209, in steady-state from angles of attack from $\alpha=3 \deg$ to $24 \deg$}
+    \label{fig:static_flatplate}
+\end{wrapfigure}
+
+\subsubsection{Flat plate}
+
+The static properties of the modified flat plate airfoil were determined experimentally in the SHARX recirculating water channel at EPFL, similar to the one described by Henne et al. in \cite{henne_dynamic_2018}. The airfoil is a flat plate with chord length of $c=0.15$ m, span $b=0.6$. The flat plate has a rounded trailing edge and its leading edge is sharpened with a 45 $\deg$ bevel on both side, as shown on Figure  
+
+
+
+The load cell was calibrated with no inflow velocity to compensate for the load cell offset, inertial and  buoyancy forces. The calibration test was run for 10s and the signal was averaged to a single calibration value for each axis. This value is then subtracted from the signals during experiments. The calibration procedure is repeated every day so that the calibration values are valid only on the same day, as external perturbations such as atmospheric pressure might change from one day to another. 
+
+After calibration was done, the static loads were measured at $Re=7.5\cdot10^4$. The measurements were taken from an angle of attack eof $-5 \deg$ to $30 \deg$ with a step of $1 \deg$ in between measurement point. The signal coming from the load cell was average for 10s in order to yield a single force at each pitch position. The series was repeated five times and the normal coefficient value was then averaged to a single one for each angle of attack. 
+
+\begin{wrapfigure}{r}{10cm}
+\centering
+\includegraphics[width=10cm]{static_flatplate.png}
+\caption{Normal coefficient curve for the modified flat plate airfoil, in steady-state from angles of attack from $\alpha=-5 \deg$ to $30 \deg$}
+\label{fig:static_flatplate}
+\end{wrapfigure}
+
+\subsection{Dynamic stall experiments}
+
+\subsubsection{NACA 0012}
+
+Data for the NACA 0012 was taken from Leishman \& Beddoes 1989 article \cite{leishman_semi-empirical_1989}. The airfoil is describing a pitching oscillation with a reduced frequency of $k=0.1$ and a Mach number of $M=0.3$.
+
+\subsubsection{OA 209}
+
+\subsubsection{Flat plate}
+
