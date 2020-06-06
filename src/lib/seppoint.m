@@ -9,7 +9,7 @@ function f = seppoint(steady,alpha)
 % and are determined using static data.
 
 f1 = 1 - 0.3*exp((alpha-steady.alpha_ss)/steady.S1);
-f2 = 0.04 +.66*exp((steady.alpha_ss-alpha)/steady.S2);
+f2 = 0.13 +(0.7-0.13)*exp((steady.alpha_ss-alpha)/steady.S2);
 f = (alpha<=steady.alpha_ss).*f1 + (alpha>steady.alpha_ss).*f2; % f1 is weighted by 1 if alpha<alpha_ss and f2 by 0 and vice-versa
 end
 

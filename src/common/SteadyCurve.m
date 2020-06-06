@@ -170,8 +170,9 @@ classdef SteadyCurve < handle
             figure
             plot(obj.alpha,obj.fexp,'DisplayName','f_{exp}')
             hold on 
-            plot(obj.alpha,obj.f,'DisplayName','f')          
+            plot(obj.alpha,obj.f,'DisplayName','f') 
             grid on 
+            legend('Location','SouthWest')
             xlabel('\alpha (°)')
             ylabel('x/c (-)')
         end
