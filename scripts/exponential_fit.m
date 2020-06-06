@@ -39,29 +39,16 @@ for k=1:length(c)
         Cl = raw.Cl;
         Cd = raw.Cd;
     end
-    % Butterworth filter
-    fc = 35;
     fs = 1/ramp.Ts;
-    [b,a] = butter(5,fc/(fs/2));
-    Cl_filtered = filter(b,a,Cl);
-    Cd_filtered = filter(b,a,Cd);
-    ramp.setAlphaDot(LB(c(k)).alphadot) % in degrees
-    % Moving average filter
-    Cl_ff = movmean(Cl_filtered,30);
-    Cd_ff = movmean(Cd_filtered,30);
-    % Chebychev type-II filter
-    fp = 1/3;
-    [b,a] = cheby2(6,20,36*fp/(fs/2));
-    Cl_fff = filter(b,a,Cl_ff);
-    Cd_fff = filter(b,a,Cd_ff);
-    ramp.setCL(Cl_fff);
-    ramp.setCD(Cd_fff);
-    %     ramp.setCL(Cl);
-    %     ramp.setCD(Cd);
+    Clfff = myFilter(Cl,fs);
+    Cdfff = myFilter(Cd,fs);
+    ramp.setCL(Clfff);
+    ramp.setCD(Cdfff);
     ramp.computeAirfoilFrame();
     ramp.isolateRamp();
     % Define stall
     ramp.findExpOnset();
+    ramp.setAlphaDot(LB(c(k)).alphadot) % in degrees
     ramp.setPitchRate(airfoil);
 end
 
@@ -85,7 +72,6 @@ alpha_ss = airfoil.steady.alpha_ss;
 
 figure(fig)
 subplot(311)
-% how not to create a new legend entry every time?
 plot(r,alpha_lag_ds,'.','DisplayName','\alpha_{ds} (lagged)','MarkerSize',20)
 plot(r,ones(size(r)).*alpha_ss,'--','DisplayName','\alpha_{ss}','LineWidth',2);
 legend('FontSize',20,'Location','SouthEast')
