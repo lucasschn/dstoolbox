@@ -6,7 +6,7 @@ function [alpha_lag_ds,Talpha] = Expfit(airfoil,ramp)
 % then computed and all the created data is ploted on a reduced
 % pitch rate vs pitch angle graph.
 % initialization of the vectors
-
+debug = false;
 % abreviations
 if isempty(ramp.r)
     error('Reduced pitch rate is not determined.')
@@ -24,7 +24,7 @@ alpha_ds_r = @(x,r) x(1)-(x(1)-alpha_ss)*exp(-x(2)*r);
 t0 = interp1(ramp.analpha,ramp.t,0);
 if ~isempty(ramp.i_CConset)
     if ramp.alpha_CConset > alpha_ss
-        t_ds = ramp.t(ramp.i_CConset)-t0;
+        t_ds = ramp.t(ramp.i_CConset)-t0; % time since start of ramp
         alpha_ds = ramp.alpha_CConset;
     elseif ramp.alpha_CLonset > alpha_ss
         warning('CL was used to define DS for r=%.3f',ramp.r)
@@ -33,10 +33,19 @@ if ~isempty(ramp.i_CConset)
     else
         error('The dynamic stall angle is lower than the static stall angle.')
     end
+    if debug
+        fprintf('From experiment : alpha_ds = %.2f°\n',alpha_ds)
+        fprintf('From experiment : t_ds = %.2fs\n',t_ds)
+    end
 else % rely on the expfit
-    load(sprintf('expfit_%s',airfoil.name),'A','B')
+    load(sprintf('/Users/lucas/Documents/EPFL/PDM/expfit_%s',airfoil.name),'A','B')
+    fprintf('A = %.2f, B = %.2f \n',A,B)
     alpha_ds = alpha_ds_r([A B],r);
-    t_ds = alpha_ds/ramp.alphadot + t0;
+    t_ds = alpha_ds/ramp.alphadot; % time since start of ramp
+    if debug
+        fprintf('From expfit : alpha_ds = %.2f° \n',alpha_ds)
+        fprintf('From expfit : t_ds = %.2fs \n',t_ds)
+    end
 end
 
 if isempty(alpha_ss)

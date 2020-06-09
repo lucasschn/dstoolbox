@@ -34,11 +34,12 @@ function setLinFit(airfoil,varargin)
         pl = [(polyval(pr,r0)-alpha_ss)/r0 alpha_ss];
         Talpha = pi/180*pr(1);
         alpha_ds0 = pr(2);
-        save(sprintf('linfit_%s',airfoil.name),'Talpha','alpha_ds0')
+        save(sprintf('../linfit_%s',airfoil.name),'Talpha','alpha_ds0','r0')
         
-        %% Compute alpha_ds_lag according to Sheng's definition of Talpha
+        %% Compute alpha_ds_lag and alpha_crit
         
         alpha_lag_ds = -ones(size(varargin));
+        alpha_crit = -ones(size(varargin));
         % looking for the value of alpha_lag(alpha) at the point alpha_ds
         for k=1:length(varargin)
             ramp = varargin{k};
@@ -50,21 +51,11 @@ function setLinFit(airfoil,varargin)
             else % if alpha_continuous_grow is defined
                 alpha_lag_ds(k) = interp1(ramp.alpha_continuous_grow,ramp.alpha_lag(ramp.i_continuous_grow),alpha_ds(k));
             end
+        % define the critical alpha
+        alpha_crit(k) = computeAlphaCrit(airfoil,alpha_ds0,ramp.r);
         end
 
-        %% Define the critical alpha
-        % initialization of the vectors
-        alpha_crit = -ones(size(varargin)); % varargin is a set of RampUpMotions
         
-        % definition of alpha_crit depending on r (only for Sheng)
-        for k=1:length(varargin)
-            ramp = varargin{k};
-            if ramp.r >= r0
-                alpha_crit(k) = alpha_ds0;
-            else % if r<r0
-                alpha_crit(k) = alpha_ss + (alpha_ds0 - alpha_ss)*ramp.r/r0;
-            end
-        end
         
         %% Plot the alpha_ds_r figure
         
