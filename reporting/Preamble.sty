@@ -17,20 +17,22 @@
 \usepackage[table]{xcolor}
 \usepackage{lipsum}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Bibliography %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\usepackage[backend=biber,sorting=ynt,urldate=long,style=apa,citestyle=numeric-comp]{biblatex}
+%\usepackage[backend=biber,sorting=ynt,urldate=long,style=draft,citestyle=numeric-comp]{biblatex}
 % recommend style=numeric-comp or style=authoryear-comp
-\addbibresource{bibliography.bib}
+% \addbibresource{bibliography.bib}
 \usepackage[breaklinks=true,linktocpage=true]{hyperref} % adds hyperlinks to references
-\setcounter{biburllcpenalty}{7000}
-\setcounter{biburlucpenalty}{8000}
-\usepackage{url}
-\usepackage{csquotes}
+%\setcounter{biburllcpenalty}{7000}
+%\setcounter{biburlucpenalty}{8000}
+%\usepackage{url}
+%\usepackage{csquotes}
+\usepackage[square,numbers]{natbib}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Symbols + Math %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \usepackage{amsmath} % extensive math options
 \usepackage{amsfonts}
 \usepackage{nicefrac} 
 \usepackage{amssymb}
+\usepackage{siunitx}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Figures %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \usepackage{graphicx}
@@ -88,7 +90,8 @@
 %\DeclareDelayedFloatFlavor{sidewaysfigure}{figure}
 %\renewcommand{\efloatseparator}{\mbox{}}
 
-\captionsetup{textfont={sf,md,small,color=darkgreen},labelfont={bf,sc,color=darkgreen},labelsep=newline,justification=centerlast}
+\captionsetup{textfont={sf,md,small,color=darkgreen},labelfont={bf,sc,color=darkgreen},labelsep=newline}
+% use option justification=centerlast for centered captions
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Page headers %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %\usepackage{fancyhdr} % I can't remember the reason why I avoided this package

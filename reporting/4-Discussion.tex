@@ -9,21 +9,21 @@ It can be seen from the PIV measurements that a laminar separation bubble (LSB) 
 
 \section{Static model}
 
-In all the presented models, the separation point position is described as an angle of attack in some form similar to Equation \eqref{eq:seppoint}. In most cases, this function is injective. This assumption is shown to fail at moderate Reynolds numbers as shown in \autocite{tank_possibility_2017}. However, in the range of Reynolds numbers considered by Leishman and Beddoes, this assumption is made. In the Beddoes-Leishman model presented in \autocite{leishman_semi-empirical_1989}, Equation \eqref{eq:seppoint} is used.
+In all the presented models, the separation point position is described as an angle of attack in some form similar to Equation \eqref{eq:seppoint}. In most cases, this function is injective. This assumption is shown to fail at moderate Reynolds numbers \cite{tank_possibility_2017}. However, in the range of Reynolds numbers considered by Leishman and Beddoes, this assumption is made. In Leishman-Beddoes model  \cite{leishman_semi-empirical_1989}, Equation \eqref{eq:seppoint} is used.
 
 Indeed, the Kirchhoff model is inapplicable to the modified flat plate airfoil, most likely due to the presence of the laminar separation bubble. Indeed, we observe a sudden drop in lift when the separation bubble disappears that cannot be represented by Kirchhoff model. As a result, the ratio between the separated and attached $C_N$ is clearly not represented well by $0.25(1+\sqrt{f})^2$, as shown in Figure \ref{•}.
 
 \section{Linear relationship between the pitch rate and the dynamic stall time delay}
 
-Mulleners \& Raffel in \cite{mulleners_onset_2010} divide the time frame between $t_{ss}$ and $t_{ds}$, the dynamic stall time delay, in two parts. The first one, $\Delta_1$, goes from the $t_ss$ to the time at which the small vortices forming all along the airfoil surface rise and collapse together. This phase is termed the primary instability stage. The second part, the vortex formation stage, runs from the small vortices collapse until the moment at wich the LEV is shed into the wake, $t_ds$.
+Mulleners \& Raffel in \cite{mulleners_onset_2010} divide the time frame between $t_{ss}$ and $t_{ds}$, the dynamic stall time delay, in two parts. The first one, $\Delta t_1$, goes from the $t_ss$ to the time at which the small vortices forming all along the airfoil surface rise and collapse together. This phase is termed the primary instability stage. The second part, the vortex formation stage, runs from the small vortices collapse until the moment at wich the LEV is shed into the wake, $t_ds$.
 
 \begin{equation}
 \Delta t_{ds} = t_{ds} - t_{ss}  = \Delta t_1 + \Delta t_2
 \end{equation}
 
-Over a range of pitch rate covering from quasi-steady motion ($r=0.01$) until $r=0.03$, Mulleners \& Raffel \cite{mulleners_onset_2010}, \cite{mulleners_dynamic_2012}, \cite{mulleners_dynamic_2013} found the time constant associated with the primary instability stage $\Delta t_1$ to decrease linearly with increasing pitch rate. In parallel, $\Delta t_2$, the timing associated with the vortex formation stage remains unchanged. That means the overall time delay $\Delta _{ds}$ will decrease linearly with increasing pitch rate. 
+Over a range of pitch rate covering from quasi-steady motion ($r=0.01$) until $r=0.03$, Mulleners \& Raffel \cite{mulleners_onset_2010,mulleners_onset_2012,mulleners_dynamic_2013} found the time constant associated with the primary instability stage $\Delta t_1$ to decrease linearly with increasing pitch rate. In parallel, $\Delta t_2$, the timing associated with the vortex formation stage remains unchanged. That means the overall time delay $\Delta _{ds}$ will decrease linearly with increasing pitch rate. 
 
-For a ramp input ($r$ and $\alphadot$=constant), the dynamic stall time delay will corresponds to a linearly increasing dynamic stall angle delay $\Delta \alpha_ds = \alpha_{ds} - \alpha_{ss}$ over the range $0.01<r<0.03$. Mulleners \& Raffel show in \cite{mulleners_onset_2012} that this observation holds for other types of motion if the reduced pitch rate is replaced by $\alphadot_ss c /V$.
+For a ramp input ($r$ and $\alphadot$=constant), the dynamic stall time delay will corresponds to a linearly increasing dynamic stall angle delay $\Delta \alpha_ds = \alpha_{ds} - \alpha_{ss}$ over the range $0.01<r<0.03$. Mulleners \& Raffel show in \cite{mulleners_onset_2012} that this observation holds for other types of motion if the reduced pitch rate is replaced by $\alphadot_{ss} c /V$.
 
 Such an observation justifies the linear fit over $0.01<r<0.05$ of Sheng et al. in \cite{sheng_new_2006}.
 
