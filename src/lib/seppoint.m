@@ -8,8 +8,11 @@ function f = seppoint(steady,alpha)
 % computed. The constants S1 and S2 together with the stall angle alpha_ss depend on the airfoil and the flow
 % and are determined using static data.
 
-f1 = 1 - 0.3*exp((alpha-steady.alpha_ss)/steady.S1);
-f2 = 0.13 +(0.7-0.13)*exp((steady.alpha_ss-alpha)/steady.S2);
+f_ss = 0.7;
+f_inf = 0.125;
+
+f1 = 1 - (1-f_ss)*exp((alpha-steady.alpha_ss)/steady.S1);
+f2 = f_inf +(f_ss-f_inf)*exp((steady.alpha_ss-alpha)/steady.S2);
 f = (alpha<=steady.alpha_ss).*f1 + (alpha>steady.alpha_ss).*f2; % f1 is weighted by 1 if alpha<alpha_ss and f2 by 0 and vice-versa
 end
 

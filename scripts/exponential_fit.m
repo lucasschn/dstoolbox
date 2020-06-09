@@ -6,7 +6,9 @@ run('/Users/lucas/src/codes_smarth/labbook.m')
 addpath('../src/model/')
 addpath('../src/common/')
 addpath('../src/lib/')
-
+if ~strcmp(pwd,'/Users/lucas/Documents/EPFL/PDM/scripts')
+    cd('/Users/lucas/Documents/EPFL/PDM/scripts')
+end
 %% Define the airfoil and the associated steady curve
 
 airfoil = Airfoil('flatplate',0.15);
@@ -24,7 +26,7 @@ for k=1:length(c)
         inert = data.inert;
         inert.alpha = raw.alpha(raw.t>=0);
         msname = sprintf('ms%03impt%i',LB(c(k)).ms,LB(c(k)).mpt);
-        assignin('base',msname,RampUpMotion('alpha',inert.alpha,'t',inert.t,'V',LB(c(k)).U));
+        assignin('base',msname,RampUpMotion('alpha',inert.alpha,'t',inert.t,'V',LB(c(k)).U,'alphadot',LB(c(k)).alphadot));
         evalin('base',sprintf('%s.setName()',msname))
         ramp = evalin('base',msname);
         Cl = inert.Cl;
@@ -33,7 +35,7 @@ for k=1:length(c)
         data = load(loadmat(LB(c(k)).ms,LB(c(k)).mpt),'raw');
         raw = data.raw;
         msname = sprintf('ms%03impt%i',LB(c(k)).ms,LB(c(k)).mpt);
-        assignin('base',msname,RampUpMotion('alpha',raw.alpha,'t',raw.t,'V',LB(c(k)).U));
+        assignin('base',msname,RampUpMotion('alpha',raw.alpha,'t',raw.t,'V',LB(c(k)).U,'alphadot',LB(c(k)).alphadot));
         evalin('base',sprintf('%s.setName()',msname))
         ramp = evalin('base',msname);
         Cl = raw.Cl;

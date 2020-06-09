@@ -2,7 +2,7 @@ function CNk = kirchhoff(steady,alpha,x)
 
 if nargin > 2
     steady.S1 = x(1);
-     steady.S2= x(2);
+    steady.S2 = x(2);
 end
 
 f = seppoint(steady,alpha);

@@ -12,7 +12,7 @@ addpath('../src/lib/')
 airfoil = Airfoil('flatplate',0.15);
 airfoil.r0 = 0.04;
 static = load('../static_flatplate');
-airfoil.steady = SteadyCurve(static.alpha,static.CN,14);
+airfoil.steady = SteadyCurve(static.alpha,static.CN,13.5);
 
 %% Setting up the ramps
 
@@ -25,40 +25,27 @@ for k=1:length(c)
         inert = data.inert;
         inert.alpha = raw.alpha(raw.t>=0);
         msname = sprintf('ms%03impt%i',LB(c(k)).ms,LB(c(k)).mpt);
-        assignin('base',msname,RampUpMotion('alpha',inert.alpha,'t',inert.t,'V',LB(c(k)).U));
+        assignin('base',msname,RampUpMotion('alpha',inert.alpha,'t',inert.t,'V',LB(c(k)).U,'alphadot',LB(c(k)).alphadot));
         evalin('base',sprintf('%s.setName()',msname))
         ramp = evalin('base',msname);
         Cl = inert.Cl;
         Cd = inert.Cd;
     else
-        data = load(loadmat(LB(c(k)).ms,LB(c(k)).mpt),'raw');
-        raw = data.raw;
+        load(loadmat(LB(c(k)).ms,LB(c(k)).mpt),'raw','zero');
         msname = sprintf('ms%03impt%i',LB(c(k)).ms,LB(c(k)).mpt);
-        assignin('base',msname,RampUpMotion('alpha',raw.alpha,'t',raw.t,'V',LB(c(k)).U));
+        assignin('base',msname,RampUpMotion('alpha',raw.alpha,'t',raw.t,'V',LB(c(k)).U,'alphadot',LB(c(k)).alphadot));
         evalin('base',sprintf('%s.setName()',msname))
         ramp = evalin('base',msname);
-        Cl = raw.Cl;
-        Cd = raw.Cd;
+        Cl = raw.Cl-zero.Cl;
+        Cd = raw.Cd-zero.Cd;
     end
-    % Butterworth filter
-    fc = 35;
     fs = 1/ramp.Ts;
-    [b,a] = butter(5,fc/(fs/2));
-    Cl_filtered = filter(b,a,Cl);
-    Cd_filtered = filter(b,a,Cd);
-    ramp.setAlphaDot(LB(c(k)).alphadot) % in degrees
-    % Moving average filter
-    Cl_ff = movmean(Cl_filtered,30);
-    Cd_ff = movmean(Cd_filtered,30);
-    % Chebychev type-II filter
-    fp = 1/3;
-    [b,a] = cheby2(6,20,36*fp/(fs/2));    
-    Cl_fff = filter(b,a,Cl_ff);
-    Cd_fff = filter(b,a,Cd_ff);
-    ramp.setCL(Cl);
-    ramp.setCD(Cd);
-    %     ramp.setCL(Cl_fff);
-    %     ramp.setCD(Cd_fff);
+    Cl_fff = myFilter(Cl,fs);
+    Cd_fff = myFilter(Cd,fs);
+    %     ramp.setCL(Cl);
+    %     ramp.setCD(Cd);
+    ramp.setCL(Cl_fff);
+    ramp.setCD(Cd_fff);
     ramp.computeAirfoilFrame();
     ramp.isolateRamp();
     % Define stall

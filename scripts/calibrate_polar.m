@@ -29,7 +29,7 @@ auto_home = false; % do you wish to use the result of the interpolation to go ho
 saveplot = false; % do you wish to save a pdf of your figure?
 savepolar = true; % do you wish to save the data to plot your polar?
 if savepolar == 1
-polarname = 'static_flatplate5'; % what is the file name for your polar data?
+polarname = 'static_flatplate'; % what is the file name for your polar data?
 end
 
 % name of files

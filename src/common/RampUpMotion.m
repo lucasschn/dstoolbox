@@ -104,10 +104,11 @@ classdef RampUpMotion < AirfoilMotion
             dalphadt = diff(obj.alpha)./diff(obj.t);
             if nargin > 1
                 obj.alphadot = alphadot; % deg/s
-            else
+            elseif isempty(obj.alphadot)
+                warning('Alphadot was computed as the maximum rate for this ramp.')
                 obj.alphadot = max(dalphadt); % deg/s
             end
-            if ~isempty(obj.alpha)
+            if ~isempty(obj.alpha) 
                 opts = optimset('Diagnostics','off','Display','off');
                 analpha0 = lsqcurvefit(@(x,xdata) obj.alphadot*xdata+x,0,obj.t(dalphadt>=5),obj.alpha(dalphadt>=5),[],[],opts);
             else
@@ -119,6 +120,9 @@ classdef RampUpMotion < AirfoilMotion
             obj.analpha = obj.alphadot*obj.t + analpha0;
         end
         function setPitchRate(obj,airfoil)
+            if isempty(obj.alphadot) || isempty(obj.analpha)
+                obj.setAlphaDot();
+            end
             obj.r = deg2rad(obj.alphadot)*airfoil.c/(2*obj.V);
             dalphadt = diff(obj.alpha)./diff(obj.t);
             obj.rt = deg2rad(dalphadt)*airfoil.c/(2*obj.V);
@@ -190,13 +194,21 @@ classdef RampUpMotion < AirfoilMotion
             ylabel('C_D (-)')
             title(sprintf('%s ($\\dot{\\alpha} = %.2f ^{\\circ}$/s)',obj.name,obj.alphadot),'interpreter','latex')
         end
-        function plotCN(obj)
+        function plotCN(obj,mode)
             figure
-            plot(obj.alpha,obj.CN,'DisplayName','exp')
+            switch mode 
+                case 'angle'
+                    plot(obj.alpha,obj.CN,'DisplayName','exp','LineWidth',5)
+                    xlabel('\alpha (°)')
+                case 'convectime'
+                    plot(obj.S,obj.CN,'DisplayName','exp','LineWidth',5)
+                    xlabel('t_c')
+            end
             grid on
-            legend('Location','SouthEast')
-            xlabel('\alpha (°)')
-            ylabel('C_N (-)')
+            ax = gca; 
+            ax.FontSize = 20; 
+%             legend('Location','SouthEast')
+            ylabel('C_N')
             title(sprintf('%s ($\\dot{\\alpha} = %.2f ^{\\circ}$/s)',obj.name,obj.alphadot),'interpreter','latex')
         end
         function plotCNLag(obj)
@@ -230,9 +242,9 @@ classdef RampUpMotion < AirfoilMotion
         function plotAlpha(obj)
             plotAlpha@AirfoilMotion(obj)
             if ~isempty(obj.alpha_CConset)
-                plot(obj.t(obj.i_CConset),obj.alpha_CConset,'rx','DisplayName','\alpha_{ds,CC}')
+                plot(obj.t(obj.i_CConset),obj.alpha_CConset,'diamond','MarkerFaceColor','k','MarkerEdgeColor','k','MarkerSize',15,'DisplayName','\alpha_{ds,CC}')
             end  
-            title(sprintf('%s ($\\dot{\\alpha}$ = %.2f \\degree/s)',obj.name,obj.alphadot),'interpreter','latex')
+            title(sprintf('%s ($\\dot{\\alpha}$ = %.2f $^o$/s)',obj.name,obj.alphadot),'interpreter','latex')            
         end
         function plotPitchRate(obj)
             figure

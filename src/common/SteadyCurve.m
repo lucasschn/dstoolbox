@@ -118,16 +118,19 @@ classdef SteadyCurve < handle
         end          
         function plotKirchhoff(obj)
             figure
-            plot(obj.alpha,obj.CN,'DisplayName','exp')
+            plot(obj.alpha,obj.CN,'DisplayName','exp','LineWidth',2)
             hold on 
-            plot(obj.alpha,obj.CNinv,'DisplayName','inviscid')
+            plot(obj.alpha,obj.CNinv,'DisplayName','inviscid','LineWidth',2)
             if isempty(obj.S1)
                 warning('Kirchhoff has not yet been fitted to this SteadyCurve .')
             else
-                plot(obj.alpha,kirchhoff(obj,obj.alpha),'DisplayName','Kirchhoff model')
+                plot(obj.alpha,kirchhoff(obj,obj.alpha),'DisplayName','Kirchhoff model','LineWidth',2)
             end
             grid on
-            legend('Location','SouthEast')
+            ax = gca; 
+            ax.FontSize=20;
+            axis([-5 30 -0.5 1.5])
+            legend('Location','SouthEast','FontSize',20)
             xlabel('\alpha (°)')
             ylabel('C_N')
         end
@@ -158,23 +161,21 @@ classdef SteadyCurve < handle
             % ref: Leishman, Principles of Helicopter Aerodynamics 2nd Ed., eq. 7.106 page 405
             unbounded_fexp = (2*sqrt(obj.CN./(obj.slope*(obj.alpha - obj.alpha0)))-1).^2;
             obj.fexp = max([zeros(size(obj.CN)),min([ones(size(obj.CN)), unbounded_fexp],[],2)],[],2);
-            disp('fexp = ')
-            disp(obj.fexp)
-            disp('CN = ')
-            disp(obj.CN)
         end
         function plotSeparation(obj)
             if isempty(obj.fexp)
                 obj.computeSeparation()
             end
             figure
-            plot(obj.alpha,obj.fexp,'DisplayName','f_{exp}')
+            plot(obj.alpha,obj.fexp,'DisplayName','fexp','LineWidth',2)
             hold on 
-            plot(obj.alpha,obj.f,'DisplayName','f') 
+            plot(obj.alpha,obj.f,'DisplayName','f','LineWidth',2) 
             grid on 
-            legend('Location','SouthWest')
+            ax = gca; 
+            ax.FontSize = 20;            
+            legend('Location','SouthWest','FontSize',20)
             xlabel('\alpha (°)')
-            ylabel('x/c (-)')
+            ylabel('f')
         end
         function plotViscousRatio(obj)
             figure

@@ -45,21 +45,9 @@ for k=1:length(c)
         Cl = raw.Cl;
         Cd = raw.Cd;
     end
-    % Butterworth filter
-    fc = 35;
     fs = 1/ramp.Ts;
-    [b,a] = butter(5,fc/(fs/2));
-    Cl_filtered = filter(b,a,Cl);
-    Cd_filtered = filter(b,a,Cd);
-    ramp.setAlphaDot(LB(c(k)).alphadot) % in degrees
-    % Moving average filter
-    Cl_ff = movmean(Cl_filtered,30);
-    Cd_ff = movmean(Cd_filtered,30);
-    % Chebychev type-II filter
-    fp = 1/3;
-    [b,a] = cheby2(6,20,36*fp/(fs/2));
-    Cl_fff = filter(b,a,Cl_ff);
-    Cd_fff = filter(b,a,Cd_ff);
+    Cl_fff = myFilter(Cl,fs);
+    Cd_fff = myFilter(Cd,fs);
 %     ramp.setCL(Cl);
 %     ramp.setCD(Cd);
     ramp.setCL(Cl_fff);
@@ -78,7 +66,7 @@ steady_offset = -ones(size(c));
 
 for k=1:length(c) 
     msname = sprintf('ms%03impt%i',LB(c(k)).ms,LB(c(k)).mpt);
-    evalin('base',sprintf('%s.BeddoesLeishman(airfoil,1.7,6,3,''experimental'')',msname))
+    evalin('base',sprintf('%s.BeddoesLeishman(airfoil,4.5,4,6,1,''experimental'')',msname))
     evalin('base',sprintf('%s.plotLB(''convectime'')',msname))
     r(k) = evalin('base',sprintf('%s.r',msname));
     steady_offset(k) = evalin('base',sprintf('%s.CN(end)-%s.CN_LB(end)',msname,msname));

@@ -40,16 +40,17 @@ naca0012.steady.computeSlope();
 naca0012.steady.setAlpha0();
 naca0012.steady.fitKirchhoff();
 naca0012.steady.plotKirchhoff();
-Tp = [1];
+Tp = 1.7;
 Tf = 3;
-Tv = 4;
+Tv = 6;
+Tvl = 6;
 
 for kp=1:length(Tp)
     for kf=1:length(Tf)
         for kv=1:length(Tv)
-            params = sprintf('S1=%0.1f, S2=%0.1f, Tp=%0.1f, Tf=%0.1f, Tv=%0.1f',naca0012.steady.S1,naca0012.steady.S2,Tp(kp),Tf(kf),Tv(kv));
+            params = sprintf('S1=%0.1f, S2=%0.1f, Tp=%0.1f, Tf=%0.1f, Tv=%0.1f, Tvl=%0.1f',naca0012.steady.S1,naca0012.steady.S2,Tp(kp),Tf(kf),Tv(kv),Tvl);
             disp(params);
-            pitching.BeddoesLeishman(naca0012,Tp(kp),Tf(kf),Tv(kv),'experimental');
+            pitching.BeddoesLeishman(naca0012,Tp(kp),Tf(kf),Tv(kv),Tvl,'experimental');
 %             pitching.plotAlphas()
 %             pitching.plotSeparation(naca0012,'normal',0) % last argument is saving figure or not  
             fig2 = figure;
