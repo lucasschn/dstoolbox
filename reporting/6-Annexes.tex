@@ -1,0 +1,127 @@
+\section{Initialization of the separation function parameters for lest squares optimization}
+
+% That is now correct, all equations that should be in Methods are. 
+
+In order to give meaningful initialization value to the parameters $S_1$ and $S_2$ of Equation \eqref{eq:seppoint} for the optimization process described in section \ref{section:kirchhoff}, it is useful to consider the derivative of the separation point function with respect to $\alpha$, shown below:
+
+\begin{equation} 
+\frac{df}{d\alpha} = 
+     \begin{cases}
+       -\frac{(1-f_{ss})}{S_1}\exp(\frac{\alpha-\alpha_{ss}}{S_1},) &\quad \alpha \leq \alpha_{ss}\\
+        -\frac{(f_{ss}-f_\infty)}{S_2}\exp(\frac{\alpha_{ss}-\alpha}{S_2}) &\quad \alpha > \alpha_{ss}\\
+     \end{cases}
+\end{equation}
+
+By taking its derivative with respect to the angle of attack
+
+\begin{equation}
+\frac{dC_N}{d\alpha} = C_{N_{\alpha}} \left[\left(\frac{1+\sqrt{f}}{2}\right)^2+\frac{f'(\alpha)}{2f}\alpha \right]
+\end{equation}
+
+\noindent and taking the left and right limits around the static stall angle,
+
+\begin{equation}
+\frac{dC_N}{d\alpha}\Big|_{\alpha=\alpha_{ss}} = C_{N_\alpha}\left(\frac{1+\sqrt{f_{ss}}}{2}\right)
+     \begin{cases}
+      \left(\frac{1+\sqrt{f_{ss}}}{2}\right)-\frac{(1-f_{ss})\alpha_{ss}}{2\sqrt{f_{ss}}S_1},&\quad \alpha < \alpha_{ss}\\
+        \left(\frac{1+\sqrt{f_{ss}}}{2}\right)-\frac{(f_{ss}-f_\infty)\alpha_{ss}}{2\sqrt{f_{ss}}S_2}, &\quad \alpha > \alpha_{ss}\\
+     \end{cases}
+\end{equation}
+
+\noindent an expression for $S_1$ and $S_2$ that depends only on the lift curve slope during in the attached regime $C_{N_\alpha}$, the static stall angle $\alpha_{ss}$ and the lift slope around stall is found.
+
+\begin{equation}
+S_1 = \frac{(1-f_{ss})\alpha_{ss}}{2\sqrt{f_{ss}}}\left[\left(\frac{1+\sqrt{f_{ss}}}{2}\right)-\frac{1}{C_{N_\alpha}}\frac{dC_N}{d\alpha}\Big|_{\alpha=\alpha_{ss}^{-}}\right]^{-1}
+\end{equation}
+
+\begin{equation}
+S_2 = \frac{(1-f_{ss})\alpha_{ss}}{2\sqrt{f_{ss}}}\left[\left(\frac{1+\sqrt{f_{ss}}}{2}\right)-\frac{1}{C_{N_\alpha}}\frac{dC_N}{d\alpha}\Big|_{\alpha=\alpha_{ss}^{+}}\right]^{-1}
+\end{equation}
+
+\section{The mathematical relationship between lagged AoA time constant and the lagged dynamic stall angle}
+
+As the lagged pitch angle $\alpha'$ is defined as the output of a first order system, which input is $\alpha'$, let's define the transfer function for a first-order, linear time invariant system. 
+
+\begin{equation}
+G(s) = \frac{1}{1+\tau s}
+\end{equation}
+
+\noindent From control theory, we know that the response in Laplace domain is $Y(s) = G(s)U(s)$, where $Y(s)$ and $U(s)$ are the Laplace transforms of the output $y(t)$ and the input $u(t)$ of the system, respectively.
+
+\subsection{Indicial response}
+
+Let's first inspect the indicial response, in other words, the response to a step input. A step input is $u(t \geq 0) = K$. In the present context, all signals are assumed to be $0$ when time is below 0. In Laplace domain, that is $U(s) = K/s$. The response to a step input is, using partial fraction decomposition : 
+
+\begin{equation}
+Y(s) = G(s)U(s) = \frac{K}{s(1+\tau s)} =\frac{K}{s} - \frac{K\tau}{1+\tau s}
+\end{equation}
+
+\noindent In the time domain, that is 
+
+\begin{equation}
+y(t) = K(1-e^{-t/\tau})
+\end{equation}
+
+\noindent The steady-state value is $K$ and the final value theorem applies : 
+
+\begin{equation}
+y_{ss} = \lim_{y \rightarrow \infty} y(t) = K = \lim_{s \rightarrow 0} sY(s)
+\end{equation}
+
+Therefore, the time constant $\tau$ defines the time at which around 63\% of the steady-state value is attained. Indeed, if $t=\tau$ : 
+
+\begin{equation}
+y(t=\tau) = K(1-\frac{1}{e}) \approx 0.63K 
+\end{equation}
+
+\subsection{Response to a ramp input}
+\label{section:ramp_input}
+
+In the case of a ramp, the input writes $u(t) = Kt$, which is in Laplace domain $U(s) = K/s^2$. That gives for the output : 
+
+\begin{equation}
+Y(s) = \frac{K}{s^2(1+\tau s)} = \frac{K}{s^2} + \frac{K \tau^2}{1+\tau s} - \frac{K \tau}{s}
+\end{equation}
+
+Bringing this back to the time domain, we get 
+
+\begin{equation}
+y(t) = K \left[ t - \tau(1-e^{-t/\tau})\right]
+\label{ramp time response}
+\end{equation}
+
+\subsection{Application to airfoils undergoing ramps in pitch angle}
+
+The delayed pitch angle is defined as 
+
+\begin{equation}
+\Delta \alpha' = \Delta \alpha (1-e^{-t_c/T_\alpha})
+\end{equation}
+
+In the case of airfoils whose angle of attack describes a ramp in time, we now have a formula to adjust $T_\alpha$ so that $\alpha'(t_c)$ is equal to $\alpha_{ss}$ at $t_{ds}$. Indeed, in order to comply with Sheng criterion, we need to:
+
+\begin{itemize}
+\item make the lagged dynamic stall angle $\alpha'_{ds} = \alpha'(t=t_{ds})$ constant with respect to the reduced pitch rate $r$ of the ramp motion
+\item make this constant equal to the static stall angle $\alpha_{ss}$
+\end{itemize}
+
+
+\noindent Remembering that the output $y$ of our first order system is $\alpha'$, the procedure is to impose $\alpha'(t_{ss}) = \alpha_{ss}$ and adjust $\tau = T_\alpha$ in Equation \eqref{ramp time response} to comply with this constraint.
+
+\section{Recurrence solution to the Duhamel Integral}
+\label{section:duhamel}
+Since the Beddoes-Leishman model is based on a superposition of indicial responses\footnote{Indicial responses are more often termed step responses in modern control theory}, there are many convolution integrals to be computed between the indicial response and the actual time-evolution of $\alpha(t)$.
+
+For a step response $\phi(s)$ of linear time invariant (LTI) system and an input $u(t)$, the response $y(t)$ will be \cite{hendricks_linear_2008}, \cite{bonvin_systemes_2015}: 
+
+\begin{equation}
+     y(t) = u(t_0)\phi(s) + \int_{t=0}^{t}\frac{du}{dt}(\tau)\phi(t-\tau) d\tau
+\end{equation}
+
+However, there is need for a numerical way to compute such an integral. Due to the technical limitations of their time and the need for real time prediction, Beddoes \& Leishman wanted to have a recurrence numerical solution to this integral. The method to find such a solution is given in Leishman's book \cite[p.459-462]{leishman_principles_2006} for a two term exponentially growing step response of the form $\phi(t)=1-A_{1} e^{-b_{1} t}-A_{2} e^{-b_{2} t}$. The response to an input $\alpha(t)$ will be : 
+
+\begin{equation}
+     y(t) = \alpha(t)-X(t-\Delta t) e^{-b_{1} \Delta t}+A_{1} \Delta \alpha_{t} e^{-b_{1} \Delta t / 2} - Y(s-\Delta s) e^{-b_{2} \Delta t}+A_{2} \Delta \alpha_{t} e^{-b_{2} \Delta t / 2}
+\end{equation}
+
+We can then see the relationship between the form of the step reponse and the recurrence solution.

@@ -4,10 +4,10 @@ From as early as the 1970s, pioneers such as McCroskey \cite{mccroskey_dynamic_1
 
 Beddoes came up with the 1st generation of his dynamic stall model in 1976 \cite{beddoes_synthesis_1976}.
 Based on both his own observation and Ashley's theoretical framework for aeroelasticity \cite{ashley_piston_1956}, this model first introduced the indicial response method and the notion of effective angle of attack. These concepts were meant to persist up to the most modern versions of the Leishman-Beddoes (LB) model. 
-In the second iteration of his dynamic stall model, Beddoes first gave an approach to trailing edge separation using Kirchhoff model \cite{beddoes_representation_1983}. 
+In the second iteration of his dynamic stall model, Beddoes first provided an approach to trailing edge separation using Kirchhoff model \cite{beddoes_representation_1983}. 
 Together with Leishman, they finally presented in 1989 the 3rd-generation \cite{leishman_semi-empirical_1989} dynamic stall model, which is nowadays referred to as \textit{Leishman-Beddoes model}\footnote{Even though the name in reversed order (\textit{Beddoes-Leishman}) might occur at least as frequently, in the present work this model will be referred to as \textit{Leishman-Beddoes model} so that the abreviation LB cannot be confused with the abbreviation for \textit{boundary layer}, BL.}.
 Influenced by the convenient framework of control theory, Leishman also proposed an alternative formulation using the state-space form of the 3rd-generation model \cite{leishman_state-space_1989}.
-Despites the high number of parameters and the empirical origin of some of its parts, the 3rd-generation model provided a solid way of predicting the lift, drag, and pitching moment characteristics of an airfoil in high speed and high Reynolds number conditions (M $>0.3$, Re $> 10^6$). These operating conditions perfectly suited the main field of application at that time: helicopter aerodynamics. For the same reason, the airfoil shape chosen was often the symmetric NACA0012 describing a pitching or plunging motion \cite{beddoes_representation_1983,leishman_semi-empirical_1989,sheng_new_2006,sheng_improved_2007, tank_possibility_2017,rocchio_simple_2020}. 
+Despite the high number of parameters and the empirical origin of some of its parts, the 3rd-generation model provided a solid way of predicting the lift, drag, and pitching moment characteristics of an airfoil in high speed and high Reynolds number conditions (M $>0.3$, Re $> 10^6$). These operating conditions perfectly suited the main field of application at that time: helicopter aerodynamics. For the same reason, the airfoil shape chosen was often the symmetric NACA0012 describing a pitching or plunging motion \cite{beddoes_representation_1983,leishman_semi-empirical_1989,sheng_new_2006,sheng_improved_2007, tank_possibility_2017,rocchio_simple_2020}. 
 
 Dynamic stall received a renewed interest since the 2000s due to the development of wind energy, especially for vertical axis wind turbines (VAWTs). In wind turbine applications, the typical airfoil shapes, motions, and flow conditions differ largely from helicopters. Sheng et al. developed a dynamic stall criterion more adequate to lower speeds (M $<0.3$). This criterion was further developed \cite{sheng_improved_2007} and gave birth to a modified version of the 3rd-generation LB model \cite{sheng_modified_2008}. Simultaneously, researchers extended their focus to ramp-up motions, which are better suited than pitching motions for isolating the influence of the pitch rate. 
 
@@ -17,7 +17,7 @@ Recent developments of Tank et al. \cite{tank_possibility_2017} showed that dyna
 
 % Motivation
 
-The present study aims at optimizing the compromise between accuracy, lightness, and physicality that has been reached in the established dynamic stall models. 
+The present study aims at optimizing the compromise between accuracy, computational lightness, and physicality that has been reached in the established dynamic stall models. 
 The 3rd-generation LB model predicts reasonably the dynamic loads on an airfoil, but it depends on a dozen of tuning parameters. 
 Tuning such a large number of parameters can be impractical. This is even more true in the case of a new airfoil, for which few experimental data is available or in new conditions (Reynolds and Mach numbers). The number of required parameter has already been disminished by Sheng et al. \cite{sheng_modified_2008}. Special attention has therefore been dedicated to improving their model, which is also better adapted to lower velocities.  
 
@@ -28,7 +28,7 @@ This observation lead to the hypothesis that the piecewise linear fit of Sheng e
 
 A second critic can be made to Sheng's model. The critical angle $\alpha_{crit}$ plays a central role, but its definition seems rather arbitrary and lacks of physical meaning. A more physical definition is proposed here. 
 
-Based on these two reproaches to Sheng's stall onset criterion and the associated modified LB model, there seemed to be room for improvement.
+An improved version of Sheng's dynmic stall model is presented by adressing these two critics to the Sheng's stall onset criterion and the associated modified LB model.
 
 
  

@@ -1,0 +1,268 @@
+In this chapter, the results of the dynamic stall models described in Section \ref{section:ds_model} are presented. As explained in Section \ref{section:exp_setup}, the experimental data consists in a range of ramp-up motions, for a flat plate with sharp edges. The pitch rates have been varied from $\alphadot_{min} = 2.5 \si{\degree \per \second}$ to $\alphadot_{max} = 50 \si{\degree \per \second}$, with a step of $\Delta \alphadot = 2.5 \si{\degree \per \second}$, which corresponds to reduced pitch rate range from $r_{min} = \num{6.5e-3}$ to $r_{max}=\num{1.1e-1}$ with a step of $\Delta r = \num{6.5e-3}$. 
+
+The results presented in this chapter are the output of the models, i.e. the normal force coefficient. Dynamic stall studies considering pitching motions usually show plots of the forces against the angle of attack. However, when using ramps at high pitch rate, the dynamic stall vortices are shed after the airfoil has reached $\alpha_{max}=\ang{30}$. 
+Representing the results as a function of the angle of attack therefore is not suited to show the evolution of these effects, because they can occur while the angle of attack remains constant ($t>3 \si{\second}$ on Figure \ref{fig:ramp_example}). For this reason, the results are plotted in the time domain. The dimensionless time, or \textit{convective time}, is given by $t_c = t c /(2V)$: it can be seen as the number of semi-chord length travelled by a particle of fluid moving at the flow speed $V$.
+
+\section{Static model}
+
+% about the value of f_\infty and f_ss
+The values for $f_{ss}$ and $f_{\infty}$ (see Equation \ref{eq:seppoint}) chosen by Leishman \& Beddoes \cite{leishman_semi-empirical_1989} are shown on Table \ref{table:seppoint_params} . These were chosen to fit different helicopter airfoils including NACA 0012. Sheng et al. \cite{sheng_modified_2008} chose their values for NACA 0012 and S809 (a wind-turbine airfoil). Despite both studies including the NACA 0012 airfoil, the assumed separation point at static stall $f_{ss}$ differs by a distance of 10\% of the chord. 
+
+\begin{table}
+	\centering
+	\begin{tabular}{|c|c|c|}
+	\hline
+	Reference & $f_{ss}$ & $f_\infty $ \\
+	\hline
+	Leishman \& Beddoes 1989 \cite{leishman_semi-empirical_1989} & 0.7 & 0.04 \\
+	Sheng et al. 2008  \cite{sheng_modified_2008} & 0.6 & 0.02 \\
+	Present work & 0.7 & 0.125 \\
+	\hline
+	\end{tabular}
+	\caption{Values of the static stall $f_{ss}$, and asymptotic $f_\infty$ separation location according to different references}
+	\label{table:seppoint_params}	
+\end{table}
+
+In the present study, $f_{ss}$ and $f_{\infty}$ were chosen according to the experimental static separation point $f_{exp}$, found by using the static experimental $C_N$ and Equation \eqref{eq:kirchhoff} (Figure \ref{fig:static_separation}). Static stall was found to happen at $\alpha_{ss}=\ang{13.5}$ from Figure $\ref{fig:static_flatplate}$. This corresponds roughly to $f_{ss} \approx 0.7$ on the experimental separation curve. The horizontal asymptot was found to be around $f_\infty$ on the experimental separation curve. This value certainly overestimates the separation location when $\alpha$ is allowed to be bigger than $\ang{30}$, but results from Chen \& Fang show that $f_\infty$ cannot be as low as the values from Sheng et al. and Leishman \& Beddoes in the case of a flat plate with a bevelled leading edge.
+
+\begin{wrapfigure}{r}{7cm}
+	\centering
+	\includegraphics[width=7cm]{static_separation.png}
+	\caption{Comparison of the experimental and modelled static separation point}
+	\label{fig:static_separation}
+\end{wrapfigure}
+
+Indeed, Chen \& Fang find that the boundary layer tends to attach at the rear lip of the bevel for higher angles of attack. 
+In that situation, the separation point is located at $f=\frac{h/2}{c}\approx 6.67 \%$ of the chord length (Figure \ref{fig:flatplate_geometry_simple}). This can explain why the value $f_{\infty}$ found for the present case is about $8$ to $10\%$ larger than the ones from Leishman \& Beddoes and Sheng et al.
+
+\begin{figure}[b]
+	\centering
+	\includegraphics[width=0.7\textwidth]{flatplate_geometry_simple.png}
+	\caption{Geometry of the flat plate airfoil. The distances are not at the right scale but the angles are respected. All distances are shown in millimeters.}
+	\label{fig:flatplate_geometry_simple}
+\end{figure}
+
+The drop around $\ang{10}-\ang{11}$ is due to the visible bump in the static $C_N$ at the same angles of attack (\ref{fig:static_flatplate}). This bump is suspected to be caused by a laminar separation bubble (LSB) \cite{tank_possibility_2017}. The Kirchhoff model is not designed to take this phenomenon into account, so the experimental separation location $f_{exp}$ is underestimated in that range of pitch angles. The used coefficients $f_{ss}$, $f_\infty$, $S_1$ ad $S_2$ nevertheless yield the static normal force coefficient shown in Figure \ref{fig:CN_kirchhoff}. The pre-stall slope is computed as the average of the derivative $dC_N/d\alpha$ for $\alpha<\ang{10}$. This approach neglects the change of slope due to the laminar separation bubble, which causes a degradation of the model predictions during the pre-stall part, as will be shown in the next sections. On the other hand, it allows to approximate correctly the height of the stall peak once the static stall angle has been set. Indeed, the normal coefficient $C_{N,ss}$ can be computed as follows:
+
+\begin{equation}
+    C_{N,ss} = \alpha_{ss} \cdot \frac{1}{\alpha_{ss}} \int_{\ang{0}}^{\alpha_{ss}} \frac{dC_N}{d\alpha} d\alpha = \alpha_{ss} \cdot avg(dC_N/d\alpha)\Big|_{\ang{0}}^{\alpha_{ss}}
+\label{eq:average_static_slope}
+\end{equation}
+
+In Equation \eqref{eq:average_static_slope}, the normal coefficient at static stall is seen as the product between the average slope of $C_N(\alpha)$ between $\ang{0}$ and $\alpha_{ss}$. If the range of $\alpha$ on which the average is performed is decreased, the accuracy of the prediction of $C_{N,ss}$ will be proportionally decreased. During dynamic experiments modelling, the accuracy of the primary peak would also suffer. A solution to this problem would be to reconsider the form of the separation curve and the Kirchhoff model (Equations \eqref{eq:seppoint} \& \eqref{eq:kirchhoff}). $C_{N_\alpha}$ could take two different values, to take into account the variation of the slope before and after the laminar separation bubble bursting, which happens around \ang{7} in that case. 
+
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=0.7\textwidth]{CN_kirchhoff.png}
+	\caption{Comparison of the static normal force coefficient $C_N$ using Kirchhoff model with the experimental data.}
+	\label{fig:CN_kirchhoff}
+\end{figure}
+
+
+\section{Leishman-Beddoes model}
+
+The slope during pre-stall, $C_{N,\alpha}$, is considered constant throughout Leishman-Beddoes model. However, as shown by the static curve (Figure \ref{fig:static_flatplate}), the initial slope is not held until stall. 
+Either the value of the initial slope or the average slope until stall can be taken for $C_{N,\alpha}$. Figure \ref{fig:CN_LBfiltered} shows the normal force coefficient $C_N$ predicted by Leishman-Beddoes model with these two different values for the static pre-stall slope. Using the initial slope as $C_{N,\alpha}$ yields a better prediction of the normal force during the attached regime ($0 \lesssim t_c \lesssim 20$ on Figure \ref{fig:example_slope5}).
+Oscillations appear after stall because the flow is separated. They are not captured because the higher harmonics shedding has not been implemented in the model. The flat plate then as a blunt body when inclined $\ang{30}$, where vortices grow on both the leading and the trailing edge. These vortices add either a constructive or destructive contribution to the circulation of the flow around the airfoil, which in turn has an influence on the lift. The normal force  should pass by the minima of the post-stall oscillations, because the present implementation is not accounting for the added lift of secondary vortices. From Figure \ref{fig:example_slope13}, we see that the steady-state normal coefficient takes two completely diffent values depending of the static pre-stall slope chosen. 
+The steady-state value using the static slope around $\ang{0}$  to compute the modified Kirchoff normal force in Equation \eqref{eq:mod_kirchhoff} (Figure \ref{fig:example_slope13}) is about $75 \%$ of the one using the average slope until stall as $C_{N,\alpha}$ (Figure \ref{fig:example_slope13}). The steady state value of the normal coefficient is: 
+
+\begin{equation}
+    C_N(\alpha=\ang{30}, t \rightarrow \infty) \approx C_{N_{\alpha}}\left(\frac{1+\sqrt{f_\infty}}{2}\right)^{2} \ang{30}
+    \label{eq:CN_LB_steady_state}
+\end{equation}
+
+\noindent as $C_N$ equals $C_N^f$ when the LEV has passed and the impulsive normal force due to the added mass vanishes when the airfoil is steady. The value of the parenthesis is close to 0.5 because when the flow is fully separated, the separation location is close to 0. The steady-state value of $C_N$ at $\ang{30}$ is close to $15 \cdot C_{N_\alpha}$. A small variation in $C_{N_\alpha}$ has therefore
+a big impact: an impact of about 15 times the varation's magnitude. By looking at the comparison between initial and average slope, it appears that none of the two succeeds at predicting the steady-state value when $\alpha=\ang{30}$. The form using the initial slope around $\ang{0}$ is then retained for the rest of this chapter. In future implementations of the LB model to this airfoil, one should look into adapting the value of $C_{N_\alpha}$ depending on the angle of attack. 
+
+\begin{figure}[h]
+    \begin{subfigure}{.5\textwidth}
+        \includegraphics[width=\textwidth]{steady_state_slope5}
+        \caption{$C_{N_\alpha}$ = slope around $\ang{0}$}
+        \label{fig:example_slope5}
+    \end{subfigure}
+    \begin{subfigure}{.5\textwidth}
+        \includegraphics[width=\textwidth]{steady_state_slope13}
+        \caption{$C_{N_\alpha}$ = average slope until $\alpha_{ss}$}
+        \label{fig:example_slope13}
+    \end{subfigure}
+    \caption{Comparison of the normal coefficient using two different static slope values for the modified Kirchhoff force $C_N^f$ (Equation \eqref{eq:mod_kirchhoff}). The yellow line indicates the value found using Equation \eqref{eq:CN_LB_steady_state}}
+    \label{fig:CN_LBfiltered}
+\end{figure}
+
+The convective time interval between two peaks for $r=0.020$ has been measured to be $\Delta t_c=6.18$, which corresponds to a Strouhal number of $St = \frac{2}{\Delta t_c}=0.324$. The periodicity of the vortex shedding for all the experiments at steady-state is similar. The observation is correlated by Chen \& Fang, who find a Strouhal number of $St=0.3$ for a flat plate inclined at $\ang{30}$ with bevelled edges \cite{chen_strouhal_1996}. Despite their experiments being at $Re=\num{3.2e4}$, they show that the Strouhal number is independent of the Reynolds number when the flow is fully separated.
+
+Figure \ref{fig:CN_LB} shows the normal coefficient resulting of Leishman-Beddoes model for three different pitch rates. Two are in the range of validity of Sheng's model for later comparison ($r=0.02$ and $r=0.026$), and one is above ($r=0.092$). In Leishman-Beddoes model, three time constants have to be tune for every case. These three time constants were tuned for $r=0.02$ and then kept constant for the other pitch rates to test the robustness of the model. In the three pitch rates, the pre-stall slope and the location of the primary peak are well predicted. The height of the primary peak lie in a range of $96\%-106\%$ of the experimental value for the three cases. 
+
+The decay to the steady-state ($20 \lesssim t_c \lesssim 30$ for $r=0.020$) is not consistent with experimental evidence, mainly for $r=0.020$. The cause is the misprediction of the steady-state load. Indeed, the minimal experimental load for $r=0.020$ when $t_c \gtrsim 50$ is around 1.1, whereas the predicted steady load is about 1.3: around 20\% relative error. For $r=0.026$ and $r=0.092$, the steady-state prediction is closer to experiment and as a result the decay from the primary peak to the steady-state is also better.
+
+As explained above, the inaccuracies in modelling the static $C_N$ at $\ang{30}$ are mainly caused by the choice of a constant pre-stall slope $C_{N_\alpha}$ among the many values that $dC_N/d\alpha$ takes before stall in experimental conditions (see Figure \ref{fig:static_flatplate}. The uncertainty on the Reynolds number in the experimental setup can also play a role. Indeed, there can easily be a difference of flow velocity between the day when the static curve was measured and the day when the dynamic experiments where made, because the flux is controlled by varying the speed of revolution of a pump. The relationship between the rotational speed of the pump and the flow velocity has been inferred using PIV data. However, this relationship also depends on the volume of water in the channel, which is subject to some variation over time.    
+
+\begin{figure}[h]
+    \begin{subfigure}{\textwidth}
+        \centering
+        \includegraphics[width=.7\textwidth]{Results_LB/CN_LB_r020.png}
+        \caption{$r = 0.020$}
+        \label{fig:CN_LB_r020}
+    \end{subfigure}
+    \begin{subfigure}{\textwidth}
+        \centering
+        \includegraphics[width=.7\textwidth]{Results_LB/CN_LB_r026.png}
+        \caption{$r = 0.026$}
+        \label{fig:CN_LB_r026}
+    \end{subfigure}
+    \begin{subfigure}{\textwidth}
+        \centering
+        \includegraphics[width=.7\textwidth]{Results_LB/CN_LB_r092.png}
+        \caption{$r = 0.092$}
+        \label{fig:CN_LB_r092}
+    \end{subfigure}
+    \caption{Comparison between LB model prediction and filtered experimental data for $T_p=3.6$, $T_f=1$, $T_v=2$, and $T_{vl}=0.5$}
+    \label{fig:CN_LB}
+\end{figure}
+
+\iffalse
+The use of different values for $C_{N_\alpha}$ in the computation of the circulatory lift $C_N^C$ (Equation \eqref{eq:circulatory}), the separated effective angle of attack $\alpha_f$ (Equation \eqref{eq:separated_effective_alpha}), and the modified Kirchhoff force $C_N^f$ (Equation \eqref{eq:mod_kirchhoff}) leads to inconsistencies in the separation curves. At steady-state, all separation locations $f$, $f'$, and $f''$ should take the same value, slightly above the one when the boundary layer is fully separated $f_\infty$. Figure \ref{fig:f_LB} shows opposite, due to $C_{N_\alpha}$ not being equal in Equations \eqref{eq:separated_effective_alpha} \& \eqref{eq:mod_kirchhoff}.
+\fi
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=10cm]{Results_LB/f_LB.png}
+    \caption{Comparison between experimental and Leishman-Beddoes predicted separation point for $r = 0.02$}
+    \label{fig:f_LB}
+\end{figure}
+
+\section{Modified LB with Sheng criterion}
+
+Mulleners \& Raffel in \cite{mulleners_onset_2010} divide the time frame between $t_{ss}$ and $t_{ds}$, the dynamic stall time delay, in two parts. The first one, $\Delta t_1$, goes from the $t_ss$ to the time at which the small vortices forming all along the airfoil surface rise and collapse together. This phase is termed the primary instability stage. The second part, the vortex formation stage, runs from the small vortices collapse until the moment at wich the LEV is shed into the wake, $t_{ds}$.
+
+\begin{equation}
+\Delta t_{ds} = t_{ds} - t_{ss}  = \Delta t_1 + \Delta t_2
+\end{equation}
+
+Over a range of pitch rate covering from quasi-steady motion ($r=0.01$) until $r=0.03$, Mulleners \& Raffel \cite{mulleners_onset_2010,mulleners_onset_2012,mulleners_dynamic_2013} found the time constant associated with the primary instability stage $\Delta t_1$ to decrease linearly with increasing pitch rate. In parallel, $\Delta t_2$, the timing associated with the vortex formation stage remains unchanged. That means the overall time delay $\Delta _{ds}$ will decrease linearly with increasing pitch rate. 
+
+For a ramp input ($r$ and $\alphadot$=constant), the dynamic stall time delay will corresponds to a linearly increasing dynamic stall angle delay $\Delta \alpha_{ds} = \alpha_{ds} - \alpha_{ss}$ over the range $0.01<r<0.03$. Mulleners \& Raffel show in \cite{mulleners_onset_2012} that this observation holds for other types of motion if the reduced pitch rate is replaced by $\alphadot_{ss} c /V$.
+
+Such an observation justifies the linear fit over $0.01<r<0.05$ of Sheng et al. \cite{sheng_new_2006}. Using this procedure presented in Section \ref{section:sheng_criterion}, the stall of the flat plate airfoil at $Re=\num{8.4e4}$ was fitted using with $r_0=0.04$, $T_\alpha=0.93$, and $\alpha_{ds,0}=\ang{25.9}$ (Figure  \ref{fig:alpha_ds_r}). The parameters were found using a least square optimization. The point of transition between linear fits, $r_0=0.04$, was found to be significantly higher than the one suggested by Sheng et al. $r_0=0.01$, whereas the slope of the linear fit for $r>r_0$, $T_\alpha$ was also found to be way lower than for NACA airfoils (between 4 and 6.5, \cite{sheng_new_2006}). One hypothesis is that the two dynamic stall angles found experimentally for $r=0.046$ and $r=0.052$ are artefacts, caused by the proximity of the final angle $\alpha_{max}=\ang{30}$ and should be discarded. In that case, the slope $T_\alpha$ should be measured on the first part of Figure \ref{fig:alpha_ds_r}, in the range $0.01<r<0.04$. That slope was measured to be 6.33, which falls in the range of values mentioned above. Confirming that hypothesis requires further investigation in the form of ramp-up experiments going beyond $\alpha_{max}=\ang{30}$. If true, the dynamic stall angle for $r=0.04$ and $r=0.93$ should align with the slower ones. 
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width = 0.7\textwidth]{alpha_ds_r.png}
+    \caption{Piecewise linear fit of $\alpha_{ds}(r)$ for the flat plate airfoil ($T_\alpha = 0.93$, $\alpha_{ds,0}=\ang{25.9}$, $r_0=0.04$, and $\alpha_{ss}=\ang{13.5}$)}
+    \label{fig:alpha_ds_r}
+\end{figure}
+
+Sheng's version of LB model was applied to the experimental data for $r=0.020$ (Figure \ref{fig:CN_ShengLB_r020}), $r=0.026$ (Figure \ref{fig:CN_ShengLB_r026}), and $r=0.092$ (Figure \ref{fig:CN_ShengLB_r092}). The advantage of Sheng's model is that $T_p$ does not need to be adjusted anymore for a particular pitching velocity, since the linear fit parameters are computed once per airfoil and Reynolds number, but for all pitch rates. 
+The rise to the primary peak is adequately modelled. The maximum of the absolute error between the model and the prediction for $t_c<15$ is lower than 6\%. 
+The height of the primary peak is generally overestimated, with the modelled peak height lying in a range from $+4\%$ to $+12\%$ of the experimental value, even having set removed the delay induced by $T_f$ by setting $T_f$ to zero. This can be a clue of the overestimation of $T_\alpha$, which mitigates the benefits of not having to tune $T_p$.
+
+%% This parenthesis could go in Methodology %% 
+
+The steady-state value of $C_N$ is over-estimated in the three cases. Here the approximation made for Equation \eqref{eq:CN_LB_steady_state} cannot be made because $f''$ does not converges to $f$ when the airfoil remains steady. The final value of $C_N$ then writes: 
+
+\begin{equation}
+    C_N(\alpha=\ang{30}, t \rightarrow \infty) = C_{N_{\alpha}}\left(\frac{1+\sqrt{f''(\ang{30})}}{2}\right)^{2} \ang{30}
+    \label{eq:CN_ShengLB_steady_state}
+\end{equation}
+
+The final value of $f''$ is still equal to the final value of $f'$, because the exponential term the definition of $f''$ (Equation \ref{eq:fpp_sheng}) vanishes over time. Unlike in Lesihman-Beddoes model, the final value of $f'$ is not directly approximable by $f_\infty$ in that case because of the special form of the separation function in Sheng's model, see Equation \eqref{eq:fp_sheng}. Indeed, the numerator inside the exponential terms is different from the static separation point (Equation \eqref{eq:seppoint}). $\alpha_{crit}$ differs from the static stall angle $\alpha_{ss}$ by a value that Sheng et al. call $\Delta \alpha_1$:
+
+\begin{equation}
+    \Delta \alpha_1 = \alpha_{crit} - \alpha_{ss} = 
+\begin{cases}
+\alpha_{ds0}- \alpha_{ss}, &\quad \text{if} \quad r \geq r_0 \\
+(\alpha_{ds0}-\alpha_{ss}) \frac{r}{r_0}, &\quad \text{if} \quad r < r_0 \\
+\end{cases}
+    \label{eq:delta_alpha1}
+\end{equation}
+
+The delayed separation point $f'$ defined by Sheng et al. in Equation \eqref{eq:fp_sheng} is equivalent to the original static formulation (Equation \eqref{eq:seppoint}) if $\alpha$ is replaced by $\alpha'-\Delta \alpha_1$ in the exponentials. For $f$ and $f'$ to converge to the same value when the airfoil remains steady, it is necessary that $\alpha$ and $\alpha'-\Delta \alpha_1$ also admit the same limit:
+
+\begin{equation}
+    \lim_{t_c \rightarrow \infty}  \alpha'(r,t_c) - \Delta \alpha_1 (r) =  \lim_{t_c \rightarrow \infty} \alpha(t_c) = \ang{30}
+    \label{eq:alphas_steady_state}
+\end{equation}
+
+When the airfoil reamins static, $\alpha'=\alpha$, so Equation \eqref{eq:alphas_steady_state} requires $\Delta \alpha_1 \rightarrow 0$ as $t_c \rightarrow \infty$, since  . The value of $r$ in the definition of $\Delta \alpha_1$ was therefore intepreted as being the instantaneous reduced pitch rate, $r(t)= \frac{\alphadot(t)c}{2V}$.
+%% end of paranthesis %% 
+
+On all graphs of Figure \ref{fig:CN_ShengLB}, the yellow curve indicates the modified-Kirchoff normal force (Equation \eqref{eq:mod_kirchhoff}) and the purple curve stands for the vortex lift (Equation \eqref{eq:vortex_lift}). The total normal force predicted by Sheng-LB model is the sum of the two and is denoted by the red line. 
+
+For both pitch rates $r=0.020$ (Figure \ref{fig:CN_ShengLB_r020}) and $r=0.026$ (Figure \ref{fig:CN_ShengLB_r026}), the steady-state and the decay to it do not match experimental data. This is mostly due to the overestimation of $C_{N_\alpha}$ as for Leishman-Beddoes and can be solved by taking the average $dC_N/d\alpha$ from \ang{0} to \ang{13} as $C_{N_\alpha}$ for Equation \eqref{eq:mod_kirchhoff}.
+
+By taking a higher pitch rate, as in Figure \ref{fig:CN_ShengLB_r092} with $r=0.092$, Sheng's model is not supposed to be valid anymore, but we see that the prediction is the best among the three pitch rates. The primary peak is $4.3\%$ too high, but the steady-state is much better predicted than for the other cases. The sudden drop in the modified-Kirchhoff force $C_N^f$ is most due to the drop in impulsive normal force, the one related to the added mass. The fastest the airfoil moves, the more added mass effect develop. In that case, it adds 0.5 to the circulatory normal force during the rise. The vortex lift had to be tuned so that the total normal force does not suddenly drop. 
+
+The lagged separation locations (Figure \ref{fig:f_ShengLB_r026}) $f'$ and $f''$ \footnote{As $T_f=0$, $f'$ and $f''$ are identical on Fig. \ref{fig:f_ShengLB_r026}} are not simply delayed versions of $f$, i.e. $f'(t)\neq f(t-\tau)$, unlike in Leishman-Beddoes model (Figure \ref{fig:f_LB}) where $f$, $f'$, and $f''$ have the same shape. Here the aspect of $f'$ and $f''$ is different from the one of $f$, and that is caused by $\alpha$ being replaced by $\alpha'- \Delta \alpha_1$ in the separation function (Equation \eqref{eq:fp_sheng}). $\alpha'$ does follow the variation of $\alpha$ with some time delay, but $\Delta \alpha_1$ does not. Still, $\Delta \alpha_1$ quickly decays to zero when the airfoil stops moving , which allows $f'$ and $f$ to take the same final value ($t_c > 25$).
+
+
+\begin{figure}[h]
+    \begin{subfigure}{\textwidth}
+        \centering
+        \includegraphics[width=0.7\textwidth]{Results_ShengLB/CN_ShengLB_r020.png}
+        \caption{$r = 0.020$, $T_f=0$, $T_v=0.5$, and $T_{vl}=3$}
+        \label{fig:CN_ShengLB_r020}
+    \end{subfigure}
+    \begin{subfigure}{\textwidth}
+        \centering
+        \includegraphics[width=0.7\textwidth]{Results_ShengLB/CN_ShengLB_r026.png}
+        \caption{$r = 0.026$, $T_f=0$, $T_v=0.5$, and $T_{vl}=2$}
+        \label{fig:CN_ShengLB_r026}
+    \end{subfigure}
+    \begin{subfigure}{\textwidth}
+        \centering
+        \includegraphics[width=0.7\textwidth]{Results_ShengLB/CN_ShengLB_r092.png}
+        \caption{$r = 0.092$, $T_f=0$, $T_v=3$, and $T_{vl}=2$}
+        \label{fig:CN_ShengLB_r092}
+    \end{subfigure}
+    \caption{Comparison between Sheng's model prediction and filtered experimental $C_N$, $T_\alpha=0.93$}
+    \label{fig:CN_ShengLB}
+\end{figure}
+
+
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=10cm]{Results_ShengLB/f_ShengLB_r026.png}
+    \caption{Comparison between experimental and Sheng-LB predicted separation point for $r = 0.026$}
+    \label{fig:f_ShengLB_r026}
+\end{figure}
+
+\section{Sheng LB with exponential fit}
+
+The exponential fit of $\alpha_{ds}(r)$ (Figure \ref{fig:expfit}, red curve) displays a much wider range of validity than the linear fit from Sheng's model. The exponential fit has been able to fit all the experiments, i.e. up to $r=0.113$, whereas the linear fit only applies up to $r=0.05$ \cite{sheng_new_2006}. The black diamonds indicate the observed stall angles in the dynamic experiments $\alpha_{ds} = \alpha(t_{ds})$, whereas the blue diamonds represent the value of $\alpha'$ at that moment $\alpha'_{ds} = \alpha'(t_{ds})$. The light blue dashed line indicates the value of $\alpha_ss$. As explained in Section \ref{section:expfit}, the lag $T_\alpha$ between $\alpha$ and $\alpha'$ is computed so that the lagged angles at dynamic stall $\alpha'_{ds}$ are coinciding with the static stall angle.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{alpha_ds_expfit} 
+    \caption{Evolution of the stall angle and the lagged stall angle with the reduced pitch rate for a flat plate airfoil. The fit is defined by Equation \eqref{eq:alpha_ds_r}.}
+    \label{fig:expfit}
+\end{figure}
+
+The normal force prediction for the three pitch rates were made using the same time constants $T_f$, $T_v$ and $T_{vl}$ to allow for comparison. Only $T_\alpha$ changes due to the modified stall critetion. The resulting prediction are very similar to the ones from Sheng's original model. Only the decay to the steady-state after the primary peak is different. It is smoother and $C_N$ does not exhibit a local minimum during the decay, which also observed in the experimental data. In that sense, the model using the exponential fit matches better the experimental evidence. This is causes by a later vortex lift. The vortex lift $C_N^v$ lasts the same amount of time in both cases ($T_{vl}$), but is started later using the new criterion. From Equation \eqref{eq:adim_vortex_time_sheng}, one can see that the vortex starts to form when the stall criterion $\alpha'>\alpha_ {crit}$ is attained. The lag between $\alpha$ and $\alpha'$ is defined by $T_\alpha$, and $T_\alpha$ is significantly higher when using the exponential fit, so the LEV contribution to the overall lift comes later than in Sheng's original model.
+
+\begin{figure}[h]
+    \begin{subfigure}{\textwidth}
+        \centering
+        \includegraphics[width=0.7\textwidth]{Results_Expfit/CN_ExpfitLB_r020}
+        \caption{$r=0.20$, $T_\alpha=6.4$, $T_f=0$, $T_v=0.5$, $T_{vl}=2$}
+        \label{fig:CN_ExpfitLB_r020}
+    \end{subfigure}
+    \begin{subfigure}{\textwidth}
+        \centering
+        \includegraphics[width=0.7\textwidth]{Results_Expfit/CN_ExpfitLB_r026}
+        \caption{$r=0.26$, $T_\alpha=6.8$, $T_f=0$, $T_v=0.5$, $T_{vl}=2$}
+        \label{fig:CN_ExpfitLB_r026}
+    \end{subfigure}
+    \begin{subfigure}{\textwidth}
+        \centering
+        \includegraphics[width=0.7\textwidth]{Results_Expfit/CN_ExpfitLB_r092}
+        \caption{$r=0.92$, $T_\alpha=3.5$, $T_f=0$, $T_v=0.5$, $T_{vl}=2$}
+        \label{fig:CN_ExpfitLB_r092}
+    \end{subfigure}
+    \caption{Comparison between filtered experimental data and the "exponential fit model" prediction}
+    \label{fig:CN_Expfit}
+\end{figure}
+
+% TODO: Discuss here the pertinence of defining $f(\alpha)$ in presence of a leading edge separation bubble (LSB), ref tank_new_2017
+
+% TODO: Discuss the inadequacy of Kirchhoff model for our flatplate airfoil
