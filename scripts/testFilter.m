@@ -21,38 +21,43 @@ x = sin(2*pi*f1*t);
 x_noisy = x + sin(2*pi*f2*t+rand(1))+sin(2*pi*f3*t+rand(1));
 
 
-x_filtered = myFilterTwice(x_noisy,fs);
-
+x_filtered = myFilterTwice(x_noisy,fs,0);
+x_movmean = myFilterTwice(x_noisy,fs,1);
 
 figure
-
-subplot(311)
 plot(t,x,'LineWidth',4)
-title('a)')
-ylabel('x')
+xlabel('t (s)')
 grid on 
 ax = gca; 
 ax.FontSize = 20; 
+saveas(gcf,'../fig/1Hz','png')
 
-subplot(312)
+figure
 plot(t,x_noisy,'LineWidth',2)
-title('b)')
-ylabel('x')
+xlabel('t (s)')
 grid on 
 ax = gca; 
 ax.FontSize = 20; 
+saveas(gcf,'../fig/noisy_1Hz','png')
 
-subplot(313)
+figure
 plot(t,x,'LineWidth',4,'DisplayName','original')
 hold on
 plot(t,x_filtered,'--','LineWidth',4,'DisplayName','retrieved')
 legend show
-title('c)')
 xlabel('t (s)')
-ylabel('x')
 grid on 
 ax = gca; 
 ax.FontSize = 20; 
-
-
 saveas(gcf,'../fig/filter_test_without','png')
+
+figure
+plot(t,x,'LineWidth',4,'DisplayName','original')
+hold on
+plot(t,x_movmean,'-','LineWidth',4,'DisplayName','retrieved')
+legend show
+xlabel('t (s)')
+grid on 
+ax = gca; 
+ax.FontSize = 20; 
+saveas(gcf,'../fig/filter_test_with','png')
