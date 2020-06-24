@@ -4,7 +4,7 @@
 % Date : 05.06.2020
 
 close all
-clear cll
+clear all
 clc 
 set(0,'DefaultFigureWindowStyle','docked')
 addpath('../plot_dir/')
@@ -21,7 +21,7 @@ airfoil.steady = SteadyCurve(static.alpha,static.CN,14);
 
 %% Setting up the ramps
 
-c = [18,14,22,67,26,84,30,89];
+c = [22,67,26,84,30];
 
 for k=1:length(c)
     if LB(c(k)).ms >= 13 && LB(c(k)).ms < 100
@@ -30,7 +30,7 @@ for k=1:length(c)
         inert = data.inert;
         inert.alpha = raw.alpha(raw.t>=0);
         msname = sprintf('ms%03impt%i',LB(c(k)).ms,LB(c(k)).mpt);
-        assignin('base',msname,RampUpMotion('alpha',inert.alpha,'t',inert.t,'V',LB(c(k)).U));
+        assignin('base',msname,RampUpMotion('alpha',inert.alpha,'t',inert.t,'V',LB(c(k)).U,'alphadot',LB(c(k)).alphadot));
         evalin('base',sprintf('%s.setName()',msname))
         ramp = evalin('base',msname);
         Cl = inert.Cl;
@@ -68,8 +68,10 @@ for k=1:length(c)
     msname = sprintf('ms%03impt%i',LB(c(k)).ms,LB(c(k)).mpt);
     evalin('base',sprintf('%s.BeddoesLeishman(airfoil,4.5,4,6,1,''experimental'')',msname))
     evalin('base',sprintf('%s.plotLB(''convectime'')',msname))
+    ramp = evalin('base',msname);
+    evalin('base',sprintf('saveas(gcf,''../fig/LB_r%03d'',''png'')',round(ramp.r,3)*1000))
     r(k) = evalin('base',sprintf('%s.r',msname));
-    steady_offset(k) = evalin('base',sprintf('%s.CN(end)-%s.CN_LB(end)',msname,msname));
+    steady_offset(k) = evalin('base',sprintf('mean(%s.CN(%s.S > 0.9*%s.CN(end)))-%s.CN_LB(end)',msname,msname,msname,msname));
 end
 
 %Compute the static lift offset between experiment and Kirchhoff
@@ -78,10 +80,12 @@ kirchhoff_offset = airfoil.steady.CN(end)-kirchhoff(airfoil.steady,30);
 % Plot and compare results
 figure
 plot(r,steady_offset,'.','MarkerSize',20,'Display','steady state offset')
-hold on 
-plot(r,kirchhoff_offset*ones(size(r)),'r-.','DisplayName','static offset due to Kirchhoff')
+%hold on 
+%plot(r,kirchhoff_offset*ones(size(r)),'r-.','DisplayName','static offset due to Kirchhoff')
+ax = gca; 
+ax.FontSize = 20; 
 xlabel('r')
-ylabel('steady offset')
+ylabel('\Delta C_{N,\infty}')
 grid on 
 
 
