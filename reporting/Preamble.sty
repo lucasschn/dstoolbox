@@ -90,7 +90,8 @@
 %\DeclareDelayedFloatFlavor{sidewaysfigure}{figure}
 %\renewcommand{\efloatseparator}{\mbox{}}
 
-\captionsetup{textfont={sf,md,small,color=darkgreen},labelfont={bf,sc,color=darkgreen},labelsep=newline}
+\captionsetup{textfont={sf,md,small,color=darkgreen},labelfont={bf,sc,color=darkgreen},labelsep=newline,justification=justified, singlelinecheck=off}
+\captionsetup[subfigure]{justification=centering}
 % use option justification=centerlast for centered captions
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Page headers %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -137,6 +138,10 @@
 
 \usepackage{sectsty}
 \allsectionsfont{\bfseries\scshape\color{darkgreen}}
+%%%%%%%%%%%%% Nomenclature %%%%%%%%%%%%%%
+\usepackage{nomencl}
+\usepackage{etoolbox} % for appto
+\makenomenclature
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Fancy Quotes %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \definecolor{quotemark}{gray}{0.7}
