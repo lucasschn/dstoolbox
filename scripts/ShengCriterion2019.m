@@ -16,7 +16,7 @@ airfoil.steady = SteadyCurve(static.alpha,static.CN,13.5);
 
 %% Setting up the ramps
 
-c = [18,14,22,67,68,69,70,26,27,28,29,84,85,86,87,30,89];
+c = [18,14,22,67,26,84,30,89];
 
 for k=1:length(c)    
     if LB(c(k)).ms >= 13 && LB(c(k)).ms < 100
@@ -42,8 +42,6 @@ for k=1:length(c)
     fs = 1/ramp.Ts;
     Cl_fff = myFilter(Cl,fs);
     Cd_fff = myFilter(Cd,fs);
-    %     ramp.setCL(Cl);
-    %     ramp.setCD(Cd);
     ramp.setCL(Cl_fff);
     ramp.setCD(Cd_fff);
     ramp.computeAirfoilFrame();
@@ -51,15 +49,15 @@ for k=1:length(c)
     % Define stall
     ramp.findExpOnset();
     ramp.setPitchRate(airfoil);
-    evalin('base',sprintf('fig%d = %s.plotCC();',k,msname));
+    evalin('base',sprintf('fig%d = %s.plotCC(''convectime'');',k,msname));
 end
 
 %% Running Sheng experiment
 
 % Define alpha_ds0 & compute Talpha
-setLinFit(airfoil,ms012mpt1,ms010mpt1,ms013mpt1,ms025mpt1,ms025mpt2,ms025mpt3,ms025mpt4,ms014mpt1,ms014mpt2,ms014mpt3,ms014mpt4,ms034mpt1,ms034mpt2,ms034mpt3,ms034mpt4,ms015mpt1,ms116mpt1);
+setLinFit(airfoil,ms012mpt1,ms010mpt1,ms013mpt1,ms025mpt1,ms014mpt1,ms034mpt1,ms015mpt1,ms116mpt1);
 
-saveas(gcf,'../fig/alpha_ds_r','png')
+%saveas(gcf,'../fig/alpha_ds_r','png')
 % %% Add Sheng's predicted stall angles to the figures
 % for k=1:length(c)
 %     msname = sprintf('ms%03impt%i',LB(c(k)).ms,LB(c(k)).mpt);
