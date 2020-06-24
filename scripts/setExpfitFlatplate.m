@@ -42,10 +42,10 @@ for k=1:length(c)
         Cd = raw.Cd;
     end
     fs = 1/ramp.Ts;
-    Clfff = myFilter(Cl,fs);
-    Cdfff = myFilter(Cd,fs);
-    ramp.setCL(Clfff);
-    ramp.setCD(Cdfff);
+    Clf = myFilter(Cl,fs);
+    Cdf = myFilter(Cd,fs);
+    ramp.setCL(Clf);
+    ramp.setCD(Cdf);
     ramp.computeAirfoilFrame();
     ramp.isolateRamp();
     % Define stall
@@ -74,17 +74,18 @@ alpha_ss = airfoil.steady.alpha_ss;
 
 figure(fig)
 subplot(311)
-plot(r,alpha_lag_ds,'.','DisplayName','\alpha_{ds} (lagged)','MarkerSize',20)
-plot(r,ones(size(r)).*alpha_ss,'--','DisplayName','\alpha_{ss}','LineWidth',2);
-legend('FontSize',20,'Location','SouthEast')
+plot(r,alpha_lag_ds,'d','MarkerSize',10,'MarkerFaceColor','#0072BD','MarkerEdgeColor','#0072BD','DisplayName','\alpha''_{ds}')
+plot(r,ones(size(r)).*alpha_ss,'--','Color','#4DBEEE','DisplayName','\alpha_{ss}','LineWidth',2);
+legend('FontSize',20,'Location','eastoutside')
 % plot Talpha and its fit on the lower graph
 subplot(312)
 plot(r,Talpha,'.','MarkerSize',20,'DisplayName','T_\alpha')
-hold on
-xlabel('reduced pitch rate r (-)','FontSize',20);
+ax = gca;
+ax.FontSize = 20;
+xlabel('r','FontSize',20);
 ylabel('T_\alpha','FontSize',20)
 grid on
-saveas(gcf,'../fig/Sheng/ShengSH2019_dsr.png')
+saveas(fig,'../fig/expfit_ds_r.png')
 
 %% Add Sheng's predicted stall angles to the figures
 % for k=1:length(c)
