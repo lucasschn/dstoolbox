@@ -1,10 +1,10 @@
 % This script is test Sheng-LB model on SH2019
 % Author : Lucas Schneeberger
 % Date : 06.06.2020
-
 close all
 clear all
 clc 
+
 set(0,'DefaultFigureWindowStyle','docked')
 addpath('../plot_dir/')
 addpath('../src/model/')
@@ -16,11 +16,11 @@ run('/Users/lucas/src/codes_smarth/labbook.m')
 airfoil = Airfoil('flatplate',0.15);
 airfoil.r0 = 0.04;
 static = load('../static_flatplate');
-airfoil.steady = SteadyCurve(static.alpha,static.CN,14);
+airfoil.steady = SteadyCurve(static.alpha,static.CN,13.5);
 
 %% Setting up the ramps
 
-c = 67;
+c = 22;
 
 for k=1:length(c)
     if LB(c(k)).ms >= 13 && LB(c(k)).ms < 100
@@ -44,12 +44,12 @@ for k=1:length(c)
         Cd = raw.Cd-zero.Cd;
     end
     fs = 1/ramp.Ts;
-    Cl_fff = myFilter(Cl,fs);
-    Cd_fff = myFilter(Cd,fs);
+    Clf = myFilterTwice(Cl,fs);
+    Cdf = myFilterTwice(Cd,fs);
 %     ramp.setCL(Cl);
 %     ramp.setCD(Cd);
-    ramp.setCL(Cl_fff);
-    ramp.setCD(Cd_fff);
+    ramp.setCL(Clf);
+    ramp.setCD(Cdf);
     ramp.computeAirfoilFrame();
     ramp.isolateRamp();
     % Define stall
@@ -61,7 +61,7 @@ end
 
 for k=1:length(c) 
     msname = sprintf('ms%03impt%i',LB(c(k)).ms,LB(c(k)).mpt);
-    evalin('base',sprintf('%s.BLSheng(airfoil,0,1,3.5,''experimental'')',msname))
+    evalin('base',sprintf('%s.BLSheng(airfoil,0,1,1,''experimental'')',msname))
     evalin('base',sprintf('%s.plotShengLB(airfoil)',msname))
 end
 
