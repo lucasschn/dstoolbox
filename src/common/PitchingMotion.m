@@ -16,14 +16,14 @@ classdef PitchingMotion < AirfoilMotion
             mco = ?PitchingMotion;
             prop = mco.PropertyList; % makes a cell array of all properties of the specified ClassName
             for k=1:length(prop)
-                if ~prop(k).Constant
+                if ~prop(k).Constant && ~prop(k).HasDefault
                     p.addParameter(prop(k).Name,[]);
                 end
             end
             p.parse(varargin{:}); % {:} is added to take the content of the cells
             % Add name / default value pairs
             for k=1:length(prop)
-                if ~prop(k).Constant
+                if ~prop(k).Constant && ~prop(k).HasDefault
                     obj.set(prop(k).Name,p.Results.(prop(k).Name))
                 end
             end
