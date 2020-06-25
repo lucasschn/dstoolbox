@@ -27,13 +27,13 @@ classdef RampUpMotion < AirfoilMotion
             mco = ?RampUpMotion;
             prop = mco.PropertyList; % makes a cell array of all properties of the specified ClassName
             for k=1:length(prop)
-                if ~prop(k).Constant
+                if ~prop(k).Constant && ~prop(k).HasDefault
                     p.addParameter(prop(k).Name,[]);
                 end
             end
             p.parse(varargin{:}); % {:} is added to take the content of the cells
             for k=1:length(prop)
-                if ~prop(k).Constant
+                if ~prop(k).Constant && ~prop(k).HasDefault
                     obj.set(prop(k).Name,p.Results.(prop(k).Name))
                 end
             end
@@ -41,7 +41,8 @@ classdef RampUpMotion < AirfoilMotion
         end
         function isolateRamp(obj)
             dalpha = diff(obj.alpha);
-            i_end = find((abs(dalpha/obj.Ts)<1e-2) .* (obj.alpha(1:end-1)>10),ceil(5/obj.Ts)); %during 1s
+            t_end = 5; % time during which the pitch angle must have stabilized to cutoff (must be above 10deg)
+            i_end = find((abs(dalpha/obj.Ts)<1e-2) .* (obj.alpha(1:end-1)>10),ceil(t_end/obj.Ts)); 
             i_end = i_end(end);
             t_end = obj.t(i_end);
             fprintf('Data will be cutoff at %.2fs \n',t_end)
@@ -124,8 +125,12 @@ classdef RampUpMotion < AirfoilMotion
                 obj.setAlphaDot();
             end
             obj.r = deg2rad(obj.alphadot)*airfoil.c/(2*obj.V);
-            dalphadt = diff(obj.alpha)./diff(obj.t);
-            obj.rt = deg2rad(dalphadt)*airfoil.c/(2*obj.V);
+            dalpha_rad = diff(obj.alpha_rad);
+            dalpha_raddt = (dalpha_rad(2:end) + dalpha_rad(1:end-1))/(2*obj.Ts); % way smoother than Euler method (dalphadt = dalpha(1:end-1)/obj.Ts)!
+            obj.rt = movmean(dalpha_raddt*airfoil.c/(2*obj.V),30);
+            if isempty(obj.S)
+                obj.S = 2*obj.V*obj.t/airfoil.c;
+            end
         end
         function findExpOnset(obj)
             % finds experimental dynamic stall onset for a specific ramp-up
@@ -169,6 +174,16 @@ classdef RampUpMotion < AirfoilMotion
                 end
             end
         end
+        function computeAnalyticalImpulsiveLift(obj)
+            % analytical alphas, angles in rad
+            D = zeros(size(ddalpha));
+            for n=2:length(ddalpha)
+                D(n) = D(n-1)*exp(-obj.Ts/TlKalpha);
+            end
+            obj.CNI = 4*TlKalpha/obj.M*(obj.alphadot-D);
+        end
+        function computeAnalyticalCirculatoryLift(obj,airfoil)
+        end
         function plotCL(obj,xaxis)
             figure
             if (~exist('xaxis','var') || strcmp(xaxis,'alpha'))
@@ -190,7 +205,7 @@ classdef RampUpMotion < AirfoilMotion
             figure
             plot(obj.alpha,obj.CD)
             grid on
-            xlabel('\alpha (�)')
+            xlabel('\alpha (°)')
             ylabel('C_D (-)')
             title(sprintf('%s ($\\dot{\\alpha} = %.2f ^{\\circ}$/s)',obj.name,obj.alphadot),'interpreter','latex')
         end
@@ -198,16 +213,20 @@ classdef RampUpMotion < AirfoilMotion
             figure
             switch mode 
                 case 'angle'
-                    plot(obj.alpha,obj.CN,'DisplayName','exp','LineWidth',5)
+                    plot(obj.alpha,obj.CN,'DisplayName','C_N','LineWidth',3)
+                    hold on 
+                    plot(obj.alpha_CConset,obj.CN(obj.i_CConset),'diamond','MarkerFaceColor','black','MarkerEdgeColor','black','MarkerSize',15,'DisplayName','\alpha_{ds,CC}')
                     xlabel('\alpha (°)')
                 case 'convectime'
-                    plot(obj.S,obj.CN,'DisplayName','exp','LineWidth',5)
+                    plot(obj.S,obj.CN,'DisplayName','C_N','LineWidth',3)
+                    hold on
+                    plot(obj.S(obj.i_CConset),obj.CN(obj.i_CConset),'diamond','MarkerFaceColor','black','MarkerEdgeColor','black','MarkerSize',15,'DisplayName','\alpha_{ds,CC}')
                     xlabel('t_c')
             end
             grid on
+            legend('Location','SouthEast','FontSize',20)
             ax = gca; 
             ax.FontSize = 20; 
-%             legend('Location','SouthEast')
             ylabel('C_N')
             title(sprintf('%s ($\\dot{\\alpha} = %.2f ^{\\circ}$/s)',obj.name,obj.alphadot),'interpreter','latex')
         end
@@ -222,27 +241,41 @@ classdef RampUpMotion < AirfoilMotion
                 hold on
                 plot(obj.analpha_lag,obj.CN,'--','DisplayName','C_N(\alpha'')')
                 warning('%s : CN curve was displayed for analytical alpha as the experimental alpha was not defined.',obj.name)
+            else 
+                error('alpha_lag is not defined')
             end
             grid on
             legend('Location','SouthEast')
-            xlabel('\alpha (�)')
-            ylabel('C_N (-)')
+            xlabel('\alpha (°)')
+            ylabel('C_N')
             title(obj.name)
         end
-        function fig = plotCC(obj)
+        function fig = plotCC(obj,mode)
+            % we should also plot CLonset
             fig = figure('name',sprintf('r=%.3f',obj.r));
-            plot(obj.alpha,obj.CC)
-            hold on
-            plot(obj.alpha_CConset,min(obj.CC),'rx')
+            switch mode
+                case 'angle'
+                    plot(obj.alpha,obj.CC,'LineWidth',3,'DisplayName','C_C')
+                    hold on
+                    plot(obj.alpha_CConset,min(obj.CC),'diamond','MarkerFaceColor','black','MarkerEdgeColor','black','MarkerSize',15,'DisplayName','\alpha_{ds,CC}')
+                    xlabel('\alpha (°)')
+                case 'convectime'
+                    plot(obj.S,obj.CC,'LineWidth',3,'DisplayName','C_C')
+                    hold on
+                    plot(obj.S(obj.i_CConset),min(obj.CC),'diamond','MarkerFace','black','MarkerEdgeColor','black','MarkerSize',15,'DisplayName','\alpha_{ds,CC}')
+                    xlabel('t_c')
+            end
             grid on
-            xlabel('\alpha (°)')
-            ylabel('C_C (-)')
+            legend('Location','SouthEast','FontSize',20)
+            ax = gca; 
+            ax.FontSize = 20; 
+            ylabel('C_C')
             title(sprintf('%s ($\\dot{\\alpha} = %.2f ^{\\circ}$/s)',obj.name,obj.alphadot),'interpreter','latex')
         end
         function plotAlpha(obj)
             plotAlpha@AirfoilMotion(obj)
             if ~isempty(obj.alpha_CConset)
-                plot(obj.t(obj.i_CConset),obj.alpha_CConset,'diamond','MarkerFaceColor','k','MarkerEdgeColor','k','MarkerSize',15,'DisplayName','\alpha_{ds,CC}')
+                plot(obj.S(obj.i_CConset),obj.alpha_CConset,'diamond','MarkerFaceColor','k','MarkerEdgeColor','k','MarkerSize',15,'DisplayName','\alpha_{ds,CC}')
             end  
             title(sprintf('%s ($\\dot{\\alpha}$ = %.2f $^o$/s)',obj.name,obj.alphadot),'interpreter','latex')            
         end
