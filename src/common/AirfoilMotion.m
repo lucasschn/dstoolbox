@@ -1,6 +1,7 @@
 classdef AirfoilMotion < matlab.mixin.SetGet
     properties
         name
+        model
         % experimental pitch angle evolutions
         alpha
         alpha_rad
@@ -13,15 +14,23 @@ classdef AirfoilMotion < matlab.mixin.SetGet
         CN
         CC
         % experimental parts
-        CNsteady
+        CNsteady % static value of CN(alpha(n)) according to the dynamic alpha(n)
         Ts
         t
         S % convective time
         rt % instantaneous red. pitch rate
         % experimental flow parameters
         V
-        M
+        M % Mach number
         %% Beddoes-Leishman
+        % Beddoes constants
+        A1 = 0.3;
+        A2 = 0.7;
+        A3 = 0; % for third order according to Sheng 2008 and 2011
+        b1 = 0.14;
+        b2 = 0.53;
+        b3 = 0;
+        % Time constants
         DeltaS
         Tp
         Tf
@@ -59,11 +68,6 @@ classdef AirfoilMotion < matlab.mixin.SetGet
         analpha_lag
     end
     properties (Constant = true)
-        % Beddoes constants
-        A1 = 0.3;
-        A2 = 0.7;
-        b1 = 0.14;
-        b2 = 0.53;
         % speed of sound
         a = 340.3;
     end
@@ -76,14 +80,14 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             mco = ?AirfoilMotion;
             prop = mco.PropertyList; % makes a cell array of all properties of the specified ClassName; % makes a cell array of all properties of the specified ClassName
             for k=1:length(prop)
-                if ~prop(k).Constant
+                if ~prop(k).Constant && ~prop(k).HasDefault
                     p.addParameter(prop(k).Name,[]);
                 end
             end
             p.parse(varargin{:}); % {:} is added to take the content of the cells
             % Add name / default value pairs
             for k=1:length(prop)
-                if ~prop(k).Constant
+                if ~prop(k).Constant && ~prop(k).HasDefault
                     obj.set(prop(k).Name,p.Results.(prop(k).Name))
                 end
             end
@@ -166,9 +170,11 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             end
         end
         function BeddoesLeishman(obj,airfoil,Tp,Tf,Tv,Tvl,alphamode)
+            obj.model = 'LB';
             airfoil.steady.fitKirchhoff()
+            obj.setCNsteady(airfoil.steady)
             obj.computeAttachedFlow(airfoil,alphamode);
-            obj.computeLEseparation(airfoil,Tp,alphamode);
+            obj.computeLEseparation(Tp,alphamode);
             obj.computeTEseparation(airfoil,Tf,'BL');
             obj.computeDS(airfoil,Tv,Tvl,'BL');
         end
@@ -180,31 +186,42 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             obj.computeDS(airfoil,Tv,Tvl,'BLBangga');
         end
         function BLSheng(obj,airfoil,Tf,Tv,Tvl,alphamode)
-            obj.Tf=Tf; 
-            obj.Tv=Tv; 
-            obj.Tvl=Tvl;
+            obj.model = 'Sheng-LB';
             airfoil.steady.fitKirchhoff()
             obj.computeAttachedFlow(airfoil,alphamode);
             obj.computeTEseparation(airfoil,Tf,'BLSheng');
             obj.computeDS(airfoil,Tv,Tvl,'BLSheng');
         end
         function BLexpfit(obj,airfoil,Tf,Tv,Tvl,alphamode)
-            obj.Tf=Tf;
-            obj.Tv=Tv; 
-            obj.Tvl=Tvl;
+            obj.model = 'Expfit';
             airfoil.steady.fitKirchhoff()
             obj.computeAttachedFlow(airfoil,alphamode);
             obj.computeTEseparation(airfoil,Tf,'BLSheng with expfit');
             obj.computeDS(airfoil,Tv,Tvl,'BLSheng with expfit');
+        end
+        function GomanKhrabrov(obj,steady,tau1,tau2)
+            % Resample CNsteady to fit experimental unsteady alphas
+            obj.tau1 = tau1;
+            obj.tau2 = tau2;
+            steady.setCN0();
+            obj.setCNsteady(steady)
+            steady.computeSlope();
+            steady.computeSeparation();
+            obj.alphadot_rad = diff(obj.alpha_rad)./diff(obj.t);
+            obj.alpha_shift = obj.alpha_rad(1:length(obj.alphadot_rad))-tau2*obj.alphadot_rad;
+            u = obj.alpha_shift;
+            u(u<min(steady.alpha_rad)) = min(steady.alpha_rad);
+            u(u>max(steady.alpha_rad)) = max(steady.alpha_rad);
+            x0 = interp1(steady.alpha_rad,steady.fexp,u);
+            sys = ss(-1/tau1,1/tau1,1,0);
+            obj.x = lsim(sys,x0,obj.t(1:length(x0)));
+            obj.CN_GK = steady.slope/4*(1+sqrt(obj.x)).^2+steady.CN0;
         end
         function computeAttachedFlow(obj,airfoil,alphamode)
             obj.S = 2*obj.V*obj.t/airfoil.c;
             obj.DeltaS = mean(diff(obj.S));
             obj.computeImpulsiveLift(airfoil,alphamode);
             obj.computeCirculatoryLift(airfoil,alphamode);
-            % effective angle of attack
-            obj.alphaE = obj.CNC/airfoil.steady.slope; % slope is in deg
-            obj.alphaE_rad = deg2rad(obj.alphaE);
             % chord force
             obj.CCC = obj.CNC.*tan(obj.alphaE_rad);
             % Potential normal coefficient
@@ -228,7 +245,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
         end
         function computeExperimentalImpulsiveLift(obj,TlKalpha)
             % experimental alphas, angles in rad
-            dalpha = diff(obj.alpha_rad); % should be degrees, but only radians work!
+            dalpha = diff(obj.alpha_rad); % should be in degrees but only radians work!
             ddalpha = diff(dalpha); % same unit as above
             D = zeros(size(ddalpha));
             for n=2:length(ddalpha)
@@ -249,10 +266,24 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             end
         end
         function computeExperimentalCirculatoryLift(obj,airfoil)
-            deltaalpha = diff(obj.alpha_rad); % should be in degrees, but only radians work
-            rule = 'mid-point';
-            [X,Y] = obj.computeDuhamel(deltaalpha,rule);
-            obj.CNC = airfoil.steady.slope*(reshape(obj.alpha(1:length(X)),size(X))-X-Y); % alpha is in degrees, slope is in 1/deg
+            deltaalpha = diff(obj.alpha); % deg
+            rule = 'mid-point';            
+            order = 2;
+            switch order
+                case 2
+                    [X,Y] = obj.computeDuhamel(deltaalpha,rule);
+                    % effective angle of attack
+                    airfoil.steady.computeSlope(5)
+                    obj.alphaE = (reshape(obj.alpha(1:length(X)),size(X))-X-Y);
+                    obj.alphaE_rad = deg2rad(obj.alphaE);
+                    obj.CNC = airfoil.steady.slope*obj.alphaE; % alpha is in degrees, slope is in 1/deg
+                case 3
+                    [X,Y,Z] = obj.computeDuhamelThirdOrder(deltaalpha);
+                    % effective angle of attack
+                    obj.alphaE = (reshape(obj.alpha(1:length(X)),size(X))-X-Y-Z);
+                    obj.alphaE_rad = deg2rad(obj.alphaE);
+                    obj.CNC = airfoil.steady.slope*obj.alphaE;
+            end
         end
         function [X,Y] = computeDuhamel(obj,deltaalpha,rule)
             % Choose the best-suited algorithm for approximation of the
@@ -279,7 +310,29 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             end
             
         end
-        function computeLEseparation(obj,airfoil,Tp,alphamode)
+        function [X,Y,Z] = computeDuhamelThirdOrder(obj,deltaalpha)
+            % Implements a third order circulatory force model, following
+            % Sheng 2008 & 2011. Changes Beddoes constants!
+            obj.A1 = 0.165;
+            obj.A2 = 0.335; 
+            obj.A3 = 0.5;
+            obj.b1 = 0.05; 
+            obj.b2 = 0.222;         
+            obj.b3 = 0.8/obj.M;
+            X = zeros(size(deltaalpha));
+            Y = zeros(size(deltaalpha));
+            Z = zeros(size(deltaalpha));
+            for n=2:length(deltaalpha)
+                X(n) = X(n-1)*exp(-obj.b1*obj.beta^2*obj.DeltaS) + obj.A1*deltaalpha(n)*exp(-obj.b1*obj.beta^2*obj.DeltaS/2);
+                Y(n) = Y(n-1)*exp(-obj.b2*obj.beta^2*obj.DeltaS) + obj.A2*deltaalpha(n)*exp(-obj.b2*obj.beta^2*obj.DeltaS/2);
+                Z(n) = Z(n-1)*exp(-obj.b3*obj.beta^2*obj.DeltaS) + obj.A3*deltaalpha(n)*exp(-obj.b3*obj.beta^2*obj.DeltaS/2);
+            end
+            obj.A1 = 0.3;
+            obj.A2 = 0.7;
+            obj.b1 = 0.14;
+            obj.b2 = 0.53;
+        end
+        function computeLEseparation(obj,Tp,alphamode)
             % Computes the delayed normal coefficient, CNprime, depending
             % on the time constant Tp for a given airfoil undergoing the
             % instanciated pitching motion.
@@ -290,9 +343,9 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             end
             switch alphamode
                 case 'analytical'
-                    obj.CNprime = airfoil.steady.slope*obj.analpha(1:length(Dp)) - Dp; % we pretend the flow is attached over the whole alpha-range
+                    obj.CNprime = obj.CNp - Dp;
                 case 'experimental'
-                    obj.CNprime = obj.CNp - Dp; % we pretend the flow is attached over the whole alpha-range
+                    obj.CNprime = obj.CNp - Dp;
             end
         end
         function computeTEseparation(obj,airfoil,Tf,model)
@@ -314,10 +367,20 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             n = min([length(obj.CNI),length(obj.CNC)]);
             % TODO: Replace Kirchhoff model by interpolation of experimental
             % static curve
-            obj.CNf = airfoil.steady.slope*((1+sqrt(obj.fpp(1:n)))/2).^2.*(obj.alphaE(1:n)-airfoil.steady.alpha0)+obj.CNI(1:n);
-            % seems like CNss goes to CNk value but I don't know why
-            eta = 0.95;
-            
+            airfoil.steady.computeSlope(5)
+            slope5 = airfoil.steady.slope;
+            airfoil.steady.computeSlope(10) % this has to be the same slope has used to computed fexp from CN in the steady curve. Otherwise, fp(end) will not match f(end)
+%             slope10 = airfoil.steady.slope;
+%             airfoil.steady.computeSlope(13)
+%             slope13 = airfoil.steady.slope;
+            % these two make discontinuities
+            % slope_adapted = [slope5*ones(size(obj.alpha(obj.alpha<=5))); slope10*ones(size(obj.alpha(obj.alpha(1:n) > 5)))];
+%             CNcrit = interp1(airfoil.steady.alpha,airfoil.steady.CN,airfoil.steady.alpha_ss);
+%             slope_adapted = slope5.*(obj.CNprime<CNcrit)+slope10.*(obj.CNprime>CNcrit);
+            slope_adapted = slope5;
+            obj.CNf = slope_adapted.*(obj.alphaE(1:n).*((1+sqrt(obj.fpp(1:n)))/2).^2-airfoil.steady.alpha0)+obj.CNI(1:n);
+            % CNss goes to CNalpha*(1+sqrt(f_\infty)/2
+            eta = 0.95; 
             obj.CCf = eta*airfoil.steady.slope*obj.alphaE(1:n).^2.*sqrt(obj.fpp(1:n));
         end
         function computeSepLag(obj,airfoil,model)
@@ -330,8 +393,10 @@ classdef AirfoilMotion < matlab.mixin.SetGet
                     obj.alphaf = obj.CNprime/airfoil.steady.slope; % effective separation point
                     obj.alphaf_rad = deg2rad(obj.alphaf);
                     n = min([length(obj.alphaf),length(obj.CNsteady)]);
-                    % Bangga 2020, Eq. 33
-                    visc_ratio = obj.CNsteady(1:n)./(airfoil.steady.slope*(obj.alphaf(1:n)-airfoil.steady.alpha0inv)); % here the zero-lift AoA for inviscid flow is needed.                    
+                    % Bangga 2020, Eq. 33 (I think Bangga's equation is
+                    % wrong, it should not be alphaf but alpha. Otherwise we would get f>1)
+                    % take only alpha>0, we are not interested in knowing the values of the separation function on the negative side)                                    
+                    visc_ratio = obj.CNsteady(obj.alpha(1:n)>0)./obj.CNprime(obj.alpha(1:n)>0); % here the zero-lift AoA for inviscid flow is needed.                    
                     if any(visc_ratio<0)
                         error('Viscous ratio cannot be negative.')
                     elseif any(visc_ratio>1)
@@ -341,13 +406,12 @@ classdef AirfoilMotion < matlab.mixin.SetGet
                     end
                 case 'BLSheng'
                     load(sprintf('/Users/lucas/Documents/EPFL/PDM/linfit_%s.mat',airfoil.name),'Talpha','alpha_ds0');
-                    obj.computeAlphaLag(airfoil,Talpha)
-                    if obj.r>=airfoil.r0
-                        delta_alpha1 = alpha_ds0 - airfoil.steady.alpha_ss;
-                    else
-                        delta_alpha1 = (alpha_ds0 - airfoil.steady.alpha_ss)*obj.r/airfoil.r0;
-                    end
-                    obj.fp = seppoint(airfoil.steady,obj.alpha_lag-delta_alpha1);
+                    obj.computeAlphaLag(airfoil,Talpha)                                                         
+                    da1 = alpha_ds0 - airfoil.steady.alpha_ss;                   
+                    da2 = (alpha_ds0 - airfoil.steady.alpha_ss)*obj.rt/airfoil.r0;
+                    delta_alpha1 = da1.*(obj.rt>=airfoil.r0)+da2.*(obj.rt<airfoil.r0); 
+                    n = min([length(obj.alpha_lag),length(delta_alpha1)]);
+                    obj.fp = seppoint(airfoil.steady,obj.alpha_lag(1:n)-delta_alpha1(1:n));
                 case 'BLSheng with expfit'
                     [~,Talpha] = Expfit(airfoil,obj);
                     obj.computeAlphaLag(airfoil,Talpha)
@@ -359,6 +423,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             % having computed the attached-flow behavior and both TE and LE
             % separation with the homolog methods.
             obj.Tv = Tv; 
+            obj.Tvl = Tvl;
             % vortex normal coeff
             KN = 1/4*(1+sqrt(obj.fpp)).^2;
             n = min([length(obj.CNC),length(KN)]);
@@ -408,24 +473,6 @@ classdef AirfoilMotion < matlab.mixin.SetGet
                end
            end
         end
-        function GomanKhrabrov(obj,steady,tau1,tau2)
-            % Resample CNsteady to fit experimental unsteady alphas
-            obj.tau1 = tau1;
-            obj.tau2 = tau2;
-            steady.setCN0();
-            obj.setCNsteady(steady)
-            steady.computeSlope();
-            steady.computeSeparation();
-            obj.alphadot_rad = diff(obj.alpha_rad)./diff(obj.t);
-            obj.alpha_shift = obj.alpha_rad(1:length(obj.alphadot_rad))-tau2*obj.alphadot_rad;
-            u = obj.alpha_shift;
-            u(u<min(steady.alpha_rad)) = min(steady.alpha_rad);
-            u(u>max(steady.alpha_rad)) = max(steady.alpha_rad);
-            x0 = interp1(steady.alpha_rad,steady.fexp,u);
-            sys = ss(-1/tau1,1/tau1,1,0);
-            obj.x = lsim(sys,x0,obj.t(1:length(x0)));
-            obj.CN_GK = steady.slope/4*(1+sqrt(obj.x)).^2+steady.CN0;
-        end
         function computeAlphaLag(obj,airfoil,Talpha)
             % computes the delayed angle of attack alpha_lag w.r.t. the
             % experimental angle of attack alpha. The time constant for the
@@ -450,6 +497,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
                 analpha_lag0 = lsqcurvefit(@(x,xdata) alphadot_lag*xdata+x,0,obj.t(dalpha_lagdt>=5),obj.alpha_lag(dalpha_lagdt>=5),[],[],opts);
                 obj.analpha_lag =  alphadot_lag*obj.t + analpha_lag0;
             elseif ~isempty(obj.analpha) % compute analpha_lag from analpha
+                warning('analpha_lag was computed from analpha')
                 dalpha = diff(obj.analpha);
                 obj.analpha_lag = zeros(size(obj.analpha));
                 Dalpha = zeros(size(obj.alpha));
@@ -462,11 +510,11 @@ classdef AirfoilMotion < matlab.mixin.SetGet
         function plotAlpha(obj)
             figure
             if ~isempty(obj.alpha)
-                plot(obj.t,obj.alpha,'LineWidth',5,'DisplayName','exp')
+                plot(obj.S,obj.alpha,'LineWidth',5,'DisplayName','exp')
                 hold on
             end
             if ~isempty(obj.analpha)
-                plot(obj.t,obj.analpha,'--','LineWidth',5,'DisplayName','ideal')
+                plot(obj.S,obj.analpha,'--','LineWidth',5,'DisplayName','ideal')
                 hold on
             end
             axis([0 Inf -5 35])
@@ -474,7 +522,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             ax = gca;
             ax.FontSize = 20; 
             grid on
-            xlabel('t (s)')
+            xlabel('t_c')
             ylabel('\alpha (°)')
             title(obj.name)
         end
@@ -507,25 +555,47 @@ classdef AirfoilMotion < matlab.mixin.SetGet
         function plotLB(obj,mode)
             figure
             switch mode
-                case 'alpha'
-                    plot(obj.alpha(1:length(obj.CN)),obj.CN,'DisplayName','exp')
+                case 'angle'
+                    plot(obj.alpha(1:length(obj.CN)),obj.CN,'LineWidth',2,'DisplayName','exp')
                     hold on
-                    plot(obj.alpha(1:length(obj.CN_LB)),obj.CN_LB,'DisplayName','LB')
+                    plot(obj.alpha(1:length(obj.CN_LB)),obj.CN_LB,'LineWidth',2,'DisplayName','LB')
+                    %plot(obj.alpha,obj.CNsteady)
                     xlabel('\alpha (°)')
                 case 'convectime'
-                    plot(obj.S(1:length(obj.CN)),obj.CN,'DisplayName','exp')
+                    plot(obj.S(1:length(obj.CN)),obj.CN,'LineWidth',2,'DisplayName','exp')
                     hold on
-                    plot(obj.S(1:length(obj.CN_LB)),obj.CN_LB,'DisplayName','LB')
+                    plot(obj.S(1:length(obj.CN_LB)),obj.CN_LB,'LineWidth',2,'DisplayName','LB')
+                    %plot(obj.S(1:length(obj.CNsteady)),obj.CNsteady,'LineWidth',2,'DisplayName','static')
                     xlabel('t_c')
             end
             ylabel('C_N')
             grid on
-            legend('Location','NorthEast','FontSize',20)
-            title(sprintf('r=%.3f,Tp=%.1f,Tf =%.1f,Tv=%.1f,Tvl=%.1f',obj.r,obj.Tp,obj.Tf,obj.Tv,obj.Tvl))
+            legend('Location','SouthEast','FontSize',20)
             ax = gca;
             ax.FontSize = 20;
+            title(sprintf('$r=%.3f,T_p=%.1f,T_f =%.1f,T_v=%.1f,T_{vl}=%.1f$',obj.r,obj.Tp,obj.Tf,obj.Tv,obj.Tvl),'FontSize',14,'interpreter','latex') 
+        end
+        function plotSteady(obj,airfoil)
+            airfoil.steady.computeSlope(5)
+            slope5 = airfoil.steady.slope;
+            airfoil.steady.computeSlope(13)
+            slope13 = airfoil.steady.slope;
+            CN_steady = slope5*((1+sqrt(airfoil.steady.f_inf))/2).^2*30;
+            figure
+            plot(obj.S(1:length(obj.CN)),obj.CN,'LineWidth',2,'DisplayName','exp')
+            hold on
+            plot(obj.S(1:length(obj.CN_LB)),obj.CN_LB,'LineWidth',2,'DisplayName','LB')
+            plot(obj.S,CN_steady.*ones(size(obj.S)),'--','LineWidth',2,'DisplayName','steady-state (Eq. 3.2)')
+            xlabel('t_c')
+            ylabel('C_N')
+            grid on
+            legend('Location','NorthEast','FontSize',20)
+            ax = gca;
+            ax.FontSize = 20;
+            title(sprintf('$r=%.3f,T_p=%.1f,T_f =%.1f,T_v=%.1f,T_{vl}=%.1f$',obj.r,obj.Tp,obj.Tf,obj.Tv,obj.Tvl),'FontSize',14,'interpreter','latex') 
         end
         function plotShengLB(obj,airfoil)
+            figure
             plot(obj.S(1:length(obj.CN)),obj.CN,'DisplayName','exp','LineWidth',2)
             hold on
             plot(obj.S(1:length(obj.CN_LB)),obj.CN_LB,'DisplayName','Sheng-LB','LineWidth',2)
@@ -534,24 +604,31 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             xlabel('t_c')
             ylabel('C_N')
             grid on
-            legend('Location','NorthEast','FontSize',20)
+            legend('Location','SouthEast','FontSize',20)
             load(sprintf('../linfit_%s.mat',airfoil.name),'Talpha');
-            title(sprintf('r=%.3f,T\\alpha=%.1f,Tf =%.1f,Tv=%.1f,Tvl=%.1f',obj.r,Talpha,obj.Tf,obj.Tv,obj.Tvl))
+            title(sprintf('$r=%.3f,T\\alpha=%.2f,Tf =%.1f,Tv=%.1f,Tvl=%.1f$',obj.r,Talpha,obj.Tf,obj.Tv,obj.Tvl),'interpreter','latex')
             ax = gca;
             ax.FontSize = 20;
+            axis([0 obj.S(end) -0.03 2])
         end
-        function plotLBExpfit(obj,airfoil)
+        function plotLBExpfit(obj,airfoil,CN_Sheng)
+            figure
             plot(obj.S(1:length(obj.CN)),obj.CN,'DisplayName','exp','LineWidth',2)
-            hold on
+            hold on            
+            if nargin > 2
+                plot(obj.S(1:length(CN_Sheng)),CN_Sheng,'DisplayName','LB-Sheng','LineWidth',2)
+            end            
             plot(obj.S(1:length(obj.CN_LB)),obj.CN_LB,'DisplayName','LB-Expfit','LineWidth',2)
-            plot(obj.S(1:length(obj.CNf)),obj.CNf,'DisplayName','C_N^f')
-            plot(obj.S(1:length(obj.CNv)),obj.CNv,'DisplayName','C_N^v')
+            if obj.Tv ~=0 && isempty(CN_Sheng)
+                plot(obj.S(1:length(obj.CNf)),obj.CNf,'DisplayName','C_N^f')
+                plot(obj.S(1:length(obj.CNv)),obj.CNv,'DisplayName','C_N^v')
+            end
             xlabel('t_c')
             ylabel('C_N')
             grid on
-            legend('Location','NorthEast','FontSize',20)
+            legend('Location','SouthEast','FontSize',20)
             [~,Talpha] = Expfit(airfoil,obj);
-            title(sprintf('r=%.3f,T\\alpha=%.1f,Tf =%.1f,Tv=%.1f,Tvl=%.1f',obj.r,Talpha,obj.Tf,obj.Tv,obj.Tvl))
+            title(sprintf('$r=%.3f,T\\alpha=%.1f,Tf =%.1f,Tv=%.1f,Tvl=%.1f$',obj.r,Talpha,obj.Tf,obj.Tv,obj.Tvl),'interpreter','latex')
             ax = gca;
             ax.FontSize = 20;
         end
@@ -565,12 +642,14 @@ classdef AirfoilMotion < matlab.mixin.SetGet
         end
         function plotAlphas(obj)
             figure
-            plot(obj.t,obj.alpha,'LineWidth',2,'DisplayName','\alpha_{xp}')
+            plot(obj.t,obj.alpha,'LineWidth',2,'DisplayName','\alpha_{xp}','LineWidth',2)
             hold on
-            plot(obj.t(1:length(obj.alphaf)),obj.alphaf,'DisplayName','\alpha_f')
-            plot(obj.t(1:length(obj.alphaE)),obj.alphaE,'DisplayName','\alpha_E')
+            plot(obj.t(1:length(obj.alphaf)),obj.alphaf,'DisplayName','\alpha_f','LineWidth',2)
+            plot(obj.t(1:length(obj.alphaE)),obj.alphaE,'DisplayName','\alpha_E','LineWidth',2)
             grid on
-            legend('Location','Best')
+            ax = gca; 
+            ax.FontSize = 20;
+            legend('Location','Best','Fontsize',20)
             xlabel('time (s)')
             ylabel('\alpha (°)')
         end
@@ -578,7 +657,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             figure
             switch mode
                 case 'angle'
-                    plot(airfoil.steady.alpha,obj.fexp,'DisplayName','fexp','LineWidth',2)
+                    plot(airfoil.steady.alpha,airfoil.steady.fexp,'DisplayName','fexp','LineWidth',2)
                     hold on
                     plot(airfoil.steady.alpha,obj.f,'DisplayName','f','LineWidth',2)
                     plot(obj.alpha(1:length(obj.fp)),obj.fp,'DisplayName','f''','LineWidth',2)
@@ -587,19 +666,24 @@ classdef AirfoilMotion < matlab.mixin.SetGet
                 case 'convectime'
                     plot(obj.S,interp1(airfoil.steady.alpha,airfoil.steady.fexp,obj.alpha),'DisplayName','fexp','LineWidth',2)
                     hold on
-                    plot(obj.S,interp1(airfoil.steady.alpha,airfoil.steady.f,obj.alpha),'DisplayName','f','LineWidth',2)
-                    plot(obj.S(1:length(obj.fp)),obj.fp,'DisplayName','f''','LineWidth',2)
-                    plot(obj.S(1:length(obj.fpp)),obj.fpp,'DisplayName','f''''','LineWidth',2)
+                    plot(obj.S,interp1(airfoil.steady.alpha,airfoil.steady.f,obj.alpha),'DisplayName','f (Eq. 2.1)','LineWidth',2)
+                    if strcmp(obj.model,'LB')
+                        disp_name = 'f'' (Eq. 2.10)';
+                    else
+                        disp_name = 'f'' (Eq. 2.24)';
+                    end
+                    plot(obj.S(1:length(obj.fp)),obj.fp,'DisplayName',disp_name,'LineWidth',2)
+                    plot(obj.S(1:length(obj.fpp)),obj.fpp,'DisplayName','f'''' (Eq. 2.11)','LineWidth',2)
                     xlabel('t_c')
                 otherwise 
                     error('Either angle or convectime mode must be specified as an argument')
             end
             legend('FontSize',20)
-            title(sprintf('r=%.3f,Tp=%.1f,Tf =%.1f,Tv=%.1f,Tvl=%.1f',obj.r,obj.Tp,obj.Tf,obj.Tv,obj.Tvl))
+            title(sprintf('r=%.3f,Tp=%.1f,Tf =%.1f,Tv=%.1f,Tvl=%.1f',obj.r,obj.Tp,obj.Tf,obj.Tv,obj.Tvl),'interpreter','latex')
             ax = gca;
             ax.FontSize = 20; 
             grid on
-            ylabel('x/c')
+            ylabel('f')
             if  nargin>3 && save
                 saveas(gcf,'../fig/f_curves.png')
             end
@@ -662,6 +746,17 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             xlabel('t (s)')
             ylabel('\alpha')
             title(sprintf('%s ($\\dot{\\alpha} = %.2f ^{\\circ}$/s)',obj.name,obj.alphadot),'interpreter','latex')
+            legend('Location','SouthEast')
+        end
+        function plotCNprime(obj)
+            n = length(obj.CNprime);
+            figure
+            plot(obj.S,obj.CNsteady,'DisplayName','static')
+            hold on 
+            plot(obj.S(1:n),obj.CNprime,'DisplayName','C_N''')
+            grid on 
+            xlabel('t_c')
+            ylabel('C_N')
             legend('Location','SouthEast')
         end
     end
