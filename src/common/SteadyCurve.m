@@ -6,6 +6,7 @@ classdef SteadyCurve < handle
         CNinv
         CL
         alpha0 = 0; % alpha0 = alpha(CN=0)
+        alpha0inv = 0; % zero lift angle for inviscid conditions
         alpha_ss % denoted alpha_1 in Beddoes-Leishman
         f
         CNalpha % 1/deg
@@ -13,6 +14,8 @@ classdef SteadyCurve < handle
         slope_rad % pre-stall slope in 1/rad
         fexp
         % Kirchhoff 
+        f_ss = 0.7;
+        f_inf = 0.125;
         S1
         S2
     end
@@ -28,7 +31,7 @@ classdef SteadyCurve < handle
             else
                 obj.alpha_ss = alpha_ss;
             end
-            obj.computeSlope()
+            obj.computeSlope(10)
             obj.setAlpha0()
             obj.fitKirchhoff()
             obj.computeSeparation()
@@ -42,10 +45,12 @@ classdef SteadyCurve < handle
             end
             obj.alpha_ss = obj.alpha(ialphass);
         end
-        function computeSlope(obj)
+        function computeSlope(obj,max_alpha)
             % CN slope for attached flow. Should be around 2pi/beta
-            % converted to degrees. 
-            CNslopes = obj.CNalpha(obj.alpha<10); % 1/deg
+            % converted to degrees. max_alpha defines the angle until which
+            % the slope is averaged, in degrees.
+            warning('The slope is now computed by averaging up to %d degrees.',max_alpha)
+            CNslopes = obj.CNalpha(obj.alpha<=max_alpha); % 1/deg
             if isempty(CNslopes)
                 % assume inviscid thin airfoil
                 warning('The steady curve contains no angle of attack below 10 degrees. An inviscid thin airfoil is assumed to determine the pre-stall slope.')
@@ -58,13 +63,18 @@ classdef SteadyCurve < handle
             end
             obj.CNinv = obj.slope*obj.alpha;
         end
+        function plotInviscid(obj)
+            obj.plotCN
+            hold on 
+            plot(obj.alpha,obj.CNinv)
+        end
         function plotCN(obj)
             figure
             plot(obj.alpha,obj.CN)
             grid on
             xlabel('\alpha (°)')
             ylabel('C_N')
-            axis([0 Inf 0 Inf])
+            axis([-5 30 -Inf Inf])
         end
         function plotCL(obj)
             figure
@@ -78,8 +88,8 @@ classdef SteadyCurve < handle
             % good guess of the optimal value)
             stall_slope_minus = obj.CNalpha(find(obj.alpha<obj.alpha_ss,1,'last'));
             stall_slope_plus = obj.CNalpha(find(obj.alpha>obj.alpha_ss,1,'first'));
-            S10 = 0.3*deg2rad(obj.alpha_ss)/(2*sqrt(0.7))*(((1+sqrt(0.7))/2)^2-stall_slope_minus/obj.slope_rad).^(-1);
-            S20 = 0.66*deg2rad(obj.alpha_ss)/(2*sqrt(0.7))*(((1+sqrt(0.7))/2)^2-stall_slope_plus/obj.slope_rad).^(-1);
+            S10 = (1-obj.f_ss)*deg2rad(obj.alpha_ss)/(2*sqrt(obj.f_ss))*(((1+sqrt(obj.f_ss))/2)^2-stall_slope_minus/obj.slope_rad).^(-1);
+            S20 = (obj.f_ss-obj.f_inf)*deg2rad(obj.alpha_ss)/(2*sqrt(obj.f_ss))*(((1+sqrt(obj.f_ss))/2)^2-stall_slope_plus/obj.slope_rad).^(-1);
             
             % Optimizes S1,S2 so that the normal coefficient modelled with seppoint and Kirchhoff 
             % equals the experimental static CN
@@ -118,9 +128,9 @@ classdef SteadyCurve < handle
         end          
         function plotKirchhoff(obj)
             figure
-            plot(obj.alpha,obj.CN,'DisplayName','exp','LineWidth',2)
+            plot(obj.alpha,obj.CN,'x','DisplayName','exp','LineWidth',2)
             hold on 
-            plot(obj.alpha,obj.CNinv,'DisplayName','inviscid','LineWidth',2)
+            %plot(obj.alpha,obj.CNinv,'DisplayName','inviscid','LineWidth',2)
             if isempty(obj.S1)
                 warning('Kirchhoff has not yet been fitted to this SteadyCurve .')
             else
@@ -128,7 +138,7 @@ classdef SteadyCurve < handle
             end
             grid on
             ax = gca; 
-            ax.FontSize=20;
+            ax.FontSize = 20;
             axis([-5 30 -0.5 1.5])
             legend('Location','SouthEast','FontSize',20)
             xlabel('\alpha (°)')
@@ -167,12 +177,13 @@ classdef SteadyCurve < handle
                 obj.computeSeparation()
             end
             figure
-            plot(obj.alpha,obj.fexp,'DisplayName','fexp','LineWidth',2)
+            plot(obj.alpha,obj.fexp,'x','DisplayName','fexp','LineWidth',2)
             hold on 
             plot(obj.alpha,obj.f,'DisplayName','f','LineWidth',2) 
             grid on 
             ax = gca; 
-            ax.FontSize = 20;            
+            ax.FontSize = 20;    
+            axis([-5 30 0 1])
             legend('Location','SouthWest','FontSize',20)
             xlabel('\alpha (°)')
             ylabel('f')
@@ -181,10 +192,15 @@ classdef SteadyCurve < handle
             figure
             % must be f here because fexp is computed by inverted Kirchhoff
             % model
-            plot(obj.f,obj.CN./obj.CNinv,'LineWidth',1,'DisplayName','visc. ratio')
+            plot(obj.f,obj.CN./obj.CNinv,'LineWidth',2,'DisplayName','visc. ratio')
+            hold on 
+            plot(obj.f,0.25*(1+sqrt(obj.f)).^2,'DisplayName','Kirchhoff')
+            legend('Location','SouthWest','FontSize',20)
+            ax = gca;
+            ax.FontSize = 20; 
             axis([0 1 0 1])
             grid on
-            xlabel('f (x/c)')
+            xlabel('f')
             ylabel('\kappa (-)')
         end     
     end
