@@ -2,7 +2,7 @@ close all
 clear all
 clc
 set(0,'DefaultFigureWindowStyle','docked')
-run('../data/2008_simcos/matlab/labbook.m')
+run('../data/2008_simcos/matlab/labbook_simcos.m')
 addpath('../src/model/')
 addpath('../src/common/')
 addpath('../src/lib/')
@@ -18,10 +18,10 @@ M = 0.14;
 
 airfoil = Airfoil('OA209',0.3);
 %airfoil.steady = SteadyCurve(static_data(:,1),static_data(:,2));
-load('../static_corr')
+load(fullfile('..','static_corr'))
 airfoil.steady = SteadyCurve(mA,mCl_corr);
 airfoil.steady.plotCN()
-saveas(gcf,'../fig/static_OA209','png')
+saveas(gcf,fullfile('..','fig','static_OA209.png'))
 
 %% Dynamic data
 nr=13;

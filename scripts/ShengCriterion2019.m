@@ -2,16 +2,17 @@ close all
 clear all
 clc
 set(0,'DefaultFigureWindowStyle','docked')
-run('/Users/lucas/src/codes_smarth/labbook.m')
-addpath('../src/model/')
-addpath('../src/common/')
-addpath('../src/lib/')
-
+if ispc
+    addpath('\\OSCAR\Macintosh HD\Users\lucas\src\codes_smarth')
+end
+addpath(genpath(fullfile('..','src','model')))
+run('labbook.m')
 %% Define the airfoil and the associated steady curve
 
 airfoil = Airfoil('flatplate',0.15);
 airfoil.r0 = 0.04;
 static = load('../static_flatplate');
+% changing alpha_ss to 8° does not give a linear fit
 airfoil.steady = SteadyCurve(static.alpha,static.CN,13.5);
 
 %% Setting up the ramps
@@ -40,15 +41,15 @@ for k=1:length(c)
         Cd = raw.Cd-zero.Cd;
     end
     fs = 1/ramp.Ts;
-    Cl_fff = myFilter(Cl,fs);
-    Cd_fff = myFilter(Cd,fs);
+    Cl_fff = myFilterTwice(Cl,fs);
+    Cd_fff = myFilterTwice(Cd,fs);
     ramp.setCL(Cl_fff);
     ramp.setCD(Cd_fff);
     ramp.computeAirfoilFrame();
     ramp.isolateRamp();
+    ramp.setPitchRate(airfoil);
     % Define stall
     ramp.findExpOnset();
-    ramp.setPitchRate(airfoil);
     evalin('base',sprintf('fig%d = %s.plotCC(''convectime'');',k,msname));
 end
 
@@ -65,3 +66,6 @@ setLinFit(airfoil,ms012mpt1,ms010mpt1,ms013mpt1,ms025mpt1,ms014mpt1,ms034mpt1,ms
 %     hold on
 %     evalin('base',sprintf('plot(%s.alpha_lagonset*ones(2,1),fig%d.CurrentAxes.YLim,''b--'')',msname,k));
 % end
+
+%% Check if Talpha is correct based on DS onset
+
