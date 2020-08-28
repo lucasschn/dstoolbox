@@ -13,7 +13,7 @@ rho = 1000;
 U = 0.5;
 
 % /!\ ms115 is an old static curve with alpha<25, higher AoA are missing.
-% Use claibrate_polar.m instead.
+% Use calibrate_polar.m instead.
 load('../data/2019_SH/20191009/loads/ms115mpt001.mat');
 fdata = [out(2).t out(2).forces(:,1) out(2).forces(:,2)];
 [t_NI, helpi_NI] = unique(fdata(:,1)); % time vector for the force data

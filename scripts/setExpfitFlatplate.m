@@ -42,8 +42,8 @@ for k=1:length(c)
         Cd = raw.Cd;
     end
     fs = 1/ramp.Ts;
-    Clf = myFilter(Cl,fs);
-    Cdf = myFilter(Cd,fs);
+    Clf = myFilterTwice(Cl,fs);
+    Cdf = myFilterTwice(Cd,fs);
     ramp.setCL(Clf);
     ramp.setCD(Cdf);
     ramp.computeAirfoilFrame();

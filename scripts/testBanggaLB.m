@@ -17,11 +17,11 @@ run('/Users/lucas/src/codes_smarth/labbook.m')
 airfoil = Airfoil('flatplate',0.15);
 airfoil.r0 = 0.04;
 static = load(fullfile('..','static_flatplate'));
-airfoil.steady = SteadyCurve(static.alpha,static.CN,13);
+airfoil.steady = SteadyCurve(static.alpha,static.CN,13.5);
 
 %% Set up the ramp
 
-c = 2;
+c = 22;
 
 data = load(loadmat(LB(c).ms,LB(c).mpt),'raw','inert','avg','zero');
 raw = data.raw;
@@ -43,11 +43,14 @@ ramp.setCD(Cdf);
 
 ramp.computeAirfoilFrame();
 ramp.isolateRamp();
-ramp.setPitchRate(airfoil);
-% Define stall (convectime must have been set)
+% Define stall
 ramp.findExpOnset();
+ramp.setPitchRate(airfoil);
+
 %% Run Leishman-Beddoes' model on the ramp
 
-ramp.BeddoesLeishman(airfoil,3,1,2,1.8,'experimental')
-ramp.plotFatma()
-% saveas(gcf,'../fig/CNv_limcrit','png')
+ramp.BLBangga(airfoil,5,2,5,1,'experimental')
+ramp.plotLB('convectime')
+saveas(gcf,'../fig/CN_BanggaLB','png')
+ramp.plotSeparation(airfoil,'convectime',0)
+saveas(gcf,'../fig/f_BanggaLB','png')

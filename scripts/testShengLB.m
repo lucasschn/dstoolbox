@@ -14,13 +14,13 @@ run('/Users/lucas/src/codes_smarth/labbook.m')
 %% Define the airfoil and the associated steady curve
 
 airfoil = Airfoil('flatplate',0.15);
-airfoil.r0 = 0.04;
+airfoil.r0 = 0.01;
 static = load('../static_flatplate');
-airfoil.steady = SteadyCurve(static.alpha,static.CN,13.5);
+airfoil.steady = SteadyCurve(static.alpha,static.CN,8);
 
 %% Setting up the ramps
 
-c = 22;
+c = 24;
 
 for k=1:length(c)
     if LB(c(k)).ms >= 13 && LB(c(k)).ms < 100
@@ -58,10 +58,9 @@ for k=1:length(c)
 end
 
 %% Run Sheng-LB model on all ramps
-
+load('../linfit_flatplate','Talpha')
 for k=1:length(c) 
-    msname = sprintf('ms%03impt%i',LB(c(k)).ms,LB(c(k)).mpt);
-    evalin('base',sprintf('%s.BLSheng(airfoil,0,1,1,''experimental'')',msname))
+    msname = sprintf('ms%03impt%i',LB(c(k)).ms,LB(c(k)).mpt);    
+    evalin('base',sprintf('%s.BLSheng(airfoil,,Talpha,%s.estimateTvl,''experimental'')',msname,msname))
     evalin('base',sprintf('%s.plotShengLB(airfoil)',msname))
 end
-

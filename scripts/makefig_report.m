@@ -1,21 +1,21 @@
 % This script is made to save all figures needed for the report
 % Author : Lucas Schneeberger
 % Date : 06.06.2020
-
 close all
 clear all
 clc
 set(0,'DefaultFigureWindowStyle','docked')
-addpath('../plot_dir/')
-addpath('../src/model/')
-addpath('../src/common/')
-addpath('../src/lib/')
-run('/Users/lucas/src/codes_smarth/labbook.m')
+addpath(fullfile('..','plot_dir'))
+addpath(genpath(fullfile('..','src')))
+run('labbook.m')
+
+%% Defines paths 
+
 %% Define the airfoil and the associated steady curve
 
 airfoil = Airfoil('flatplate',0.15);
 airfoil.r0 = 0.04;
-static = load('../static_flatplate');
+static = load(fullfile('..','static_flatplate'));
 airfoil.steady = SteadyCurve(static.alpha,static.CN,13.5);
 
 %% Setting up the non-filterd ramp
@@ -86,7 +86,7 @@ save_LB = false;
 ramp1_filt.BeddoesLeishman(airfoil,Tp,Tf,Tv,Tvl,'experimental')
 ramp1_filt.plotLB('convectime')
 if save_LB
-    saveas(gcf,'../fig/CN_LB_r020','png')
+    saveas(gcf,fullfile('..','fig','CN_LB_r020'),'png')
 end
 
 CN1_LB = ramp1_filt.CN_LB;
@@ -94,7 +94,7 @@ CN1_LB = ramp1_filt.CN_LB;
 ramp2_filt.BeddoesLeishman(airfoil,Tp,Tf,Tv,Tvl,'experimental')
 ramp2_filt.plotLB('convectime')
 if save_LB
-    saveas(gcf,'../fig/CN_LB_r026','png')
+    saveas(gcf,fullfile('..','fig','CN_LB_r026'),'png')
 end
 
 CN2_LB = ramp2_filt.CN_LB;
@@ -102,7 +102,7 @@ CN2_LB = ramp2_filt.CN_LB;
 ramp3_filt.BeddoesLeishman(airfoil,Tp,Tf,Tv,Tvl,'experimental')
 ramp3_filt.plotLB('convectime')
 if save_LB
-    saveas(gcf,'../fig/CN_LB_r092','png')
+    saveas(gcf,fullfile('..','fig','CN_LB_r092'),'png')
 end
 
 CN3_LB = ramp3_filt.CN_LB;
@@ -115,7 +115,7 @@ fprintf('%.1f%%, %.1f%%, %.1f%% \n',max(CN1_LB)/max(ramp1_filt.CN)*100-100,max(C
 
 Tf = 0; Tv = 0.5; Tvl = 3;
 
-save_shengLB = false;
+save_shengLB = true;
 
 ramp1_filt.BLSheng(airfoil,Tf,Tv,Tvl,'experimental')
 ramp1_filt.plotShengLB(airfoil)
@@ -151,7 +151,7 @@ fprintf('Sheng-LB: r=.020, r=.026, r=0.092 \n')
 fprintf('%.1f%%, %.1f%%, %.1f%% \n',max(CN1_ShengLB)/max(ramp1_filt.CN)*100-100,max(CN2_ShengLB)/max(ramp2_filt.CN)*100-100,max(CN3_ShengLB)/max(ramp3_filt.CN)*100-100) 
 %% Test Expfit-LB
 
-save_expfit = true;
+save_expfit = false;
 
 Tf = 0; Tv = 0.5; Tvl = 3;
 

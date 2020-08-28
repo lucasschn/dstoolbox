@@ -44,18 +44,19 @@ if 0
         eval(sprintf('plot(s%d.alpha,s%d.CN,''DisplayName'',''s%d'')',k,k,k))
     end
 end
-if 1
+if 0
     plot(highres.polarforces.alpha,highres.polarforces.Cn,'DisplayName','highres')
 end
 grid on
+axis tight
 ax = gca; 
 ax.FontSize = 20; 
 xlabel('\alpha (°)')
-ylabel('C_N (-)')
+ylabel('C_N')
 legend('Location','SouthEast')
 
 
 
 %% Save avg curve and figure
-%save('../static_flatplate','-struct','savg')
-%saveas(gcf,'../fig/static_flatplate','png')
+save('../static_flatplate','-struct','savg')
+saveas(gcf,'../fig/static_flatplate','png')

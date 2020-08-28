@@ -8,24 +8,26 @@ V = M*343;
 
 %% NACA 23012
 naca23012 = Airfoil('NACA 23012',0.55);
+% approximate alpha_ss value to make the algorithm work
+naca23012.steady.alpha_ss = 15; 
 
-stall23012 = readmatrix('data/sheng_naca23012.csv');
-CNalpha23012 = readmatrix('data/CN_alpha.csv');
-CNalphalag23012 = readmatrix('data/CN_alpha_lag.csv');
+% Data from Sheng's article
+stall23012 = readmatrix('../data/sheng_naca23012.csv'); % alpha_ds(r)
+r = stall23012(:,1); alpha_ds = stall23012(:,2);
+CNalpha23012 = readmatrix('../data/CN_alpha.csv'); % CN(alpha)
+CNalphalag23012 = readmatrix('../data/CN_alpha_lag.csv'); % CN(alpha')
 
-r = stall23012(:,1);
-alpha_ds = stall23012(:,2);
-
+% Building the RampUpMotion objects from Sheng's ramps
 for k=1:length(r)
     assignin('base',sprintf('ms%d',k),RampUpMotion('r',r(k),'V',V,'alpha_CConset',alpha_ds(k)));
     eval(sprintf('ms%d.setName()',k)) % defines the name property from the name of the instance
     eval(sprintf('ms%d.setAlphaDot(%3.4f)',k,rad2deg(r(k))*2*V/naca23012.c))
 end
 
-% Define alpha_ds0 & compute Talpha
-naca23012.Sheng(ms1,ms2,ms3,ms4,ms5,ms6,ms7,ms8,ms9,ms10,ms11,ms12,ms13,ms14,ms15,ms16,ms17,ms18,ms19,ms20,ms21,ms22,ms23,ms24,ms25,ms26,ms27);
+% Define alpha_ds0 & compute Talpha from Sheng's experiments
+setLinFit(naca23012,ms1,ms2,ms3,ms4,ms5,ms6,ms7,ms8,ms9,ms10,ms11,ms12,ms13,ms14,ms15,ms16,ms17,ms18,ms19,ms20,ms21,ms22,ms23,ms24,ms25,ms26,ms27);
 
-saveas(gcf,'fig/Sheng/Sheng23012.png')
+saveas(gcf,'../fig/Sheng/Sheng23012.png')
 
 r = 0.025; % compares well to ms19
 alphadot = rad2deg(r)*2*V/naca23012.c; % deg
@@ -48,7 +50,7 @@ grid on
 % plot(t,alpha,'DisplayName','\alpha')
 % hold on
 % plot(t,alpha_lag,'DisplayName','\alpha''')
-% xlabel('t (s)')
+% xlabel('t (s)')https://www.epfl.ch/labs/dcml/internships/
 % ylabel('\alpha (°)')
 % legend show
 % grid on
@@ -56,8 +58,9 @@ grid on
 
 %% NACA 0012
 naca0012 = Airfoil('NACA 0012',0.55); 
-
-data0012 = readmatrix('data/sheng_naca0012.csv');
+% approximate alpha_ss value to make the algorithm work
+naca0012.steady.alpha_ss = 15; 
+data0012 = readmatrix('../data/sheng_naca0012.csv');
 
 r = data0012(:,1);
 alpha_ds = data0012(:,2);
@@ -69,8 +72,8 @@ for k=1:length(r)
 end
 
 % Define alpha_ds0 & compute Talpha
-naca0012.Sheng(ms1,ms2,ms3,ms4,ms5,ms6,ms7,ms8,ms9,ms10,ms11,ms12,ms13,ms14,ms15,ms16,ms17,ms18,ms19,ms20,ms21,ms22,ms23);
+setLinFit(naca0012,ms1,ms2,ms3,ms4,ms5,ms6,ms7,ms8,ms9,ms10,ms11,ms12,ms13,ms14,ms15,ms16,ms17,ms18,ms19,ms20,ms21,ms22,ms23);
 % How to automate this argument passing? Sheng should be accepting a vector
 % of ramps instead?
 
-saveas(gcf,'fig/Sheng/Sheng0012.png')
+saveas(gcf,'../fig/Sheng/Sheng0012.png')

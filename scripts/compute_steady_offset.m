@@ -7,17 +7,15 @@ close all
 clear all
 clc 
 set(0,'DefaultFigureWindowStyle','docked')
-addpath('../plot_dir/')
-addpath('../src/model/')
-addpath('../src/common/')
-addpath('../src/lib/')
-run('/Users/lucas/src/codes_smarth/labbook.m')
+addpath(fullfile('..','plot_dir'))
+addpath(genpath(fullfile('..','src')))
+run(fullfile('/Users','lucas','src','codes_smarth','labbook.m'))
 %% Define the airfoil and the associated steady curve
 
 airfoil = Airfoil('flatplate',0.15);
 airfoil.r0 = 0.04;
-static = load('../static_flatplate');
-airfoil.steady = SteadyCurve(static.alpha,static.CN,14);
+static = load(fullfile('..','static_flatplate'));
+airfoil.steady = SteadyCurve(static.alpha,static.CN,13.5);
 
 %% Setting up the ramps
 
@@ -46,8 +44,8 @@ for k=1:length(c)
         Cd = raw.Cd;
     end
     fs = 1/ramp.Ts;
-    Cl_fff = myFilter(Cl,fs);
-    Cd_fff = myFilter(Cd,fs);
+    Cl_fff = myFilterTwice(Cl,fs);
+    Cd_fff = myFilterTwice(Cd,fs);
 %     ramp.setCL(Cl);
 %     ramp.setCD(Cd);
     ramp.setCL(Cl_fff);
@@ -62,6 +60,8 @@ end
 %% Run Beddoes Leishman model on all ramps
 
 r = -ones(size(c));
+steady_exp = -ones(size(c));
+steady_LB = -ones(size(c));
 steady_offset = -ones(size(c));
 
 for k=1:length(c) 
@@ -69,10 +69,13 @@ for k=1:length(c)
     evalin('base',sprintf('%s.BeddoesLeishman(airfoil,4.5,4,6,1,''experimental'')',msname))
     evalin('base',sprintf('%s.plotLB(''convectime'')',msname))
     ramp = evalin('base',msname);
-    evalin('base',sprintf('saveas(gcf,''../fig/LB_r%03d'',''png'')',round(ramp.r,3)*1000))
+    saveas(gcf,fullfile('..','fig',sprintf('LB_r%03d',round(ramp.r,3)*1000)),'png')
     r(k) = evalin('base',sprintf('%s.r',msname));
-    steady_offset(k) = evalin('base',sprintf('mean(%s.CN(%s.S > 0.9*%s.CN(end)))-%s.CN_LB(end)',msname,msname,msname,msname));
+    steady_exp(k) = evalin('base',sprintf('mean(%s.CN(%s.S > 0.9*%s.S(end)))',msname,msname,msname));
+    steady_LB(k) = evalin('base',sprintf('%s.CN_LB(end)',msname));
 end
+
+steady_offset = steady_exp - steady_LB;
 
 %Compute the static lift offset between experiment and Kirchhoff
 kirchhoff_offset = airfoil.steady.CN(end)-kirchhoff(airfoil.steady,30);

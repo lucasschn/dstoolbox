@@ -1,15 +1,11 @@
-% This script is made to test Bangga's model on SH2019
+% This script aims at 
 % Author : Lucas Schneeberger
-% Date : 11.06.2020
+% Date : 21.08.2020
 
 close all
 clear all
 clc 
 set(0,'DefaultFigureWindowStyle','docked')
-addpath('../plot_dir/')
-addpath('../src/model/')
-addpath('../src/common/')
-addpath('../src/lib/')
 run('/Users/lucas/src/codes_smarth/labbook.m')
 
 %% Define the airfoil and the associated steady curve
@@ -17,11 +13,11 @@ run('/Users/lucas/src/codes_smarth/labbook.m')
 airfoil = Airfoil('flatplate',0.15);
 airfoil.r0 = 0.04;
 static = load(fullfile('..','static_flatplate'));
-airfoil.steady = SteadyCurve(static.alpha,static.CN,13);
+airfoil.steady = SteadyCurve(static.alpha,static.CN,8);
 
 %% Set up the ramp
 
-c = 2;
+c = 22;
 
 data = load(loadmat(LB(c).ms,LB(c).mpt),'raw','inert','avg','zero');
 raw = data.raw;
@@ -47,7 +43,25 @@ ramp.setPitchRate(airfoil);
 % Define stall (convectime must have been set)
 ramp.findExpOnset();
 %% Run Leishman-Beddoes' model on the ramp
+Tp = 1:0.25:9;
+CNds = -ones(size(Tp));
+CNprime_ds = -ones(size(Tp));
 
-ramp.BeddoesLeishman(airfoil,3,1,2,1.8,'experimental')
-ramp.plotFatma()
-% saveas(gcf,'../fig/CNv_limcrit','png')
+for k=1:length(Tp)
+    ramp.BeddoesLeishman(airfoil,Tp(k),0,2.5,ramp.estimateTvl,'experimental');
+    [CNds(k),imaxCNLB] = max(ramp.CN_LB); % maximum of the model prediction
+    [~,imaxCN] = max(ramp.CN); % maximum of the experimental result
+    CNprime_ds(k) = ramp.CNprime(imaxCN);
+end
+
+figure 
+plot(Tp,CNds,'d','MarkerFaceColor','b','DisplayName','C_{N,ds}')
+hold on 
+plot(Tp,CNprime_ds,'d','MarkerFaceColor','r','DisplayName','C''_{N,ds}')
+yline(1.1457,'--','LineWidth',2,'DisplayName','C_N^{CRIT}')
+xlabel('T_p')
+ylabel('C_N')
+grid on
+ax = gca; 
+ax.FontSize = 20; 
+legend('Location','East')

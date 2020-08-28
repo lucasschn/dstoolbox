@@ -44,8 +44,8 @@ for k=1:length(c)
         Cd = raw.Cd-zero.Cd;
     end
     fs = 1/ramp.Ts;
-    Cl_fff = myFilter(Cl,fs);
-    Cd_fff = myFilter(Cd,fs);
+    Cl_fff = myFilterTwice(Cl,fs);
+    Cd_fff = myFilterTwice(Cd,fs);
 %     ramp.setCL(Cl);
 %     ramp.setCD(Cd);
     ramp.setCL(Cl_fff);

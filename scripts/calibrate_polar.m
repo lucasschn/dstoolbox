@@ -28,8 +28,8 @@ find_alpha0 = false; % do you wish to find alpha_0?
 auto_home = false; % do you wish to use the result of the interpolation to go home?
 saveplot = false; % do you wish to save a pdf of your figure?
 savepolar = true; % do you wish to save the data to plot your polar?
-if savepolar == 1
-polarname = 'static_flatplate'; % what is the file name for your polar data?
+if savepolar
+polarname = 'static_flatplate5'; % what is the file name for your polar data?
 end
 
 % name of files
@@ -42,7 +42,8 @@ param.chord = 0.15;         % chorch length in m
 param.span = 0.6;           % span in m
 
 % fluid data
-param.Uinf = 0.5;          % free stream velocity in m/s
+param.Uinf = sqrt(2*11.72/(1000*0.15*0.6*1.15));          % free stream velocity in m/s
+% uncertainty on Uinf, use sqrt(2*Nstatic_exp/(rho*A*CNss_exp))
 param.rho = 1000;           % density in kg/m^3
 param.mu =  10^-3;          % dynamic viscosity in N s/m^2            
 param.nu = param.mu/param.rho;       % kinematic viscosity in m^2/s
