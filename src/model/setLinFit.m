@@ -22,7 +22,7 @@ function setLinFit(airfoil,varargin)
             % ... and assign it
             r(k) = ramp.r;
             % Define experimental stall if necessary ...
-            if isempty(ramp.i_CConset)
+            if isempty(ramp.alpha_CConset) && isempty(ramp.i_CConset)
                 ramp.findExpOnset();
             end
             % ... and assign it
@@ -32,7 +32,7 @@ function setLinFit(airfoil,varargin)
                 alpha_ds(k) = ramp.alpha_CLonset; 
                 warning('CL was used to define stall in %s',ramp.name)
             else 
-                fit_error('Both CC- and CL-based stall angles are smaller than static stall angle.')
+                error('Both CC- and CL-based stall angles are smaller than static stall angle.')
             end
         end
         
