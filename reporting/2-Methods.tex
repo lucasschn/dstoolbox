@@ -88,12 +88,18 @@ X(n)= & X(n-1) \exp \left(-b_{1} \beta^{2} \Delta S\right)+A_{1} \Delta \alpha \
 Y(n)= & Y(n-1) \exp \left(-b_{2} \beta^{2} \Delta S\right)+A_{2} \Delta \alpha \exp \left(-b_{2} \beta^{2} \Delta S / 2\right)
 \end{eqnarray}
 
+The impulsive term $C_N^I$ corresponds to the pressure difference caused by the mass displacement. It is also called \textit{added mass} in an aeroelasticity context and writes: 
+
 \begin{equation}
 C_{N}^{I}=\frac{4 K_{\alpha} T_{l}}{M}\left(\frac{\Delta \alpha}{\Delta t}-D\right)
 \label{eq:impulsive}
 \end{equation}
 
- The impulsive term corresponds to the pressure difference caused by the mass displacement. It is also called \textit{added mass} in an aeroelasticity context.
+\noindent where $K_\alpha=0.75/[(1-M)+\pi \beta M^2(A_1 b_1 + A_2 b_2)]$ and $T_l=c/a$. In the same way as $X$ and $Y$, $D$ is a deficiency function that accounts for the unsteadiness:  
+
+\begin{equation}
+	D(n) = D(n-1) \exp \left(\frac{-\Delta t}{K_\alpha T_l}\right) + \left(\frac{\Delta \alpha(n) - \Delta \alpha (n-1)}{\Delta t} \right) \exp \left(\frac{-\Delta t}{2 K_\alpha T_l} \right)
+\end{equation}
 
 \subsubsection{Leading edge separation}
 

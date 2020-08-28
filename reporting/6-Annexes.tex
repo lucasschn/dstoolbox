@@ -15,7 +15,7 @@ In order to give meaningful initialization value to the parameters $S_1$ and $S_
 By taking its derivative with respect to the angle of attack
 
 \begin{equation}
-\frac{dC_N}{d\alpha} = C_{N_{\alpha}} \left[\left(\frac{1+\sqrt{f}}{2}\right)^2+\frac{f'(\alpha)}{2f}\alpha \right]
+\frac{dC_N}{d\alpha} = C_{N_{\alpha}} \left[\left(\frac{1+\sqrt{f}}{2}\right)^2+\frac{df}{d\alpha} \frac{\alpha}{2\sqrt{f}} \right]
 \end{equation}
 
 \noindent and taking the left and right limits around the static stall angle,
@@ -23,7 +23,7 @@ By taking its derivative with respect to the angle of attack
 \begin{equation}
 \frac{dC_N}{d\alpha}\Big|_{\alpha=\alpha_{ss}} = C_{N_\alpha}\left(\frac{1+\sqrt{f_{ss}}}{2}\right)
      \begin{cases}
-      \left(\frac{1+\sqrt{f_{ss}}}{2}\right)-\frac{(1-f_{ss})\alpha_{ss}}{2\sqrt{f_{ss}}S_1},&\quad \alpha < \alpha_{ss}\\
+      \left(\frac{1+\sqrt{f_{ss}}}{2}\right)-\frac{(1-f_{ss})\alpha_{ss}}{2\sqrt{f_{ss}}S_1},&\quad \alpha \leq \alpha_{ss}\\
         \left(\frac{1+\sqrt{f_{ss}}}{2}\right)-\frac{(f_{ss}-f_\infty)\alpha_{ss}}{2\sqrt{f_{ss}}S_2}, &\quad \alpha > \alpha_{ss}\\
      \end{cases}
 \end{equation}
