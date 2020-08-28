@@ -57,18 +57,11 @@ classdef RampUpMotion < AirfoilMotion
                 obj.analpha_rad = deg2rad(obj.analpha_rad);
             end
             obj.t = obj.t(1:i_end);
-            if ~isempty(obj.CN)
             obj.CN = obj.CN(1:i_end);
-            end
-            if ~isempty(obj.CC)
             obj.CC = obj.CC(1:i_end);
-            end
-            if ~isempty(obj.CL)
             obj.CL = obj.CL(1:i_end);
-            end
-            if ~isempty(obj.CD)
             obj.CD = obj.CD(1:i_end);
-            end
+
             % then find valid values for continuously increasing alphas
             i_grow = findGrowingIndices(obj.alpha);
             for l=1:length(i_grow)
@@ -156,26 +149,10 @@ classdef RampUpMotion < AirfoilMotion
 %             ylabel('dC_N/d\alpha')
 %             grid on
             % onset based on CC curve
-            
-            % defines the location of the stop of the motion, to reject the
-            % peak associated with added mass drop
-            dalpha = diff(obj.alpha);
-            if isempty(obj.S)
-                error('Convective time has not been computed.')
-            end
-            i_stop = find(dalpha(obj.S(1:length(dalpha))>1)<1e-5,1)+find(obj.S>1,1);            
             [~,obj.i_CConset] = min(obj.CC);
             obj.alpha_CConset = obj.alpha(obj.i_CConset); % Sheng uses an inverted definition of CC
             [~,obj.i_CLonset] = max(obj.CL);
             obj.alpha_CLonset = obj.alpha(obj.i_CLonset);
-            if (obj.S(i_stop) - obj.S(obj.i_CConset))<0.5
-                warning('The maximum of CC for %s (r=%.3f) is close to the stop of the motion and therefore to the added mass loss. CC-based DS onset may be unreliable.',obj.name,obj.r)
-            elseif (obj.S(i_stop) - obj.S(obj.i_CLonset))<0.5
-                warning('The maximum of CL for %s (r=%.3f) is close to the stop of the motion and therefore to the added mass loss. CL-based DS onset may be unreliable.',obj.name,obj.r)
-            end
-            if strcmp(obj.name,'ms023mpt1')
-               % do
-            end
         end
         function findModelOnset(obj,airfoil)
             % finds the Sheng-predicted dynamic stall angle for a specific
@@ -211,7 +188,7 @@ classdef RampUpMotion < AirfoilMotion
         function plotCL(obj,xaxis)
             figure
             if (~exist('xaxis','var') || strcmp(xaxis,'alpha'))
-                plot(obj.alpha,obj.CL,'LineWidth',2,'DisplayName','C_L')
+                plot(obj.alpha,obj.CL,'LineWidth',2,'DisplayName',)
                 hold on
                 plot(obj.alpha_CLonset,max(obj.CL),'d','MarkerEdgeColor','k','MarkerFaceColor','k','C_{L,DS} C_L-based')
                 xlabel('\alpha (°)')
@@ -245,14 +222,10 @@ classdef RampUpMotion < AirfoilMotion
                     plot(obj.alpha_CConset,obj.CN(obj.i_CConset),'diamond','MarkerFaceColor','black','MarkerEdgeColor','black','MarkerSize',15,'DisplayName','C_{N,ds} C_C-based')
                     xlabel('\alpha (°)')
                 case 'convectime'
-                    load('../CNcrit','CNcrit')
                     plot(obj.S,obj.CN,'DisplayName','C_N','LineWidth',3)
                     hold on
-                    plot(obj.S(obj.i_CConset),obj.CN(obj.i_CConset),'d','MarkerFaceColor','black','MarkerEdgeColor','black','MarkerSize',15,'DisplayName','C_{N,ds} C_C-based')
-                    yline(CNcrit,'Color','r','LineStyle','--','LineWidth',1,'DisplayName','C_{N,ds}^0')
+                    plot(obj.S(obj.i_CConset),obj.CN(obj.i_CConset),'diamond','MarkerFaceColor','black','MarkerEdgeColor','black','MarkerSize',15,'DisplayName','C_{N,ds} C_C-based')
                     xlabel('t_c')
-                otherwise 
-                    error('mode must be angle or convectime')
             end
             grid on
             legend('Location','SouthEast','FontSize',20)

@@ -15,7 +15,7 @@ classdef SteadyCurve < handle
         fexp
         % Kirchhoff 
         f_ss = 0.7;
-        f_inf = 0.125;
+        f_inf = 0.04; % Sheng value is 0.02, LB is 0.04
         S1
         S2
     end
@@ -31,7 +31,7 @@ classdef SteadyCurve < handle
             else
                 obj.alpha_ss = alpha_ss;
             end
-            obj.computeSlope(10)
+            obj.computeSlope(5)
             obj.setAlpha0()
             obj.fitKirchhoff()
             obj.computeSeparation()
@@ -86,11 +86,12 @@ classdef SteadyCurve < handle
         function fitKirchhoff(obj)
             % Defines parameters for inital conditions (which is a very
             % good guess of the optimal value)
-            stall_slope_minus = obj.CNalpha(find(obj.alpha<obj.alpha_ss,1,'last'));
-            stall_slope_plus = obj.CNalpha(find(obj.alpha>obj.alpha_ss,1,'first'));
-            S10 = (1-obj.f_ss)*deg2rad(obj.alpha_ss)/(2*sqrt(obj.f_ss))*(((1+sqrt(obj.f_ss))/2)^2-stall_slope_minus/obj.slope_rad).^(-1);
-            S20 = (obj.f_ss-obj.f_inf)*deg2rad(obj.alpha_ss)/(2*sqrt(obj.f_ss))*(((1+sqrt(obj.f_ss))/2)^2-stall_slope_plus/obj.slope_rad).^(-1);
-            
+%             stall_slope_minus = obj.CNalpha(find(obj.alpha<obj.alpha_ss,1,'last'));
+%             stall_slope_plus = obj.CNalpha(find(obj.alpha>obj.alpha_ss,1,'first'));
+%             S10 = (1-obj.f_ss)*deg2rad(obj.alpha_ss)/(2*sqrt(obj.f_ss))*(((1+sqrt(obj.f_ss))/2)^2-stall_slope_minus/obj.slope_rad).^(-1);
+%             S20 = (obj.f_ss-obj.f_inf)*deg2rad(obj.alpha_ss)/(2*sqrt(obj.f_ss))*(((1+sqrt(obj.f_ss))/2)^2-stall_slope_plus/obj.slope_rad).^(-1);
+            S10 = .1;
+            S20 = 1;
             % Optimizes S1,S2 so that the normal coefficient modelled with seppoint and Kirchhoff 
             % equals the experimental static CN
             opts = optimset('Display','off'); % replace off by iter for max. details
@@ -128,7 +129,7 @@ classdef SteadyCurve < handle
         end          
         function plotKirchhoff(obj)
             figure
-            plot(obj.alpha,obj.CN,'x','DisplayName','exp','LineWidth',2)
+            plot(obj.alpha,obj.CN,'DisplayName','exp','LineWidth',2)
             hold on 
             %plot(obj.alpha,obj.CNinv,'DisplayName','inviscid','LineWidth',2)
             if isempty(obj.S1)
@@ -171,15 +172,17 @@ classdef SteadyCurve < handle
             % ref: Leishman, Principles of Helicopter Aerodynamics 2nd Ed., eq. 7.106 page 405
             unbounded_fexp = (2*sqrt(obj.CN./(obj.slope*(obj.alpha - obj.alpha0)))-1).^2;
             obj.fexp = max([zeros(size(obj.CN)),min([ones(size(obj.CN)), unbounded_fexp],[],2)],[],2);
+            obj.fexp(obj.alpha<5) = 1; 
+            fprintf('Slope is CNalpha = %.3f \n',obj.slope)
         end
         function plotSeparation(obj)
             if isempty(obj.fexp)
                 obj.computeSeparation()
             end
             figure
-            plot(obj.alpha,obj.fexp,'x','DisplayName','fexp','LineWidth',2)
+            plot(obj.alpha,obj.fexp,'DisplayName','fexp','LineWidth',2)
             hold on 
-            plot(obj.alpha,obj.f,'DisplayName','f','LineWidth',2) 
+            %plot(obj.alpha,obj.f,'DisplayName','f','LineWidth',2) 
             grid on 
             ax = gca; 
             ax.FontSize = 20;    
