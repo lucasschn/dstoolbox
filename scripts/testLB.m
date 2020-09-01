@@ -1,4 +1,5 @@
-% This script is made to test Bangga's model on SH2019
+% This script is made to test Leishman-Beddoes model on SH2019 with
+% user-defined parameters
 % Author : Lucas Schneeberger
 % Date : 11.06.2020
 
@@ -10,8 +11,11 @@ addpath('../plot_dir/')
 addpath('../src/model/')
 addpath('../src/common/')
 addpath('../src/lib/')
-run('/Users/lucas/src/codes_smarth/labbook.m')
-
+if ismac
+    run('/Users/lucas/src/codes_smarth/labbook.m')
+elseif ispc 
+    run('labbook')
+end
 %% Define the airfoil and the associated steady curve
 
 airfoil = Airfoil('flatplate',0.15);
@@ -21,20 +25,17 @@ airfoil.steady = SteadyCurve(static.alpha,static.CN,13);
 
 %% Set up the ramp
 
-c = 2;
+c = 22;
 
 data = load(loadmat(LB(c).ms,LB(c).mpt),'raw','inert','avg','zero');
 raw = data.raw;
-inert = data.inert;
-inert.alpha = raw.alpha(raw.t>=0);
+zero = data.zero;
 msname = sprintf('ms%03impt%i',LB(c).ms,LB(c).mpt);
-ramp = RampUpMotion('alpha',inert.alpha,'t',inert.t,'V',LB(c).U,'alphadot',LB(c).alphadot);
-ramp_filt = RampUpMotion('alpha',inert.alpha,'t',inert.t,'V',LB(c).U,'alphadot',LB(c).alphadot);
+ramp = RampUpMotion('alpha',raw.alpha,'t',raw.t,'V',LB(c).U,'alphadot',LB(c).alphadot);
 evalin('base',sprintf('ramp.setName(''%s'') ',msname))
-evalin('base',sprintf('ramp_filt.setName(''%s'')',msname))
 
-Cl = inert.Cl;
-Cd = inert.Cd;
+Cl = raw.Cl-zero.Cl;
+Cd = raw.Cd-zero.Cd;
 fs = 1/ramp.Ts;
 Clf = myFilterTwice(Cl,fs);
 Cdf = myFilterTwice(Cd,fs);
@@ -49,5 +50,5 @@ ramp.findExpOnset();
 %% Run Leishman-Beddoes' model on the ramp
 
 ramp.BeddoesLeishman(airfoil,3,1,2,1.8,'experimental')
-ramp.plotFatma()
+ramp.plotLB('convectime')
 % saveas(gcf,'../fig/CNv_limcrit','png')

@@ -68,15 +68,17 @@ classdef AirfoilMotion < matlab.mixin.SetGet
         CNv2
         CN_LB
         % Post-processing
+        maxCN
         maxCN_LB
         maxCNk
         maxCNf
         maxCNv
+        SmaxCN
         SmaxCN_LB
         SmaxCNk
         SmaxCNf
         SmaxCNv
-        err % mean squared difference between the experimental data and the LB prediction       
+        err % mean squared difference between the experimental data and the LB prediction
         %% Goman-Khrabrov
         tau1
         tau2
@@ -620,22 +622,65 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             end
         end
         function findPeaks(obj)
-            [maxCN,imaxCN] = max(obj.CN);
+            [obj.maxCN,imaxCN] = max(obj.CN);
             [obj.maxCN_LB,imaxCN_LB] = max(obj.CN_LB);
             [obj.maxCNk,imaxCNk] = max(obj.CNk);
             [obj.maxCNf,imaxCNf] = max(obj.CNf);
             [obj.maxCNv,imaxCNv] = max(obj.CNv);
-            SmaxCN = obj.S(imaxCN);
+            obj.SmaxCN = obj.S(imaxCN);
             obj.SmaxCN_LB = obj.S(imaxCN_LB);
             obj.SmaxCNk = obj.S(imaxCNk);
             obj.SmaxCNf = obj.S(imaxCNf);
             obj.SmaxCNv = obj.S(imaxCNv);
         end
-        function save2Excel
+        function computeErr(obj,doplot)
+            [obj.maxCN,imaxCN] = max(obj.CN);
+            dCN = diff(obj.CN(imaxCN:end)); % deltaCN after stall
+            i_vortex_end = find(dCN>0,1) + imaxCN; 
+            i_ramp_start = find(obj.S>0,1);
+            obj.S(i_vortex_end)
+            % Only compute errror until the end of primary peak
+            err = (obj.CN_LB(i_ramp_start:i_vortex_end) - obj.CN(i_ramp_start:i_vortex_end)).^2;
+            obj.err = mean(err);
+            if nargin >1 && doplot                
+                figure 
+                plot(obj.S(i_ramp_start:i_vortex_end),err,'LineWidth',2)
+                hold on 
+                yline(obj.err,'r-.','LineWidth',2,'Label','average error')
+                grid on 
+                xlabel('t_c')
+                ylabel('err')
+            end
+        end
+        function save2Excel(obj)
             writematrix(obj.r,'../paramsweep.xlsx','Sheet',sprintf('adot = %1.1f',obj.alphadot),'Range','B4')
         end
-        function save2struct
-            save
+        function save2mat(obj,name)
+            r = obj.r;
+            alphadot = obj.alphadot;
+            Tp = obj.Tp;
+            Tf = obj.Tf;
+            Tv = obj.Tv;
+            Tvl = obj.Tvl;
+            maxCN = obj.maxCN;
+            maxCN_LB = obj.maxCN_LB;
+            maxCNk = obj.maxCNk;
+            maxCNf = obj.maxCNf;
+            maxCNv = obj.maxCNv;
+            SmaxCN = obj.SmaxCN;
+            SmaxCN_LB = obj.SmaxCN_LB;
+            SmaxCNk = obj.SmaxCNk;
+            SmaxCNf = obj.SmaxCNf;
+            SmaxCNv = obj.SmaxCNv;
+            err = obj.err;            
+            if any([isempty(Tp),isempty(Tf),isempty(Tv),isempty(Tvl),isempty(maxCN),isempty(maxCN_LB),isempty(maxCNk),isempty(maxCNf),isempty(maxCNv),isempty(SmaxCN),isempty(SmaxCN_LB),isempty(SmaxCNk),isempty(SmaxCNf),isempty(SmaxCNv),isempty(err)])
+                error('One of the field is empty.')
+            elseif exist(name,'file')                
+                save(name,'r','alphadot','Tp','Tf','Tv','Tvl','maxCN','maxCN_LB','maxCNk','maxCNf','maxCNv','SmaxCN','SmaxCNk','SmaxCNf','SmaxCNv','err','-append')
+            else
+                save(name,'r','alphadot','Tp','Tf','Tv','Tvl','maxCN','maxCN_LB','maxCNk','maxCNf','maxCNv','SmaxCN','SmaxCNk','SmaxCNf','SmaxCNv','err')
+            end
+        end
         function plotAlpha(obj,mode)
             figure
             if ~isempty(obj.S)
