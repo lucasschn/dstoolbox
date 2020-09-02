@@ -1,5 +1,6 @@
 % This script is to measure the decay time from dynamic stall to
-% steady-state
+% steady-state. Steady-state is defined as when one of the secondary
+% vortices drops pass under the finalvalue of LB prediction.
 % Author : Lucas Schneeberger
 % Date : 03.08.2020
 
@@ -58,7 +59,14 @@ for k=1:length(c)
     ramp = evalin('base',msname);    
     r(k) = evalin('base',sprintf('%s.r',msname));
     tc_ds(k) = ramp.S(ramp.i_CLonset);
-    tc_inf(k) = ramp.S(ramp.i_CLonset + find(ramp.CN(ramp.i_CLonset:end)<ramp.CN_LB(end),1));
+    % defines steady-state as when on of the secondary vortices drops passes
+    % under model-predicted value
+    i_inf = find(ramp.CN(ramp.i_CLonset:end)<ramp.CN_LB(end),1);
+    if ~isempty(i_inf)
+        tc_inf(k) = ramp.S(ramp.i_CLonset + i_inf);
+    else
+        tc_inf(k) = ramp.S(end);
+    end
 end
 
 delta_tc = tc_inf - tc_ds;

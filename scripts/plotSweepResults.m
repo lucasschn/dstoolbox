@@ -7,8 +7,8 @@ clear all
 clc
 
 load(fullfile('..','data','paramsweep','res'))
-
-plotOneRate(res,25,'Tp','err','Tf')
+y
+plotOneRate(res,25,'Tp','CNv','Tf')
 
 function plotOneRate(res,rate,varx,vary,color_var)
 res_adot = res(cat(1,res.alphadot)==rate);

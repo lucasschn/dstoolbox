@@ -50,6 +50,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
         % LE separation
         CNprime
         Dp
+        CNcrit
         % TE separation
         alphaf
         alphaf_rad
@@ -391,7 +392,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
         end
         function computeTEseparation(obj,airfoil,Tf,model)
             obj.Tf = Tf;
-            obj.f = seppoint(airfoil.steady,airfoil.steady.alpha);                       
+            obj.f = interp1(airfoil.steady.alpha,airfoil.steady.f,obj.alpha);                       
             
             % Here a model for fp is selected
             obj.computeSepLag(airfoil,model)
@@ -475,8 +476,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             KN = 1/4*(1+sqrt(obj.fpp)).^2;
             n = min([length(obj.CNC),length(KN)]);
             % Cv defines how much lift will eventually go in the LEV. It is
-            % proportional to the circulation and decreased by the
-            % separation.
+            % proportional to the circulation and the amount of separation (a decrease in f leads to an increase in Cv).
             obj.Cv = obj.CNC(1:n).*(1-KN(1:n));
             % Here a model for stall criterion is selected. tau_v is
             % incremented after stall has started
@@ -507,7 +507,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
                 end
             end
             n = min([n,length(obj.CNf)]);
-            % normal force coefficient
+            % total normal force coefficient
             if secondary_vortex
                 obj.CN_LB = obj.CNf(1:n) + obj.CNv(1:n) + obj.CNv2(1:n);
             else
@@ -555,9 +555,9 @@ classdef AirfoilMotion < matlab.mixin.SetGet
                     % the airfoil stalls when a certain normal coeff is
                     % exceeded by CNprime
                     CNss = interp1(airfoil.steady.alpha,airfoil.steady.CN,airfoil.steady.alpha_ss);
-                    % CNcrit = 1.147; % limit of CNds as r->0
-                    CNcrit = CNss;
-                    isstalled = obj.CNprime > CNcrit;
+                    % obj.CNcrit = 1.147; % limit of CNds as r->0
+                    obj.CNcrit = CNss;
+                    isstalled = obj.CNprime > obj.CNcrit;
                 case 'BLSheng'
                     % the airfoil stalls when a certain AoA is exceeded by
                     % alpha'
@@ -786,25 +786,61 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             ax.FontSize = 20;
             title(sprintf('$r=%.3f,T_p=%.1f,T_f =%.1f,T_v=%.1f,T_{vl}=%.1f$',obj.r,obj.Tp,obj.Tf,obj.Tv,obj.Tvl),'FontSize',14,'interpreter','latex')
             
+            i_start = find(obj.CNprime>obj.CNcrit,1);
+            S_start = obj.S(i_start);
+            
             i_stop = find(obj.tau_v>obj.Tvl,1);            
             S_stop = obj.S(i_stop);
             
-            figure
-            subplot(211)
-            plot(obj.S,obj.tau_v,'LineWidth',2,'DisplayName','\tau_v')
-            hold on             
-            xline(S_stop,'r--','DisplayName','\tau_v = T_{vl}','LineWidth',2)
-            grid on
-            legend('Location','SouthWest')
+            fprintf('Starting time for stop criterion is %.1f. \n',S_start)
+            fprintf('Stop time is %.1f. \n',S_stop)
             
-            subplot(212)
+            figure
+            subplot(311)
+            ptv = plot(obj.S,obj.tau_v,'LineWidth',2,'DisplayName','\tau_v');
+            hold on
+            
+            subplot(312)
             plot(obj.S(1:length(obj.CNv)),obj.CNv,'LineWidth',2,'DisplayName','C_N^v')
             hold on 
             plot(obj.S(1:length(obj.Cv)),obj.Cv,'LineWidth',2,'DisplayName','C_v')
-            xline(S_stop,'r--','DisplayName','\tau_v = T_{vl}','LineWidth',2)
-            xlabel('t_c')
+            pcnp = plot(obj.S(1:length(obj.CNprime)),obj.CNprime,'LineWidth',2,'DisplayName','C''_N');
+            
+            subplot(311)
+            xl = xline(S_start,'--','Color',pcnp.Color,'Label','CN'' = C_N^{crit}','LineWidth',2);
+            xline(S_stop,'--','Color',ptv.Color,'Label','\tau_v = T_{vl}','LineWidth',2)            
+            yline(obj.Tvl,':','Color','black','Label','Tvl','LineWidth',2)
             grid on
-            legend('Location','SouthWest')
+            xlabel('t_c')
+            ylabel('\tau_v')
+            axis([0 Inf -Inf Inf])
+            lgd = legend('Location','SouthWest');
+            lgd.String = lgd.String(1);
+            title(sprintf('T_{vl} = %.1f',obj.Tvl))          
+            
+            subplot(312)
+            xl = xline(S_start,'--','Color',pcnp.Color,'Label','C_N'' = C_N^{crit}','LineWidth',2);
+            xline(S_stop,'--','Color',ptv.Color,'Label','\tau_v = T_{vl}','LineWidth',2)
+            yline(obj.CNcrit,':','Color','black','Label','C_N^{crit}','LineWidth',2)
+            xlabel('t_c')
+            ylabel('C_N')
+            grid on
+            axis([0 Inf -Inf Inf])
+            lgd = legend('Location','SouthWest');
+            lgd.String = lgd.String(1:3);
+            
+            subplot(313)
+            plot(obj.S(1:length(obj.f)),obj.f,'SeriesIndex',4,'LineWidth',2,'DisplayName','f')
+            hold on
+            plot(obj.S(1:length(obj.fp)),obj.fp,'SeriesIndex',5,'LineWidth',2,'DisplayName','f''')
+            plot(obj.S(1:length(obj.fpp)),obj.fpp,'SeriesIndex',6,'LineWidth',2,'DisplayName','f''''')
+            xlabel('t_c')
+            ylabel('f')
+            grid on
+            axis([0 Inf 0 1])
+            lgd = legend('Location','SouthWest');
+            alpha_ss = round(obj.alpha(find(obj.f<=0.7,1)),1);
+            title(['\alpha_{ss} = ' sprintf('%.1f',alpha_ss) ' °'])
         end
         function plotSteady(obj,airfoil)
             %             airfoil.steady.computeSlope(13)

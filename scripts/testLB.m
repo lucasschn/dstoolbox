@@ -51,4 +51,5 @@ ramp.findExpOnset();
 
 ramp.BeddoesLeishman(airfoil,3,1,2,1.8,'experimental')
 ramp.plotLB('convectime')
-% saveas(gcf,'../fig/CNv_limcrit','png')
+ramp.plotVortex()
+saveas(gcf,'../fig/vortex_development','fig')
