@@ -27,7 +27,7 @@ airfoil.steady = SteadyCurve(static.alpha,static.CN,13);
 params = -ones([1,4]);
 
 c = 71; % list of tested pitch rates
-n = 1000; % number of samples per pitch rate
+n = 1e4; % number of samples per pitch rate
 
 res = struct('comment',{});
 
@@ -55,9 +55,9 @@ for k = 1:length(c) % loop over the pitch rates
     ramp.findExpOnset();     
     
     for kk = 1:n % do n samples per pitch rate
-        params(1) = randsample(200,1)/10;
-        params(2) = randsample(100,1)/10;
-        params(3:4) = randsample(50,2)./10;
+        params(1) = randsample(0:0.1:20,1);
+        params(2) = randsample(0:0.1:10,1);
+        params(3:4) = randsample(0:0.1:5,2,'true');
         disp(params)
         res(n*(k-1)+kk).r = ramp.r;
         res(n*(k-1)+kk).alphadot = ramp.alphadot;

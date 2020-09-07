@@ -13,19 +13,23 @@ addpath('../src/common/')
 addpath('../src/lib/')
 if ismac
     run('/Users/lucas/src/codes_smarth/labbook.m')
+    path2fig = '../fig';
+    path2static = fullfile('..','static_flatplate');
 elseif ispc 
     run('labbook')
+    path2fig = '\\oscar\macintosh hd\Users\lucas\Documents\EPFL\PDM\fig';
+    path2static = '\\oscar\macintosh hd\Users\lucas\Documents\EPFL\PDM\static_flatplate';
 end
 %% Define the airfoil and the associated steady curve
 
 airfoil = Airfoil('flatplate',0.15);
 airfoil.r0 = 0.04;
-static = load(fullfile('..','static_flatplate'));
-airfoil.steady = SteadyCurve(static.alpha,static.CN,13);
+static = load(path2static);
+airfoil.steady = SteadyCurve(static.alpha,static.CN,8);
 
 %% Set up the ramp
 
-c = 22;
+c = 71;
 
 data = load(loadmat(LB(c).ms,LB(c).mpt),'raw','inert','avg','zero');
 raw = data.raw;
@@ -48,8 +52,12 @@ ramp.setPitchRate(airfoil);
 % Define stall (convectime must have been set)
 ramp.findExpOnset();
 %% Run Leishman-Beddoes' model on the ramp
-
-ramp.BeddoesLeishman(airfoil,3,1,2,1.8,'experimental')
-ramp.plotLB('convectime')
+ramp.BeddoesLeishman(airfoil,1,1.7,3,3,'experimental')
 ramp.plotVortex()
-saveas(gcf,'../fig/vortex_development','fig')
+% saveas(gcf,fullfile(path2fig,'vortex_development_Tp1'),'fig')
+ramp.BeddoesLeishman(airfoil,5,1.7,3,3,'experimental')
+ramp.plotVortex()
+% saveas(gcf,fullfile(path2fig,'vortex_development_Tp3'),'fig')
+ramp.BeddoesLeishman(airfoil,7,1.7,3,3,'experimental')
+ramp.plotVortex()
+% saveas(gcf,fullfile(path2fig,'vortex_development_Tp5'),'fig')

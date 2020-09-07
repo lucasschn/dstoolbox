@@ -405,7 +405,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             
             n = min([length(obj.CNI),length(obj.CNC)]);
             % slope_adapted = slope5.*(obj.CNprime<CNcrit)+slope10.*(obj.CNprime>CNcrit);
-             % Kirchhoff law
+            % Kirchhoff law
             obj.CNk = airfoil.steady.slope.*(obj.alphaE(1:n).*((1+sqrt(obj.fpp(1:n)))/2).^2-airfoil.steady.alpha0);
             obj.CNf = obj.CNk + obj.CNI(1:n);
             % CNss goes to CNalpha*(1+sqrt(f_\infty)/2
@@ -795,16 +795,20 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             fprintf('Starting time for stop criterion is %.1f. \n',S_start)
             fprintf('Stop time is %.1f. \n',S_stop)
             
+            % length of the plots 
+            %n = find(obj.CNv(i_stop:end) <= 0.005,1) + i_stop;
+            n = find(obj.S >= 30);           
+            
             figure
             subplot(311)
-            ptv = plot(obj.S,obj.tau_v,'LineWidth',2,'DisplayName','\tau_v');
+            ptv = plot(obj.S(1:n),obj.tau_v(1:n),'LineWidth',2,'DisplayName','\tau_v');
             hold on
             
             subplot(312)
-            plot(obj.S(1:length(obj.CNv)),obj.CNv,'LineWidth',2,'DisplayName','C_N^v')
+            plot(obj.S(1:n),obj.CNv(1:n),'LineWidth',2,'DisplayName','C_N^v')
             hold on 
-            plot(obj.S(1:length(obj.Cv)),obj.Cv,'LineWidth',2,'DisplayName','C_v')
-            pcnp = plot(obj.S(1:length(obj.CNprime)),obj.CNprime,'LineWidth',2,'DisplayName','C''_N');
+            plot(obj.S(1:n),obj.Cv(1:n),'LineWidth',2,'DisplayName','C_v')
+            pcnp = plot(obj.S(1:n),obj.CNprime(1:n),'LineWidth',2,'DisplayName','C''_N');
             
             subplot(311)
             xl = xline(S_start,'--','Color',pcnp.Color,'Label','CN'' = C_N^{crit}','LineWidth',2);
@@ -813,7 +817,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             grid on
             xlabel('t_c')
             ylabel('\tau_v')
-            axis([0 Inf -Inf Inf])
+            axis([0 Inf 0 6])
             lgd = legend('Location','SouthWest');
             lgd.String = lgd.String(1);
             title(sprintf('T_{vl} = %.1f',obj.Tvl))          
@@ -825,22 +829,22 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             xlabel('t_c')
             ylabel('C_N')
             grid on
-            axis([0 Inf -Inf Inf])
+            axis([0 Inf 0 3])
             lgd = legend('Location','SouthWest');
             lgd.String = lgd.String(1:3);
             
             subplot(313)
-            plot(obj.S(1:length(obj.f)),obj.f,'SeriesIndex',4,'LineWidth',2,'DisplayName','f')
+            plot(obj.S(1:n),obj.f(1:n),'SeriesIndex',4,'LineWidth',2,'DisplayName','f')
             hold on
-            plot(obj.S(1:length(obj.fp)),obj.fp,'SeriesIndex',5,'LineWidth',2,'DisplayName','f''')
-            plot(obj.S(1:length(obj.fpp)),obj.fpp,'SeriesIndex',6,'LineWidth',2,'DisplayName','f''''')
+            plot(obj.S(1:n),obj.fp(1:n),'SeriesIndex',5,'LineWidth',2,'DisplayName','f''')
+            plot(obj.S(1:n),obj.fpp(1:n),'SeriesIndex',6,'LineWidth',2,'DisplayName','f''''')
             xlabel('t_c')
             ylabel('f')
             grid on
             axis([0 Inf 0 1])
             lgd = legend('Location','SouthWest');
             alpha_ss = round(obj.alpha(find(obj.f<=0.7,1)),1);
-            title(['\alpha_{ss} = ' sprintf('%.1f',alpha_ss) ' °'])
+            title(['\alpha_{ss} = ' sprintf('%.1f',alpha_ss) ' °'])       
         end
         function plotSteady(obj,airfoil)
             %             airfoil.steady.computeSlope(13)

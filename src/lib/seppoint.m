@@ -8,7 +8,9 @@ function f = seppoint(steady,alpha)
 % computed. The constants S1 and S2 together with the stall angle alpha_ss depend on the airfoil and the flow
 % and are determined using static data.
 if steady.alpha_ss ~=13.5
+    warning off backtrace
     warning('static stall angle is %.2f',steady.alpha_ss)
+    warning on backtrace
 end
 f1 = 1 - (1-steady.f_ss)*exp((alpha-steady.alpha_ss)/steady.S1);
 f2 = steady.f_inf +(steady.f_ss-steady.f_inf)*exp((steady.alpha_ss-alpha)/steady.S2);

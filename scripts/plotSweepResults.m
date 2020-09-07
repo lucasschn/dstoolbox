@@ -6,9 +6,9 @@ close all
 clear all
 clc
 
-load(fullfile('..','data','paramsweep','res'))
-y
-plotOneRate(res,25,'Tp','CNv','Tf')
+load(fullfile('..','data','paramsweep','res25uniform'))
+plotHistogram(res,'Tp+Tf','err',0.1)
+
 
 function plotOneRate(res,rate,varx,vary,color_var)
 res_adot = res(cat(1,res.alphadot)==rate);
@@ -21,7 +21,7 @@ else
     end
     figure
     s = scatter(x,y,'filled');
-    grid on
+    grid minor
     xlabel(getLabelString(varx))
     ylabel(getLabelString(vary))
     title(sprintf('alphadot = %.2f',rate))
@@ -41,10 +41,10 @@ if nargin > 4
     c.Ticks = linspace(cvar_min,cvar_max,length(unique(cat(1,sprintf('res.%s',color_var)))));
     c.Label.String = sprintf('%s',getLabelString(color_var));
 end
-
+% axis([0 20 1 2.8])
 end
 
-function plotAllRates(res,x,y)
+function plotAllRates(res,varx,vary)
 color = nan(size(res));
 adot_min = min(cat(1,res.alphadot));
 adot_max = max(cat(1,res.alphadot));
@@ -52,17 +52,63 @@ for k = 1:length(res)
     color(k) = (res(k).alphadot-adot_min)/(adot_max-adot_min);
 end
 
+x = eval(sprintf('cat(1,res.%s)',varx));
+y = eval(sprintf('cat(1,res.%s)',vary));
+
 figure
-s = scatter(cat(1,res.Tp), cat(1,res.maxCN),'filled');
+s = scatter(x,y,'filled');
 grid on
-xlabel('T_p')
-ylabel('max C_N')
+xlabel(getLabelString(varx))
+ylabel(getLabelString(vary))
 s.CData = color;
 c = colorbar;
 c.Ticks = linspace(0,1,length(unique(cat(1,res.alphadot))));
 c.Label.String = 'pitch rate (°/s)';
 c.TickLabels = unique(color*(adot_max-adot_min)+adot_min);
 end
+
+function plotHistogram(res,varx,vary,threshold)
+if contains(varx,'+')
+    varcell = split(varx,'+');
+    for k=1:length(varcell)
+        x(k,:) = eval(sprintf('cat(1,res.%s)',varcell{k}));
+    end
+    x = sum(x,1);
+else
+    x = eval(sprintf('cat(1,res.%s)',varx));
+end
+
+y = eval(sprintf('cat(1,res.%s)',vary));
+
+bin_vect = 0:0.1:max(x);
+
+figure
+h = histogram(x,bin_vect,'DisplayName','total');
+hold on
+histogram(x(y < threshold),bin_vect,'DisplayName',sprintf('%s < %g',vary,threshold))
+grid on 
+xlabel(getLabelString(varx))
+ylabel('nb of samples')
+axis([0, max(x), 0, Inf])
+legend('Location','NorthWest')
+ax1 = gca;
+
+figure
+rel_freq = histcounts(x(y<threshold),bin_vect)./histcounts(x,bin_vect);
+b = bar(0.05:0.1:max(x)-0.05,rel_freq,1);
+b.EdgeColor = 'black';
+b.FaceAlpha = h.FaceAlpha;
+grid on
+xlim([bin_vect(1) bin_vect(end)])
+ax2 = gca;
+ax2.XTick = ax1.XTick;
+yticks = ax2.YTick;
+ax2.YTick = yticks*100;
+xlabel(getLabelString(varx))
+ylabel('relative nb of samples (%)')
+
+end
+
 
 function label = getLabelString(var)
 switch var
@@ -82,8 +128,12 @@ switch var
         label = ' max C_N^{k}';
     case 'SmaxCN_LB'
         label = 't_{C,maxLB}';
+    case 'SmaxCNv'
+        label = 'timing of C_N^v peak';
     case 'maxCNv'
-        label = 'max C_N^v';
+        label = 'height of C_N^v peak';
+    case 'err'
+        label = 'mean square error';
     otherwise
         label = var;
 end
