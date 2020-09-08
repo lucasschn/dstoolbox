@@ -126,6 +126,11 @@ classdef RampUpMotion < AirfoilMotion
                 obj.t = linspace(0,round(35/obj.alphadot,1),500);
             end
             obj.analpha = obj.alphadot*obj.t + analpha0;
+            % set angles before t0 = 0 
+            obj.analpha(obj.analpha <=0 ) = 0;
+            % set angles equal to 30 when motion is over
+            t_end = 30/obj.alphadot;
+            obj.analpha(obj.t >= t_end) = 30;
         end
         function setPitchRate(obj,airfoil)
             if isempty(obj.alphadot) || isempty(obj.analpha)
@@ -199,7 +204,7 @@ classdef RampUpMotion < AirfoilMotion
         end
         function computeAnalyticalImpulsiveLift(obj,TlKalpha)
             % analytical alphas, angles in rad
-            % if alphgadot is constant -> no acceleration -> no added mass
+            ddalpha = diff(diff(obj.analpha));
             D = zeros(size(ddalpha));
             for n=2:length(ddalpha)
                 D(n) = D(n-1)*exp(-obj.Ts/TlKalpha); % the second term is equal to zero if alphadot is constant
@@ -207,6 +212,15 @@ classdef RampUpMotion < AirfoilMotion
             obj.CNI = 4*TlKalpha/obj.M*(obj.alphadot-D);
         end
         function computeAnalyticalCirculatoryLift(obj,airfoil)
+            dt = mean(diff(obj.t));
+            deltaalpha = obj.alphadot*dt*ones(size(obj.alpha)); % deg
+            rule = 'mid-point';
+            [X,Y] = obj.computeDuhamel(deltaalpha,rule);
+            % effective angle of attack
+            obj.alphaE = obj.analpha-X-Y;
+            obj.alphaE_rad = deg2rad(obj.alphaE);
+            obj.CNC = airfoil.steady.slope*obj.alphaE; % alpha is in degrees, slope is in 1/deg
+            
         end
         function plotCL(obj,xaxis)
             figure
@@ -215,15 +229,15 @@ classdef RampUpMotion < AirfoilMotion
                 hold on
                 plot(obj.alpha_CLonset,max(obj.CL),'d','MarkerEdgeColor','k','MarkerFaceColor','k','C_{L,DS} C_L-based')
                 xlabel('\alpha (°)')
-            elseif strcmp(xaxis,'convectime')                
+            elseif strcmp(xaxis,'convectime')
                 plot(obj.S,obj.CL,'LineWidth',2)
                 hold on
                 plot(obj.S(obj.i_CLonset),max(obj.CL),'d','MarkerEdgeColor','k','MarkerFaceColor','k','DisplayName','C_{L,DS} C_L-based')
                 xlabel('t_c')
-            end      
+            end
             grid on
-            ax = gca; 
-            ax.FontSize = 20; 
+            ax = gca;
+            ax.FontSize = 20;
             ylabel('C_L')
             legend('Location','SouthEast')
             title(sprintf('%s ($\\dot{\\alpha} = %.2f ^{\\circ}$/s)',obj.name,obj.alphadot),'interpreter','latex')

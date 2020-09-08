@@ -1,4 +1,4 @@
-% This script is made to plot the results of paramsweep.m
+% This script is made to produce scatter plots and histogram plots in order to analyse the results of paramsweep.m
 % Author : Lucas Schneeberger
 % Date : 28.08.2020
 
@@ -7,7 +7,7 @@ clear all
 clc
 
 load(fullfile('..','data','paramsweep','res25uniform'))
-plotHistogram(res,'Tp+Tf','err',0.1)
+plotOneRate(res,25,'Tp','SmaxCN_LB','Tf')
 
 
 function plotOneRate(res,rate,varx,vary,color_var)
