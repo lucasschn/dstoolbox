@@ -1,4 +1,4 @@
-% This script is made to plot the results of paramsweep.m
+% This script is made to produce scatter plots and histogram plots in order to analyse the results of paramsweep.m
 % Author : Lucas Schneeberger
 % Date : 28.08.2020
 

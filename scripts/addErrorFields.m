@@ -10,7 +10,7 @@ filename = 'res25uniform';
 load(fullfile('..','data','paramsweep',filename))
 
 for k=1:length(res)
-    res(k).errPeakLoc = res(k).SmaxCN - res(k).SmaxCN_LB;
+    res(k).errPeakLoc = res(k).SmaxCN_LB - res(k).SmaxCN;
     if res(k).Tv == 0 || res(k).Tvl  == 0 % means there is no vortex lift
                 res(k).SmaxCNv = NaN; 
                 warning('Peak location has been replaced by NaN.')
@@ -19,6 +19,7 @@ for k=1:length(res)
         res(k).SmaxCNk = NaN;
         warning('Peak location has been replaced by NaN.')
     end
+    
 end
 
 save(fullfile('..','data','paramsweep',filename),'res')

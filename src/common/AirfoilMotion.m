@@ -577,7 +577,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             dalpha = diff(obj.alpha);
             obj.tau_v = zeros(size(obj.t));
             % Following Bangga 2020, Eq. 35 (first tau is always zero, last two points have no CNprime defined)
-            for k = 2:length(obj.S)-2
+            for k = 2:length(isstalled)
                 if isstalled(k)
                     obj.tau_v(k) = obj.tau_v(k-1)+0.45*dt/airfoil.c*obj.V;
                 elseif dalpha(k) >= 0
@@ -644,9 +644,9 @@ classdef AirfoilMotion < matlab.mixin.SetGet
         function computeErr(obj,doplot)
             [obj.maxCN,imaxCN] = max(obj.CN);
             dCN = diff(obj.CN(imaxCN:end)); % deltaCN after stall
-            i_vortex_end = find(dCN>0,1) + imaxCN; 
-            i_ramp_start = find(obj.S>0,1);
-            obj.S(i_vortex_end)
+            i_vortex_end = find(dCN>0.,1) + imaxCN; 
+            i_ramp_start = find(obj.S>1e-4,1);
+            
             % Only compute errror until the end of primary peak
             err = (obj.CN_LB(i_ramp_start:i_vortex_end) - obj.CN(i_ramp_start:i_vortex_end)).^2;
             obj.err = mean(err);
@@ -783,7 +783,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             hold on
             plot(obj.S(1:length(obj.CN_LB)),obj.CN_LB,'LineWidth',2,'DisplayName','LB')
             plot(obj.S(1:length(obj.CNv)),obj.CNv,'LineWidth',2,'DisplayName','C_N^v')
-            plot(obj.S(1:length(obj.CNC)),obj.CNC,'LineWidth',2,'DisplayName','C_N^C')
+            plot(obj.S(1:length(obj.CNk)),obj.CNf,'LineWidth',2,'DisplayName','C_N^f')
             plot(obj.S(1:length(obj.CNf)),obj.CNf,'LineWidth',2,'DisplayName','C_N^f')
             xlabel('t_c')
             ylabel('C_N')
@@ -1050,16 +1050,17 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             plot(obj.S(1:length(obj.CN)),obj.CN,'LineWidth',2,'DisplayName','exp')
             hold on 
             plot(obj.S(1:length(obj.CN_LB)),obj.CN_LB,'LineWidth',2,'DisplayName','LB')
-            plot(obj.S(1:length(obj.CNqs)),obj.CNqs,'LineWidth',2,'DisplayName','C_N^{qs}')
-            plot(obj.S(1:length(obj.CNv)),obj.CNv,'LineWidth',2,'DisplayName','C_N^v')
-            plot(obj.S(1:length(obj.CNf)),obj.CNf,'LineWidth',2,'DisplayName','C_N^f')
-            plot(obj.S(1:length(obj.CNsteady)),obj.CNsteady,'LineWidth',2,'DisplayName','static')
+            plot(obj.S(1:length(obj.CNk)),obj.CNk,'LineWidth',2,'DisplayName','C_N^{qs}')
+            plot(obj.S(1:length(obj.CNf)),obj.CNf,'LineWidth',2,'DisplayName','C_N^v')
+            plot(obj.S(1:length(obj.CNv)),obj.CNv,'LineWidth',2,'DisplayName','C_N^f')
+            %plot(obj.S(1:length(obj.CNsteady)),obj.CNsteady,'LineWidth',2,'DisplayName','static')
             grid on 
             xlabel('t_c')
             ylabel('C_N')
             legend('Location','SouthEast')
             ax = gca;
             ax.FontSize = 20;
+            axis([0 Inf 0 3])
             title(sprintf('$r=%.3f,T_p=%.1f,T_f =%.1f,T_v=%.1f,T_{vl}=%.1f$',obj.r,obj.Tp,obj.Tf,obj.Tv,obj.Tvl),'FontSize',14,'interpreter','latex')
         end
     end

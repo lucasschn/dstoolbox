@@ -52,5 +52,6 @@ ramp.setPitchRate(airfoil);
 % Define stall (convectime must have been set)
 ramp.findExpOnset();
 %% Run Leishman-Beddoes' model on the ramp
-ramp.BeddoesLeishman(airfoil,17.2,2.8,0.4,5,'experimental')
+ramp.BeddoesLeishman(airfoil,1,1.7,3,3,'analytical')
 ramp.plotLB('convectime')
+% saveas(gcf,fullfile(path2fig,'vortex_development_Tp5'),'fig')
