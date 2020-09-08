@@ -7,9 +7,8 @@ clear all
 clc
 
 load(fullfile('..','data','paramsweep','res25uniform'))
-plotHistogram(res,'Tp+Tf','err',0.1)
-
-
+plotHistogram(res,Tp,err,0.1)
+ 
 function plotOneRate(res,rate,varx,vary,color_var)
 res_adot = res(cat(1,res.alphadot)==rate);
 if isempty(res_adot)
@@ -22,6 +21,11 @@ else
     figure
     s = scatter(x,y,'filled');
     grid minor
+    setDataTip(s,res_adot)
+    
+    if length(res_adot)>5e3
+        s.SizeData = 10; 
+    end
     xlabel(getLabelString(varx))
     ylabel(getLabelString(vary))
     title(sprintf('alphadot = %.2f',rate))
@@ -127,7 +131,11 @@ switch var
     case 'maxCNk'
         label = ' max C_N^{k}';
     case 'SmaxCN_LB'
-        label = 't_{C,maxLB}';
+        label = 'timing of C_N^{LB} peak';
+    case 'SmaxCNf'
+        label = 'timing of C_N^f peak';
+    case 'maxCNf'
+        label = 'height of C_N^f peak';
     case 'SmaxCNv'
         label = 'timing of C_N^v peak';
     case 'maxCNv'
@@ -137,4 +145,13 @@ switch var
     otherwise
         label = var;
 end
+end
+
+function setDataTip(scatterplot,res)
+scatterplot.DataTipTemplate.DataTipRows(3) = dataTipTextRow('Sample',1:length(res));
+scatterplot.DataTipTemplate.DataTipRows(4) = dataTipTextRow('Tp',cat(1,res.Tp));
+scatterplot.DataTipTemplate.DataTipRows(5) = dataTipTextRow('Tf',cat(1,res.Tf));
+scatterplot.DataTipTemplate.DataTipRows(6) = dataTipTextRow('Tv',cat(1,res.Tv));
+scatterplot.DataTipTemplate.DataTipRows(7) = dataTipTextRow('Tvl',cat(1,res.Tvl));
+
 end

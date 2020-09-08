@@ -629,9 +629,17 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             [obj.maxCNv,imaxCNv] = max(obj.CNv);
             obj.SmaxCN = obj.S(imaxCN);
             obj.SmaxCN_LB = obj.S(imaxCN_LB);
-            obj.SmaxCNk = obj.S(imaxCNk);
+            if obj.S(imaxCNk > 30)
+                obj.SmaxCNk = NaN;
+            else 
+                obj.SmaxCNk = obj.S(imaxCNk);
+            end
             obj.SmaxCNf = obj.S(imaxCNf);
-            obj.SmaxCNv = obj.S(imaxCNv);
+            if obj.S(imaxCNv <= 0)
+                obj.SmaxCNv = NaN; 
+            else
+                obj.SmaxCNv = obj.S(imaxCNv);
+            end             
         end
         function computeErr(obj,doplot)
             [obj.maxCN,imaxCN] = max(obj.CN);

@@ -57,6 +57,8 @@ for k = 1:length(c) % loop over the pitch rates
     for kk = 1:n % do n samples per pitch rate
         params(1) = randsample(0:0.1:20,1);
         params(2) = randsample(0:0.1:10,1);
+        % does it really make sense to make Tv and Tvl start at 0? Vortex
+        % lift will be zero
         params(3:4) = randsample(0:0.1:5,2,'true');
         disp(params)
         res(n*(k-1)+kk).r = ramp.r;

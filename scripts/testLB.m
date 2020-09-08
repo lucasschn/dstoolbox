@@ -25,7 +25,7 @@ end
 airfoil = Airfoil('flatplate',0.15);
 airfoil.r0 = 0.04;
 static = load(path2static);
-airfoil.steady = SteadyCurve(static.alpha,static.CN,8);
+airfoil.steady = SteadyCurve(static.alpha,static.CN,13);
 
 %% Set up the ramp
 
@@ -52,12 +52,5 @@ ramp.setPitchRate(airfoil);
 % Define stall (convectime must have been set)
 ramp.findExpOnset();
 %% Run Leishman-Beddoes' model on the ramp
-ramp.BeddoesLeishman(airfoil,1,1.7,3,3,'experimental')
-ramp.plotVortex()
-% saveas(gcf,fullfile(path2fig,'vortex_development_Tp1'),'fig')
-ramp.BeddoesLeishman(airfoil,5,1.7,3,3,'experimental')
-ramp.plotVortex()
-% saveas(gcf,fullfile(path2fig,'vortex_development_Tp3'),'fig')
-ramp.BeddoesLeishman(airfoil,7,1.7,3,3,'experimental')
-ramp.plotVortex()
-% saveas(gcf,fullfile(path2fig,'vortex_development_Tp5'),'fig')
+ramp.BeddoesLeishman(airfoil,17.2,2.8,0.4,5,'experimental')
+ramp.plotLB('convectime')

@@ -11,6 +11,14 @@ load(fullfile('..','data','paramsweep',filename))
 
 for k=1:length(res)
     res(k).errPeakLoc = res(k).SmaxCN - res(k).SmaxCN_LB;
+    if res(k).Tv == 0 || res(k).Tvl  == 0 % means there is no vortex lift
+                res(k).SmaxCNv = NaN; 
+                warning('Peak location has been replaced by NaN.')
+    end  
+    if res(k).SmaxCNk > 30 
+        res(k).SmaxCNk = NaN;
+        warning('Peak location has been replaced by NaN.')
+    end
 end
 
 save(fullfile('..','data','paramsweep',filename),'res')
