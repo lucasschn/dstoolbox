@@ -126,10 +126,11 @@ classdef RampUpMotion < AirfoilMotion
                 obj.t = linspace(0,round(35/obj.alphadot,1),500);
             end
             obj.analpha = obj.alphadot*obj.t + analpha0;
+            t_start = - analpha0/obj.alphadot;
             % set angles before t0 = 0 
             obj.analpha(obj.analpha <=0 ) = 0;
             % set angles equal to 30 when motion is over
-            t_end = 30/obj.alphadot;
+            t_end = 30/obj.alphadot + t_start;
             obj.analpha(obj.t >= t_end) = 30;
         end
         function setPitchRate(obj,airfoil)
@@ -204,10 +205,11 @@ classdef RampUpMotion < AirfoilMotion
         end
         function computeAnalyticalImpulsiveLift(obj,TlKalpha)
             % analytical alphas, angles in rad
-            ddalpha = diff(diff(obj.analpha));
+            dalpha = diff(obj.analpha);
+            ddalpha = diff(dalpha);
             D = zeros(size(ddalpha));
             for n=2:length(ddalpha)
-                D(n) = D(n-1)*exp(-obj.Ts/TlKalpha); % the second term is equal to zero if alphadot is constant
+                D(n) = D(n-1)*exp(-obj.Ts/TlKalpha)+((dalpha(n)-dalpha(n-1))/obj.Ts)*exp(-obj.Ts/2*TlKalpha); % the second term is equal to zero if alphadot is constant
             end
             obj.CNI = 4*TlKalpha/obj.M*(obj.alphadot-D);
         end

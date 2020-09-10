@@ -93,5 +93,5 @@ end
 if ~isfolder(fullfile('..','data','paramsweep'))
     mkdir(fullfile('..','data','paramsweep'));
 end
-name = 'res25';
+name = 'res25uniform3';
 save(fullfile('..','data','paramsweep',name),'res');

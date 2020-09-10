@@ -6,9 +6,10 @@ close all
 clear all
 clc
 
-load(fullfile('..','data','paramsweep','res25uniform'))
-plotHistogram(res,Tp,err,0.1)
- 
+load(fullfile('..','data','paramsweep','res25uniform3'))
+
+plotOneRate(res,25,'Tp','SmaxCNk','Tf')
+
 function plotOneRate(res,rate,varx,vary,color_var)
 res_adot = res(cat(1,res.alphadot)==rate);
 if isempty(res_adot)
@@ -24,7 +25,7 @@ else
     setDataTip(s,res_adot)
     
     if length(res_adot)>5e3
-        s.SizeData = 10; 
+        s.SizeData = 10;
     end
     xlabel(getLabelString(varx))
     ylabel(getLabelString(vary))
@@ -45,7 +46,7 @@ if nargin > 4
     c.Ticks = linspace(cvar_min,cvar_max,length(unique(cat(1,sprintf('res.%s',color_var)))));
     c.Label.String = sprintf('%s',getLabelString(color_var));
 end
-% axis([0 20 1 2.8])
+%axis([0 20 -0.8 1])
 end
 
 function plotAllRates(res,varx,vary)
@@ -89,8 +90,11 @@ bin_vect = 0:0.1:max(x);
 figure
 h = histogram(x,bin_vect,'DisplayName','total');
 hold on
-histogram(x(y < threshold),bin_vect,'DisplayName',sprintf('%s < %g',vary,threshold))
-grid on 
+% take the absolute value of vary small than the threshold
+% this is useful for peak location error and does not impact overall error
+% (always positive)
+histogram(x(abs(y) < threshold),bin_vect,'DisplayName',sprintf('|%s| < %g',getLabelString(vary),threshold))
+grid on
 xlabel(getLabelString(varx))
 ylabel('nb of samples')
 axis([0, max(x), 0, Inf])
@@ -98,19 +102,18 @@ legend('Location','NorthWest')
 ax1 = gca;
 
 figure
-rel_freq = histcounts(x(y<threshold),bin_vect)./histcounts(x,bin_vect);
-b = bar(0.05:0.1:max(x)-0.05,rel_freq,1);
+rel_freq = histcounts(x(abs(y)<threshold),bin_vect)./histcounts(x,bin_vect);
+b = bar(0.05:0.1:max(x)-0.05,rel_freq,1,'DisplayName',sprintf('|%s| < %g',getLabelString(vary),threshold));
 b.EdgeColor = 'black';
 b.FaceAlpha = h.FaceAlpha;
 grid on
+legend('Location','NorthEast')
 xlim([bin_vect(1) bin_vect(end)])
-ax2 = gca;
-ax2.XTick = ax1.XTick;
-yticks = ax2.YTick;
-ax2.YTick = yticks*100;
 xlabel(getLabelString(varx))
 ylabel('relative nb of samples (%)')
-
+ax2 = gca;
+ax2.XTick = ax1.XTick;
+yticklabels(num2cell(ax2.YTick*100))
 end
 
 
@@ -142,6 +145,22 @@ switch var
         label = 'height of C_N^v peak';
     case 'err'
         label = 'mean square error';
+    case 'errPeakLoc'
+        label = 'error on the primary peak timing (convectime time units)';
+    case 'errPeakHeight'
+        label = 'error on the primary peak height';
+    case 'errCNk_PeakLoc'
+        label = 'error on Kirchhoff peak timing (convectime time units)';
+    case 'errCNk_PeakHeight'
+        label = 'error on Kirchhoff peak height';
+    case 'errCNf_PeakLoc'
+        label = 'error on Kirchhoff w/ added mass peak timing (convectime time units)';
+    case 'errCNf_PeakHeight'
+        label = 'error on Kirchhoff w/ added mass peak height';
+    case 'errCNv_PeakLoc'
+        label = 'error on vortex lift peak timing (convectime time units)';
+    case 'errCNv_PeakHeight'
+        label = 'error on vortex lift peak height';    
     otherwise
         label = var;
 end
@@ -153,5 +172,4 @@ scatterplot.DataTipTemplate.DataTipRows(4) = dataTipTextRow('Tp',cat(1,res.Tp));
 scatterplot.DataTipTemplate.DataTipRows(5) = dataTipTextRow('Tf',cat(1,res.Tf));
 scatterplot.DataTipTemplate.DataTipRows(6) = dataTipTextRow('Tv',cat(1,res.Tv));
 scatterplot.DataTipTemplate.DataTipRows(7) = dataTipTextRow('Tvl',cat(1,res.Tvl));
-
 end

@@ -287,12 +287,13 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             end
         end
         function computeExperimentalImpulsiveLift(obj,TlKalpha)
-            % experimental alphas, angles in rad
-            dalpha = diff(obj.alpha); % should be in degrees but only radians work!
-            ddalpha = diff(dalpha); % same unit as above
-            dalphadt = (dalpha(2:end) + dalpha(1:end-1))/(2*obj.Ts); % way smoother than Euler method (dalphadt = dalpha(1:end-1)/obj.Ts)!
-            D = zeros(size(ddalpha));
-            for n=2:length(ddalpha)
+            % experimental alphas, angles in deg     
+            d = designfilt('differentiatorfir','FilterOrder',100,'PassbandFrequency',1,'StopbandFrequency',1.2,'SampleRate',1/obj.Ts);
+            delay = mean(grpdelay(d));            
+            dadt = filter(d,obj.alpha)/obj.Ts;
+            dalphadt = dadt(delay:end);
+            D = zeros(size(dalphadt));
+            for n=2:length(dalphadt)
                 D(n) = D(n-1)*exp(-obj.Ts/TlKalpha)+(dalphadt(n)-dalphadt(n-1))*exp(-obj.Ts/(2*TlKalpha));
             end
             obj.CNI = pi/180*4*TlKalpha/obj.M*(dalphadt-D); % pi/180 comes from a degree units remaining when checking all units. CNI should be dimensionless. Tl is in seconds and the parenthesis is in deg/s.
@@ -629,7 +630,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             [obj.maxCNv,imaxCNv] = max(obj.CNv);
             obj.SmaxCN = obj.S(imaxCN);
             obj.SmaxCN_LB = obj.S(imaxCN_LB);
-            if obj.S(imaxCNk > 30)
+            if obj.S(imaxCNk) > 30
                 obj.SmaxCNk = NaN;
             else 
                 obj.SmaxCNk = obj.S(imaxCNk);
@@ -652,7 +653,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             obj.err = mean(err);
             if nargin >1 && doplot                
                 figure 
-                plot(obj.S(i_ramp_start:i_vortex_end),err,'LineWidth',2)
+                plot(obj.S(i_ramp_start:i_vortex_end),obj.err,'LineWidth',2)
                 hold on 
                 yline(obj.err,'r-.','LineWidth',2,'Label','average error')
                 grid on 
@@ -1040,20 +1041,28 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             ylabel('C_N')
             legend('Location','SouthEast')
         end
-        %         function plotRemainder(obj)
-        %             remain = obj.CN(1:length(obj.CNI)) - obj.CNI - obj.CNsteady;
-        %             figure
-        %             plot(obj.S(1:length(remain)),remain)
-        %             plot(obj.S,
-        function plotFatma(obj)
+        function plotCustom(obj,varargin)
             figure
             plot(obj.S(1:length(obj.CN)),obj.CN,'LineWidth',2,'DisplayName','exp')
             hold on 
+            if any(contains(varargin,'CN_LB'))
             plot(obj.S(1:length(obj.CN_LB)),obj.CN_LB,'LineWidth',2,'DisplayName','LB')
-            plot(obj.S(1:length(obj.CNk)),obj.CNk,'LineWidth',2,'DisplayName','C_N^{qs}')
+            end
+            if any(contains(varargin,'CNI'))
+                plot(obj.S(1:length(obj.CNI)),obj.CNI,'LineWidth',2,'DisplayName','C_N^{I}')
+            end            
+            if any(contains(varargin,'CNk'))
+            plot(obj.S(1:length(obj.CNk)),obj.CNk,'LineWidth',2,'DisplayName','C_N^{k}')
+            end
+            if any(contains(varargin,'CNf'))
             plot(obj.S(1:length(obj.CNf)),obj.CNf,'LineWidth',2,'DisplayName','C_N^v')
-            plot(obj.S(1:length(obj.CNv)),obj.CNv,'LineWidth',2,'DisplayName','C_N^f')
-            %plot(obj.S(1:length(obj.CNsteady)),obj.CNsteady,'LineWidth',2,'DisplayName','static')
+            end
+            if any(contains(varargin,'CNv'))
+            %plot(obj.S(1:length(obj.CNv)),obj.CNv,'LineWidth',2,'DisplayName','C_N^f')
+            end
+            if any(contains(varargin,'CNsteady'))
+            plot(obj.S(1:length(obj.CNsteady)),obj.CNsteady,'LineWidth',2,'DisplayName','static')
+            end
             grid on 
             xlabel('t_c')
             ylabel('C_N')
