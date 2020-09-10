@@ -6,7 +6,7 @@ DSToolbox is a Matlab toolbox for analyzing and modelling of unsteady fluid dyna
 
 Clone the repository in the folder of choice on your computer. The src folder contains the source code and the script folder contains a bunch of script and example that make use of the toolbox functionalities.
 
-## Organizaton 
+## Organization 
 
 The repository consists in the source code of the toolbox, in the src folder, and some scripts, that make use of the toolbox to produce valuable results, in the scripts fodler. 
 
