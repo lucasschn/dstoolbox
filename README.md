@@ -1,6 +1,6 @@
 # DSToolbox
 
-DSToolbox is a Matlab toolbox for analyzing and modelling and unsteady fluid dynamics experiments.
+DSToolbox is a Matlab toolbox for analyzing and modelling of unsteady fluid dynamics experiments.
 
 ## Installation
 
