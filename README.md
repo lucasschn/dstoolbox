@@ -44,7 +44,7 @@ or a general motion with custom angle of attack history:
 ```matlab
 motion = AirfoilMotion('alpha',alpha,'CN',CN)
 ```
-All 3 airfoil motions accept name-value pair arguments when constructed. This means that you can pass any `'name',value` pair as argument when creating the object to automatically assign the value `value` to the property `name` to the object, as long as the property `name` exists for this object. 
+All three airfoil motions accept name-value pair arguments when constructed. This means that you can pass any `'name',value` pair as an argument when creating the object to automatically assign the value `value` to the property `name` to the object, as long as the property `name` exists for this object. 
 
 The aerodynamic normal coefficient can be predicted using a dynamic stall model. All dynamic stall models are methods that apply to motion objects. The general syntax for models is as follows: 
 
