@@ -34,7 +34,7 @@ the created steady curve is assigned as the steady/static curve to the airfoil, 
 ramp = RampUpMotion('r',0.01,'V',0.5) % creates an ramp-up object with reduced pitch rate 0.01 and incoming flow velocity 0.5m/s.
 ```
 
-a sinusoidal motion with constat frequency:
+a sinusoidal motion with constant frequency:
 ```matlab
 pitching = PitchingMotion('alpha',alpha,'CN',CN,'k',red_freq) % creates a pitching motion object with angle of attack vector alpha, normal coefficient CN and reduced frequency red_freq.
 ```
@@ -44,6 +44,7 @@ or a general motion with custom angle of attack history:
 ```matlab
 motion = AirfoilMotion('alpha',alpha,'CN',CN)
 ```
+All 3 airfoil motions accept name-value pair arguments when constructed. This means that you can pass any `'name',value` pair as argument when creating the object to automatically assign the value `value` to the property `name` to the object, as long as the property `name` exists for this object. 
 
 The aerodynamic normal coefficient can be predicted using a dynamic stall model. All dynamic stall models are methods that apply to motion objects. The general syntax for models is as follows: 
 
