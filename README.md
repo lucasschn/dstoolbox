@@ -4,7 +4,17 @@ DSToolbox is a Matlab toolbox for analyzing and modelling of unsteady fluid dyna
 
 ## Installation
 
-Clone the repository in the folder of choice on your computer. The src folder contains the source code and the script folder contains a bunch of script and example that make use of the toolbox functionalities.
+Clone the repository in the folder of choice on your computer, for example `Documents/MATLAB`. Open a Terminal window and type:
+
+```
+cd Documents/MATLAB
+git clone git@github.com:lucasschn/dstoolbox
+
+
+The `src` folder contains the source code and the `script` folder contains a bunch of scripts and examples that make use of the toolbox functionalities. The `src`folder is further divided in three subfolders: 
+- `lib` contains a library of useful functions, tha
+- `model` contains functions that are model-specific, e.g. only used for Sheng and Expfit models
+- `common` contains the classes definitions for the core-objects of the toolbox, e.g. Airfoil, AirfoilMotion, or SteadyCurve.
 
 ## Organization 
 
