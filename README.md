@@ -28,7 +28,14 @@ The repository consists in a collection of objects, such as airfoils or typical 
 airfoil = Airfoil('naca0012',0.5) % creates an Airfoil object with name naca0012 and 0.5m chord length
 airfoil.steady = SteadyCurve(alpha,CN,13) % creates a SteadyCurve object
 ```
-The created steady curve is assigned as the steady/static curve to the airfoil, with angle of attack alpha, normal coefficient CN, and static stall angle 13°. To create a dynamic stall experiment, a motion is needed. It can be a ramp-up motion with constant pitch rate: 
+The created steady curve is assigned as the steady/static curve to the airfoil, with angle of attack alpha, normal coefficient CN, and static stall angle 13°. Different methods apply to steady curves, for additional computations or for plots. 
+
+```matlab
+airfoil.steady.plotCN() % plots the normal coefficient as a function of the AoA
+airfoil.steady.fitKirchhoff() % fits a Kirchhoff curve to the static stall curve
+```
+
+An other object is needed to represent the dynamic stall experiment. It can be a ramp-up motion with constant pitch rate: 
 
 ```matlab
 ramp = RampUpMotion('r',0.01,'V',0.5) % creates an ramp-up object with reduced pitch rate 0.01 and incoming flow velocity 0.5m/s.
@@ -44,6 +51,8 @@ or a general motion with custom angle of attack history:
 ```matlab
 motion = AirfoilMotion('alpha',alpha,'CN',CN)
 ```
+RampUpMotion and PitchingMotion both inherit from AirfoilMotion, meaning that all properties and methods of AirfoilMotion also apply to RampUpMotion and PitchingMotion. Howvever, RampUpMotion and PitchingMotion both individually have properties and methods that AirfoilMotion does not, such as the reduced pitch rate `r` and the reduced frequency `k` respectively. 
+
 All three airfoil motions accept name-value pair arguments when constructed. This means that you can pass any `'name',value` pair as an argument when creating the object to automatically assign the value `value` to the property `name` to the object, as long as the property `name` exists for this object. 
 
 The aerodynamic normal coefficient can be predicted using a dynamic stall model. All dynamic stall models are methods that apply to motion objects. The general syntax for models is as follows: 
