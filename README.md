@@ -6,34 +6,51 @@ DSToolbox is a Matlab toolbox for analyzing and modelling of unsteady fluid dyna
 
 Clone the repository in the folder of choice on your computer, for example `Documents/MATLAB`. Open a Terminal window and type:
 
-```
+```bash
 cd Documents/MATLAB
 git clone git@github.com:lucasschn/dstoolbox
-
-
-The `src` folder contains the source code and the `script` folder contains a bunch of scripts and examples that make use of the toolbox functionalities. The `src`folder is further divided in three subfolders: 
-- `lib` contains a library of useful functions, tha
-- `model` contains functions that are model-specific, e.g. only used for Sheng and Expfit models
-- `common` contains the classes definitions for the core-objects of the toolbox, e.g. Airfoil, AirfoilMotion, or SteadyCurve.
+```
+You can now make sure that you have a new folder called `dstoolbox` at the specified location. 
 
 ## Organization 
 
-The repository consists in the source code of the toolbox, in the src folder, and some scripts, that make use of the toolbox to produce valuable results, in the scripts fodler. 
+The `src` folder contains the source code and the `script` folder contains scripts and examples that make use of the toolbox functionalities. The `src`folder is further divided in three subfolders: 
+- `common` contains the classes definitions for the core-objects of the toolbox, e.g. Airfoil, AirfoilMotion, or SteadyCurv that are used independently of the model. 
+- `lib` contains a library of useful functions, not classes, also common to all models.
+- `model` contains functions that are model-specific, e.g. only used for Sheng and Expfit models
 
-The src folder contains three subdirectories: the common folder for class definitions that are useful in any dynamic stall model, the model folder for functions that are a specific model implmentation and the lib folder, which is a library of useful functions that are also common to all models.
 
 ## Usage
 
-The repository consists in a collection of objects, such as airfoils or typical motions, that can be created and on which functions can be applied. Scipts can then be written where objects are created, such as in the example below : 
+The repository consists in a collection of objects, such as airfoils or typical motions, that can be created and on which functions can be applied. Scripts can then be written where these objects are created, such as in the example below : 
 
 ```matlab
 airfoil = Airfoil('naca0012',0.5) % creates an Airfoil object with name naca0012 and 0.5m chord length
+airfoil.steady = SteadyCurve(alpha,CN,13) % creates a SteadyCurve object
 ```
-or for another object type: 
+the created steady curve is assigned as the steady/static curve to the airfoil, with angle of attack alpha, normal coefficient CN, and static stall angle 13°. To create a dynamic stall experiment, a motion is needed. It can be a ramp-up motion with constant pitch rate: 
 
 ```matlab
 ramp = RampUpMotion('r',0.01,'V',0.5) % creates an ramp-up object with reduced pitch rate 0.01 and incoming flow velocity 0.5m/s.
 ```
+
+a sinusoidal motion with constat frequency:
+```matlab
+pitching = PitchingMotion('alpha',alpha,'CN',CN,'k',red_freq) % creates a pitching motion object with angle of attack vector alpha, normal coefficient CN and reduced frequency red_freq.
+```
+
+or a general motion with custom angle of attack history:
+
+```matlab
+motion = AirfoilMotion('alpha',alpha,'CN',CN)
+```
+
+The aerodynamic normal coefficient can be predicted using a dynamic stall model. All dynamic stall models are methods that apply to motion objects. The general syntax for models is as follows: 
+
+```matlab
+ramp.BeddoesLeishman(airfoil,Tp,Tf,Tv,Tvl,'mode') % computes the aerodynamic loading experienced by an airfoil object describing the motion described by ramp
+```
+The time constants Tp,Tf,Tv & Tvl are necessary input arguments to Beddoes-Leishman model. Depending on the selected model the number of time constants can vary from 3 to 4. The 'mode' argument can be either 'experimental' or 'analytical' depending if the user wants numerical or analytical derivatives to be used. 
 
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)
