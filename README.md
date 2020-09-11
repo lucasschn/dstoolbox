@@ -22,13 +22,13 @@ The `src` folder contains the source code and the `script` folder contains scrip
 
 ## Usage
 
-The repository consists in a collection of objects, such as airfoils or typical motions, that can be created and on which functions can be applied. Scripts can then be written where these objects are created, such as in the example below : 
+The repository consists in a collection of objects, such as airfoils or typical motions, that can be created and on which functions can be applied. Scripts can then be written where these objects are created, such as in the example below: 
 
 ```matlab
 airfoil = Airfoil('naca0012',0.5) % creates an Airfoil object with name naca0012 and 0.5m chord length
 airfoil.steady = SteadyCurve(alpha,CN,13) % creates a SteadyCurve object
 ```
-the created steady curve is assigned as the steady/static curve to the airfoil, with angle of attack alpha, normal coefficient CN, and static stall angle 13°. To create a dynamic stall experiment, a motion is needed. It can be a ramp-up motion with constant pitch rate: 
+The created steady curve is assigned as the steady/static curve to the airfoil, with angle of attack alpha, normal coefficient CN, and static stall angle 13°. To create a dynamic stall experiment, a motion is needed. It can be a ramp-up motion with constant pitch rate: 
 
 ```matlab
 ramp = RampUpMotion('r',0.01,'V',0.5) % creates an ramp-up object with reduced pitch rate 0.01 and incoming flow velocity 0.5m/s.
@@ -51,7 +51,7 @@ The aerodynamic normal coefficient can be predicted using a dynamic stall model.
 ```matlab
 ramp.BeddoesLeishman(airfoil,Tp,Tf,Tv,Tvl,'mode') % computes the aerodynamic loading experienced by an airfoil object describing the motion described by ramp
 ```
-The time constants Tp,Tf,Tv & Tvl are necessary input arguments to Beddoes-Leishman model. Depending on the selected model the number of time constants can vary from 3 to 4. The 'mode' argument can be either 'experimental' or 'analytical' depending if the user wants numerical or analytical derivatives to be used. 
+The time constants Tp, Tf, Tv, and Tvl are necessary input arguments to Beddoes-Leishman model. Depending on the selected model the number of time constants can vary from 3 to 4. The 'mode' argument can be either 'experimental' or 'analytical' depending if the user wants numerical or analytical derivatives to be used. 
 
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)
