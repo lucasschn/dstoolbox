@@ -8,7 +8,7 @@ clear all
 clc 
 set(0,'DefaultFigureWindowStyle','docked')
 
-run('labbook')
+run(fullfile('..','labbook.m'))
 try
     load('paths','path2fig')
 catch
