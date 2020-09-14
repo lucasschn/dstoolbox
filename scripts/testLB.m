@@ -7,23 +7,15 @@ close all
 clear all
 clc 
 set(0,'DefaultFigureWindowStyle','docked')
-addpath('../plot_dir/')
-addpath('../src/model/')
-addpath('../src/common/')
-addpath('../src/lib/')
-if ismac
-    run('/Users/lucas/src/codes_smarth/labbook.m')
-    path2fig = '../fig';
-elseif ispc 
-    run('labbook')
-    try 
-        load('paths','path2fig')
-    catch 
-        open setPaths.m
-        error('The path to the figure folder has not been set. Please set your paths in setPaths.m and run this script again.')
-    end
-    
+
+run('labbook')
+try
+    load('paths','path2fig')
+catch
+    open setPaths.m
+    error('The path to the figure folder has not been set. Please set your paths in setPaths.m and run this script again.')
 end
+
 path2static = fullfile('..','static_flatplate');
 
 %% Define the airfoil and the associated steady curve
