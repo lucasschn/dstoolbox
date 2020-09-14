@@ -8,7 +8,7 @@ clc
 
 load(fullfile('..','data','paramsweep','res25uniform3'))
 
-plotOneRate(res,25,'Tp','SmaxCNk','Tf')
+plotOneRate(res,25,'SmaxCNf','SmaxCNv','SmaxCN_LB')
 
 function plotOneRate(res,rate,varx,vary,color_var)
 res_adot = res(cat(1,res.alphadot)==rate);
@@ -46,7 +46,7 @@ if nargin > 4
     c.Ticks = linspace(cvar_min,cvar_max,length(unique(cat(1,sprintf('res.%s',color_var)))));
     c.Label.String = sprintf('%s',getLabelString(color_var));
 end
-%axis([0 20 -0.8 1])
+
 end
 
 function plotAllRates(res,varx,vary)
@@ -115,7 +115,6 @@ ax2 = gca;
 ax2.XTick = ax1.XTick;
 yticklabels(num2cell(ax2.YTick*100))
 end
-
 
 function label = getLabelString(var)
 switch var

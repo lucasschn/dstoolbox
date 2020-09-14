@@ -14,12 +14,18 @@ addpath('../src/lib/')
 if ismac
     run('/Users/lucas/src/codes_smarth/labbook.m')
     path2fig = '../fig';
-    path2static = fullfile('..','static_flatplate');
 elseif ispc 
     run('labbook')
-    path2fig = '\\oscar\macintosh hd\Users\lucas\Documents\EPFL\PDM\fig';
-    path2static = '\\oscar\macintosh hd\Users\lucas\Documents\EPFL\PDM\static_flatplate';
+    try 
+        load('paths','path2fig')
+    catch 
+        open setPaths.m
+        error('The path to the figure folder has not been set. Please set your paths in setPaths.m and run this script again.')
+    end
+    
 end
+path2static = fullfile('..','static_flatplate');
+
 %% Define the airfoil and the associated steady curve
 
 airfoil = Airfoil('flatplate',0.15);
@@ -52,6 +58,5 @@ ramp.setPitchRate(airfoil);
 % Define stall (convectime must have been set)
 ramp.findExpOnset();
 %% Run Leishman-Beddoes' model on the ramp
-ramp.BeddoesLeishman(airfoil,0.15,0.65,0.05,0.15,'analytical')
-ramp.plotCustom('CN_LB','CNk','CNI','CNf')
+ramp.BeddoesLeishman(airfoil,1,0.65,0.05,3,'experimental')
 % saveas(gcf,fullfile(path2fig,'vortex_development_Tp5'),'fig')

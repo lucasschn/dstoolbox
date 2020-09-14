@@ -1,4 +1,9 @@
-% This script is made to add some error fields to a res structure
+% This script has two puroposes:
+% 1) Correcting some wrongly determined peaks produced by former versions
+% of findPeaks methods. 
+% 2) Add error fields to a res structure produced by paramsweep.m. The
+% error fields corresponds to error on peak location and height for CNk,
+% CNf, CNv and CN_LB curves.
 % Author : Lucas Schneeberger
 % Date : 05.09.2020
 
@@ -24,7 +29,7 @@ static = load(path2static);
 airfoil.steady = SteadyCurve(static.alpha,static.CN,13);
 
 
-filename = 'res25uniform2';
+filename = 'res25uniform3';
 load(fullfile('..','data','paramsweep',filename))
  
 c = 71;
