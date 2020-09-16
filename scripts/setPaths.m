@@ -10,5 +10,4 @@ addpath(fullfile('..','src','model'))
 % scripts
 path2fig = '\\oscar\macintosh hd\Users\lucas\Documents\EPFL\PDM\fig';
 
-
 save('paths','path2fig')

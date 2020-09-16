@@ -13,7 +13,7 @@ try
     load('paths','path2fig')
 catch
     open setPaths.m
-    error('The path to the figure folder has not been set. Please set your paths in setPaths.m and run this script again.')
+    error('The path to the figure folder has not been set. Please set your paths in setPaths.m, run it and run this script again.')
 end
 
 path2static = fullfile('..','static_flatplate');
