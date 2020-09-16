@@ -5,9 +5,8 @@ close all
 clear all
 clc
 set(0,'DefaultFigureWindowStyle','docked')
-addpath(fullfile('..','plot_dir'))
-addpath(genpath(fullfile('..','src')))
-run('labbook.m')
+
+run(fullfile('..','labbook.m'))
 
 %% Defines paths 
 
@@ -20,50 +19,23 @@ airfoil.steady = SteadyCurve(static.alpha,static.CN,13.5);
 
 %% Setting up the non-filterd ramp
 
-data = load(loadmat(LB(22).ms,LB(22).mpt),'raw','inert','avg','zero');
-raw = data.raw;
-inert = data.inert;
-inert.alpha = raw.alpha(raw.t>=0);
-ramp = RampUpMotion('alpha',inert.alpha,'t',inert.t,'V',LB(22).U,'alphadot',LB(22).alphadot);
-ramp.setName(sprintf('ms%03impt%i',LB(22).ms,LB(22).mpt));
-Cl = inert.Cl;
-Cd = inert.Cd;
-ramp.setCL(Cl);
-ramp.setCD(Cd);
-ramp.computeAirfoilFrame();
-ramp.isolateRamp();
-% Define stall
-ramp.findExpOnset();
+ramp = loadRamp(22,false);
 ramp.setPitchRate(airfoil);
+ramp.findExpOnset();
 
 %% Setting up the filtered ramps
 
 c = [22,67,75];
 
 for k=1:length(c)
-    data = load(loadmat(LB(c(k)).ms,LB(c(k)).mpt),'raw','inert','avg','zero');
-    raw = data.raw;
-    inert = data.inert;
-    inert.alpha = raw.alpha(raw.t>=0);
-    msname = sprintf('ms%03impt%i',LB(c).ms,LB(c).mpt);
-    assignin('base',sprintf('ramp%d_filt',k),RampUpMotion('alpha',inert.alpha,'t',inert.t,'V',LB(c(k)).U,'alphadot',LB(c(k)).alphadot));
-    evalin('base',sprintf('ramp%d_filt.setName(''%s'')',k,msname))
-    Cl = inert.Cl;
-    Cd = inert.Cd;
-    fs = evalin('base',sprintf('1/ramp%d_filt.Ts',k));
-    Clf = myFilterTwice(Cl,fs);
-    Cdf = myFilterTwice(Cd,fs);
-    evalin('base',sprintf('ramp%d_filt.setCL(Clf)',k));
-    evalin('base',sprintf('ramp%d_filt.setCD(Cdf)',k));
-    evalin('base',sprintf('ramp%d_filt.computeAirfoilFrame()',k));
-    evalin('base',sprintf('ramp%d_filt.isolateRamp()',k));
-    evalin('base',sprintf('ramp%d_filt.findExpOnset()',k));
+    assignin('base',sprintf('ramp%d_filt',k),loadRamp(c(k),true));
     evalin('base',sprintf('ramp%d_filt.setPitchRate(airfoil)',k));
+    evalin('base',sprintf('ramp%d_filt.findExpOnset()',k));
 end
 
 %% Make figures of the plain experimental data
 
-ramp.plotAlpha()
+ramp.plotAlpha('normal')
 % saveas(gcf,'ramp_exmaple','png')
 ramp.plotCN('convectime')
 % saveas(gcf,'../fig/CN','png')
@@ -115,7 +87,7 @@ fprintf('%.1f%%, %.1f%%, %.1f%% \n',max(CN1_LB)/max(ramp1_filt.CN)*100-100,max(C
 
 Tf = 0; Tv = 0.5; Tvl = 3;
 
-save_shengLB = true;
+save_shengLB = false;
 
 ramp1_filt.BLSheng(airfoil,Tf,Tv,Tvl,'experimental')
 ramp1_filt.plotShengLB(airfoil)

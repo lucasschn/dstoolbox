@@ -83,7 +83,7 @@ for kp=1:length(Tp)
             end
             title(params)
             grid on
-            xlabel('\alpha (°)')
+            xlabel('\alpha (ï¿½)')
             ylabel('C_N (-)')
         end
     end

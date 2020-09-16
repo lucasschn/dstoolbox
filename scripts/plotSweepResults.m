@@ -6,9 +6,9 @@ close all
 clear all
 clc
 
-load(fullfile('..','data','paramsweep','res25uniform3'))
+load(fullfile('..','data','paramsweep','res25uniform2'))
 
-plotOneRate(res,25,'SmaxCNf','SmaxCNv','SmaxCN_LB')
+plotOneRate(res,25,'Tp','SmaxCNf','Tf')
 
 function plotOneRate(res,rate,varx,vary,color_var)
 res_adot = res(cat(1,res.alphadot)==rate);

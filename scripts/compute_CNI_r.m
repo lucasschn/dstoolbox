@@ -5,9 +5,6 @@ close all
 clear all
 clc
 set(0,'DefaultFigureWindowStyle','docked')
-addpath(fullfile('..','plot_dir'))
-addpath(genpath(fullfile('..','src')))
-run(fullfile('/Users','lucas','src','codes_smarth','labbook.m'))
 
 %% Define the airfoil and the associated steady curve
 
@@ -26,20 +23,7 @@ added_mass = -ones(size(c));
 ramps = cell(size(c));
 
 for k = 1:length(c)   
-    load(loadmat(LB(c(k)).ms,LB(c(k)).mpt),'raw','zero');
-    msname = sprintf('ms%03impt%i',LB(c(k)).ms,LB(c(k)).mpt);
-    assignin('base',msname,RampUpMotion('alpha',raw.alpha,'t',raw.t,'V',LB(c(k)).U,'alphadot',LB(c(k)).alphadot));
-    evalin('base',sprintf('%s.setName()',msname))
-    ramp = evalin('base',msname);
-    Cl = raw.Cl-zero.Cl;
-    Cd = raw.Cd-zero.Cd;
-    fs = 1/ramp.Ts;
-    Cl_fff = myFilterTwice(Cl,fs);
-    Cd_fff = myFilterTwice(Cd,fs);
-    ramp.setCL(Cl_fff);
-    ramp.setCD(Cd_fff);
-    ramp.computeAirfoilFrame();
-    ramp.isolateRamp();
+    ramp = loadRamp(c(k),true);
     ramps{k} = ramp;
     % Define reduced pitch rate if necessary ...
     if isempty(ramp.r)

@@ -5,6 +5,7 @@ clc
 addpath(fullfile('..','src','common'))
 addpath(fullfile('..','src','lib'))
 addpath(fullfile('..','src','model'))
+addpath(fullfile('..','plot_dir'))
 
 % set here the path where you want to save the figures produced by the
 % scripts

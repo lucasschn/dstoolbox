@@ -8,9 +8,7 @@ close all
 clear all
 clc 
 set(0,'DefaultFigureWindowStyle','docked')
-addpath(fullfile('..','plot_dir'))
-addpath(genpath(fullfile('..','src')))
-run(fullfile('/Users','lucas','src','codes_smarth','labbook.m'))
+
 %% Define the airfoil and the associated steady curve
 
 airfoil = Airfoil('flatplate',0.15);
@@ -23,27 +21,11 @@ airfoil.steady = SteadyCurve(static.alpha,static.CN,13.5);
 c = [22,67,26,84,30,34,38];
 
 for k=1:length(c)
-    data = load(loadmat(LB(c(k)).ms,LB(c(k)).mpt),'raw','zero');
-    raw = data.raw;
-    zero = data.zero;
-    msname = sprintf('ms%03impt%i',LB(c(k)).ms,LB(c(k)).mpt);
-    assignin('base',msname,RampUpMotion('alpha',raw.alpha,'t',raw.t,'V',LB(c(k)).U));
-    evalin('base',sprintf('%s.setName()',msname))
-    ramp = evalin('base',msname);
-    Cl = raw.Cl - mean(raw.Cl(1:50));
-    Cd = raw.Cd - mean(raw.Cd(1:50));
-    fs = 1/ramp.Ts;
-    Cl_fff = myFilterTwice(Cl,fs);
-    Cd_fff = myFilterTwice(Cd,fs);
-%     ramp.setCL(Cl);
-%     ramp.setCD(Cd);
-    ramp.setCL(Cl_fff);
-    ramp.setCD(Cd_fff);
-    ramp.computeAirfoilFrame();
-    ramp.isolateRamp();    
+    ramp = loadRamp(c(k));
     ramp.setPitchRate(airfoil);
     % Define stall
     ramp.findExpOnset();
+    ramps{k} = ramp;
 end
 
 %% Run Beddoes-Leishman on all ramps
@@ -53,11 +35,9 @@ tc_ds = -ones(size(c));
 tc_inf = -ones(size(c));
 
 for k=1:length(c) 
-    msname = sprintf('ms%03impt%i',LB(c(k)).ms,LB(c(k)).mpt);
-    evalin('base',sprintf('%s.BeddoesLeishman(airfoil,4.5,4,6,1,''experimental'')',msname))
-    evalin('base',sprintf('%s.plotLB(''convectime'')',msname))
-    ramp = evalin('base',msname);    
-    r(k) = evalin('base',sprintf('%s.r',msname));
+    ramp = ramps{k}; 
+    r(k) = ramp.r;
+    ramp.BeddoesLeishman(airfoil,3,2,1,1,'experimental')
     tc_ds(k) = ramp.S(ramp.i_CLonset);
     % defines steady-state as when on of the secondary vortices drops passes
     % under model-predicted value
@@ -87,8 +67,7 @@ ylabel('t_{c,ds}')
 
 figure
 for k=1:length(c)
-    msname = sprintf('ms%03impt%i',LB(c(k)).ms,LB(c(k)).mpt);
-    ramp = evalin('base',msname);
+    ramp = ramps{k};
     plot(ramp.S-tc_ds(k),ramp.CL/ramp.CL(ramp.i_CLonset),'LineWidth',1,'DisplayName',sprintf('%.2f °/s',ramp.alphadot))
     hold on 
 end
@@ -101,8 +80,7 @@ maxCN = -ones(size(c));
 
 figure
 for k=1:length(c)
-    msname = sprintf('ms%03impt%i',LB(c(k)).ms,LB(c(k)).mpt);
-    ramp = evalin('base',msname);
+    ramp = ramps{k};
     maxCN(k) = max(ramp.CN);
     plot(ramp.S-tc_ds(k),ramp.CN,'LineWidth',1,'DisplayName',sprintf('%.2f °/s',ramp.alphadot))
     hold on 

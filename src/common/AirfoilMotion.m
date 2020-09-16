@@ -266,7 +266,8 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             obj.computeImpulsiveLift(airfoil,alphamode);
             obj.computeCirculatoryLift(airfoil,alphamode);
             % chord force
-            obj.CCC = obj.CNC.*tan(obj.alphaE_rad);
+            n = min([length(obj.CNC),length(obj.alpha)]);
+            obj.CCC = obj.CNC(1:n).*tan(obj.alphaE_rad(1:n));
             % Potential normal coefficient
             if length(obj.CNI)<length(obj.CNC)
                 obj.CNp = obj.CNI + obj.CNC(1:length(obj.CNI));
@@ -428,7 +429,11 @@ classdef AirfoilMotion < matlab.mixin.SetGet
                     end
                 case 'BLSheng'
                     obj.model='BLSheng';
-                    load(sprintf('/Users/lucas/Documents/EPFL/PDM/linfit_%s.mat',airfoil.name),'Talpha','alpha_ds0');
+                    try
+                        load(fullfile('..',sprintf('linfit_%s.mat',airfoil.name)),'Talpha','alpha_ds0');
+                    catch
+                        error('You must have created a linear fit first using the script setLinFit.m')
+                    end                    
                     obj.computeAlphaLag(airfoil,Talpha)
                     % delta_alpha1 if r≥r0
                     da1 = alpha_ds0 - airfoil.steady.alpha_ss;
@@ -578,7 +583,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             dalpha = diff(obj.alpha);
             obj.tau_v = zeros(size(obj.t));
             % Following Bangga 2020, Eq. 35 (first tau is always zero, last two points have no CNprime defined)
-            for k = 2:length(isstalled)
+            for k = 2:length(isstalled)-1
                 if isstalled(k)
                     obj.tau_v(k) = obj.tau_v(k-1)+0.45*dt/airfoil.c*obj.V;
                 elseif dalpha(k) >= 0

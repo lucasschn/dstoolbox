@@ -7,9 +7,8 @@ close all
 clear all
 clc 
 set(0,'DefaultFigureWindowStyle','docked')
-addpath(fullfile('..','plot_dir'))
-addpath(genpath(fullfile('..','src')))
-run(fullfile('/Users','lucas','src','codes_smarth','labbook.m'))
+
+run(fullfile('..','labbook.m'))
 %% Define the airfoil and the associated steady curve
 
 airfoil = Airfoil('flatplate',0.15);
@@ -19,43 +18,7 @@ airfoil.steady = SteadyCurve(static.alpha,static.CN,13.5);
 
 %% Setting up the ramps
 
-c = [22,67,26,84,30];
-
-for k=1:length(c)
-    if LB(c(k)).ms >= 13 && LB(c(k)).ms < 100
-        data = load(loadmat(LB(c(k)).ms,LB(c(k)).mpt),'raw','inert','avg','zero');
-        raw = data.raw;
-        inert = data.inert;
-        inert.alpha = raw.alpha(raw.t>=0);
-        msname = sprintf('ms%03impt%i',LB(c(k)).ms,LB(c(k)).mpt);
-        assignin('base',msname,RampUpMotion('alpha',inert.alpha,'t',inert.t,'V',LB(c(k)).U,'alphadot',LB(c(k)).alphadot));
-        evalin('base',sprintf('%s.setName()',msname))
-        ramp = evalin('base',msname);
-        Cl = inert.Cl;
-        Cd = inert.Cd;
-    else
-        data = load(loadmat(LB(c(k)).ms,LB(c(k)).mpt),'raw');
-        raw = data.raw;
-        msname = sprintf('ms%03impt%i',LB(c(k)).ms,LB(c(k)).mpt);
-        assignin('base',msname,RampUpMotion('alpha',raw.alpha,'t',raw.t,'V',LB(c(k)).U));
-        evalin('base',sprintf('%s.setName()',msname))
-        ramp = evalin('base',msname);
-        Cl = raw.Cl;
-        Cd = raw.Cd;
-    end
-    fs = 1/ramp.Ts;
-    Cl_fff = myFilterTwice(Cl,fs);
-    Cd_fff = myFilterTwice(Cd,fs);
-%     ramp.setCL(Cl);
-%     ramp.setCD(Cd);
-    ramp.setCL(Cl_fff);
-    ramp.setCD(Cd_fff);
-    ramp.computeAirfoilFrame();
-    ramp.isolateRamp();
-    % Define stall
-    ramp.findExpOnset();
-    ramp.setPitchRate(airfoil);
-end
+c = [18,14,22,67,26,84,30,2,34,71,38,6,42,75,46,10,50,62];
 
 %% Run Beddoes Leishman model on all ramps
 
@@ -65,12 +28,12 @@ steady_LB = -ones(size(c));
 steady_offset = -ones(size(c));
 
 for k=1:length(c) 
+    ramp = loadRamp(c(k));
+    ramp.setPitchRate(airfoil);
     msname = sprintf('ms%03impt%i',LB(c(k)).ms,LB(c(k)).mpt);
-    evalin('base',sprintf('%s.BeddoesLeishman(airfoil,4.5,4,6,1,''experimental'')',msname))
-    evalin('base',sprintf('%s.plotLB(''convectime'')',msname))
-    ramp = evalin('base',msname);
+    ramp.BeddoesLeishman(airfoil,4.5,4,6,1,'experimental')
     saveas(gcf,fullfile('..','fig',sprintf('LB_r%03d',round(ramp.r,3)*1000)),'png')
-    r(k) = evalin('base',sprintf('%s.r',msname));
+    r(k) = ramp.r;
     steady_exp(k) = evalin('base',sprintf('mean(%s.CN(%s.S > 0.9*%s.S(end)))',msname,msname,msname));
     steady_LB(k) = evalin('base',sprintf('%s.CN_LB(end)',msname));
 end

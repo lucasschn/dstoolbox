@@ -51,4 +51,5 @@ ramp.setPitchRate(airfoil);
 ramp.findExpOnset();
 %% Run Leishman-Beddoes' model on the ramp
 ramp.BeddoesLeishman(airfoil,1,0.65,0.05,3,'experimental')
-% saveas(gcf,fullfile(path2fig,'vortex_development_Tp5'),'fig')
+ramp.plotLB('convectime')
+saveas(gcf,fullfile(path2fig,'testFig'),'png')
