@@ -9,25 +9,20 @@
 % project: smartH
 %%%
 
-if ~isempty(getenv('USER'))
-    user = getenv('USER');
-elseif ~isempty(getenv('USERNAME'))
-    user = getenv('USERNAME');
+try
+    load('paths','path2fig')
+catch
+    open(fullfile('scripts','setPaths.m'))
+    error('The path to the figure folder has not been set. Please set your paths in setPaths.m and run this script again.')
 end
 
-switch user
-    case 'henne'
-        path2smarth = 'C:\Users\sabrinahenne\Documents\SmartH';
-    case 'lucas'
-        path2smarth = '/Users/lucas/Documents/EPFL/PDM/data';
-    case 'Lucas Schneeberger'
-        path2smarth = '\\OSCAR\Macintosh HD\Users\lucas\Documents\EPFL\PDM\data';
-end
+path2static = fullfile('..','static_flatplate');
+path2smarth = '\\sti1raw.epfl.ch\unfold\smartH';
 
 %%% where is data - where will data go?
 if ispc()
-    root.raw = @(nr3) fullfile('\\sti1raw.epfl.ch\unfold\smartH\2019_SH\',sprintf('%i',nr3),'\loads'); % Raw data location
-    root.data=@(nr3) fullfile('\\sti1raw.epfl.ch\unfold\smartH\2019_SH\',sprintf('%i',nr3));
+    root.raw = @(nr3) fullfile('\\sti1raw.epfl.ch','unfold','smartH','2019_SH',sprintf('%i',nr3),'loads'); % Raw data location
+    root.data=@(nr3) fullfile('\\sti1raw.epfl.ch','unfold','smartH','2019_SH',sprintf('%i',nr3));
     root.res = '\\sti1raw.epfl.ch\unfold\smartH\2019_SH\results';
     root.pivmat = sprintf('%s\\2019_SH\\postprocessing\\matfiles\\piv',path2smarth);
     root.loadmat = sprintf('%s\\2019_SH\\postprocessing\\matfiles\\loads',path2smarth);%'\\sti1raw.epfl.ch\unfold\smartH\2019_SH\Postprocessing\matfiles\loads';

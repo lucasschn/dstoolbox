@@ -9,14 +9,6 @@ clc
 set(0,'DefaultFigureWindowStyle','docked')
 
 run(fullfile('..','labbook.m'))
-try
-    load('paths','path2fig')
-catch
-    open setPaths.m
-    error('The path to the figure folder has not been set. Please set your paths in setPaths.m and run this script again.')
-end
-
-path2static = fullfile('..','static_flatplate');
 
 %% Define the airfoil and the associated steady curve
 
@@ -51,4 +43,5 @@ ramp.setPitchRate(airfoil);
 ramp.findExpOnset();
 %% Run Leishman-Beddoes' model on the ramp
 ramp.BeddoesLeishman(airfoil,1,0.65,0.05,3,'experimental')
-% saveas(gcf,fullfile(path2fig,'vortex_development_Tp5'),'fig')
+ramp.plotLB('convectime')
+saveas(gcf,fullfile(path2fig,'testFig'),'png')

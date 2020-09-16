@@ -4,11 +4,11 @@ clc
 
 %% Load 1deg curves
 for k=1:5
-    assignin('base',sprintf('s%d',k),eval(sprintf('load(''../data/2020_SH/20200510/calibration/static_flatplate%d.mat'')',k)));
+    assignin('base',sprintf('s%d',k),load(fullfile('..',sprintf('static_flatplate%d.mat',k))));
 end
 
 %% Load 0.5deg curve
-highres = load('../upstrokepolar');
+highres = load(fullfile('..','upstrokepolar'));
 
 highres.polarforces.Cn = highres.polarforces.Cl.*cosd(highres.polarforces.alpha)+highres.polarforces.Cd.*sind(highres.polarforces.alpha);
 

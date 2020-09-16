@@ -2,14 +2,13 @@ close all
 clear all
 clc
 set(0,'DefaultFigureWindowStyle','docked')
-addpath(genpath(fullfile('..','src','model')))
-run('labbook.m')
+run(fullfile('..','labbook.m'))
 
 %% Define the airfoil and the associated steady curve
 
 airfoil = Airfoil('flatplate',0.15);
 airfoil.r0 = 0.04;
-static = load('../static_flatplate');
+static = load(fullfile('..','static_flatplate'));
 airfoil.steady = SteadyCurve(static.alpha,static.CN,8);
 
 %% Define ramps and plot tc_ds(r)
@@ -23,21 +22,7 @@ tc_ss = -ones(size(c));
 CN_ds = -ones(size(c));
 
 for k=1:length(c)    
-    load(loadmat(LB(c(k)).ms,LB(c(k)).mpt),'raw','zero');
-    msname = sprintf('ms%03impt%i',LB(c(k)).ms,LB(c(k)).mpt);
-    assignin('base',msname,RampUpMotion('alpha',raw.alpha,'t',raw.t,'V',LB(c(k)).U,'alphadot',LB(c(k)).alphadot));
-    evalin('base',sprintf('%s.setName()',msname))
-    ramp = evalin('base',msname);
-    Cl = raw.Cl-zero.Cl;
-    Cd = raw.Cd-zero.Cd;
-    fs = 1/ramp.Ts;
-    Cl_fff = myFilterTwice(Cl,fs);
-    Cd_fff = myFilterTwice(Cd,fs);
-    ramp.setCL(Cl_fff);
-    ramp.setCD(Cd_fff);
-    ramp.computeAirfoilFrame();
-    ramp.isolateRamp();
-
+    ramp = loadRamp(c(k));
     % Define reduced pitch rate if necessary ...
     if isempty(ramp.r)
         % compute it with alphadot
@@ -50,7 +35,9 @@ for k=1:length(c)
         ramp.findExpOnset();
     end
     % ... and assign it
-    tc_ss(k) = interp1(ramp.analpha,ramp.S,airfoil.steady.alpha_ss);   
+    i_start = find(ramp.analpha == 0,1,'last');
+    i_end = find(ramp.analpha >= 30,1);
+    tc_ss(k) = interp1(ramp.analpha(i_start:i_end),ramp.S(i_start:i_end),airfoil.steady.alpha_ss);   
     if ramp.alpha_CLonset > airfoil.steady.alpha_ss        
         tc_ds(k) = ramp.S(ramp.i_CLonset);
         CN_ds(k) = ramp.CN(ramp.i_CLonset);        

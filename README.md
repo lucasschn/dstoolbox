@@ -55,7 +55,17 @@ RampUpMotion and PitchingMotion both inherit from AirfoilMotion, meaning that al
 
 All three airfoil motions accept name-value pair arguments when constructed. This means that you can pass any `'name',value` pair as an argument when creating the object to automatically assign the value `value` to the property `name` to the object, as long as the property `name` exists for this object. 
 
-The aerodynamic normal coefficient can be predicted using a dynamic stall model. All dynamic stall models are methods that apply to motion objects. The general syntax for models is as follows: 
+Different methods can be applied to a newly created ramp object, such as `setCL()` for setting the experiment lift coefficient corresponding to this ramp manually. A convenient function `loadRamp(casenumber,filtered)` sets up the experimental data to the ramp automatically from the server data. 
+
+```matlab
+ramp = loadRamp(22,false);
+ramp.setPitchRate(airfoil);
+ramp.findExpOnset()
+```
+
+Here the number 22 defines the experimental case number corresponding to the desired experiement. All case numbers are defined in the labbook (`labbook.m`in the repository). `setPitchrate(airfoil)`must be executed independently because it requires an airfoil object as an argument (in order to define the reduced pitch rate, the chord length is required). This will also set the convectime time vector, which allows `findExpOnset()` to be run. It is recommended to take the habbit to declare a ramp using this three methods before any usage. 
+
+Once the airfoil motion has been set up correctly, the corresponding aerodynamic normal coefficients can be predicted using a dynamic stall model. All dynamic stall models are methods that apply to motion objects. The general syntax for models is as follows: 
 
 ```matlab
 ramp.BeddoesLeishman(airfoil,Tp,Tf,Tv,Tvl,'mode') % computes the aerodynamic loading experienced by an airfoil object describing the motion described by ramp

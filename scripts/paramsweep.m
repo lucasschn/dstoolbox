@@ -7,15 +7,9 @@ close all
 clear all
 clc   
 set(0,'DefaultFigureWindowStyle','docked')
-addpath('../plot_dir/')
-addpath('../src/model/')
-addpath('../src/common/')
-addpath('../src/lib/')
-if ismac  
-    run('/Users/lucas/src/codes_smarth/labbook.m')
-elseif ispc
-    run('labbook')
-end
+
+run(fullfile('..','labbook'))
+
 %% Define the airfoil and the associated steady curve
 
 airfoil = Airfoil('flatplate',0.15);

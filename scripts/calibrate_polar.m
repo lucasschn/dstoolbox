@@ -118,8 +118,8 @@ if savepolar == 1
     polarforces.CL = CLift;
     polarforces.CD = CDrag;
     polarforces.CN = CNormal;
-    save(fullfile(calibrationfolder,polarname),'alpha')
-    save(fullfile(calibrationfolder,polarname),'-struct','polarforces','CN','CL','CD','-append')
+    save(fullfile(polarfolder,polarname),'alpha')
+    save(fullfile(polarfolder,polarname),'-struct','polarforces','CN','CL','CD','-append')
 end
 
 %% PLOT POLAR

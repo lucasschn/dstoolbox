@@ -2,10 +2,9 @@ close all
 clear all
 clc
 set(0,'DefaultFigureWindowStyle','docked')
-run('../data/2008_simcos/matlab/labbook_simcos.m')
-addpath('../src/model/')
-addpath('../src/common/')
-addpath('../src/lib/')
+path2oscar = '\\oscar\macintosh hd\Users\lucas\Documents\EPFL\PDM\';
+run(fullfile(path2oscar,'data\2008_simcos\matlab\labbook_simcos.m'))
+
 %% flow parameters
 V = 50; %m/s
 Re = 9.2e5; % chord as characteristic length
@@ -18,10 +17,10 @@ M = 0.14;
 
 airfoil = Airfoil('OA209',0.3);
 %airfoil.steady = SteadyCurve(static_data(:,1),static_data(:,2));
-load(fullfile('..','static_corr'))
+load(fullfile(path2oscar,'static_corr'))
 airfoil.steady = SteadyCurve(mA,mCl_corr);
 airfoil.steady.plotCN()
-saveas(gcf,fullfile('..','fig','static_OA209.png'))
+saveas(gcf,fullfile(path2oscar,'fig','static_OA209.png'))
 
 %% Dynamic data
 nr=13;
@@ -34,7 +33,7 @@ for k=1:length(data.Cl)
     CD(k) = sum(data.Cp(k,:)*data.xk);
 end
 
-load('../dynamic_corr')
+load(fullfile(path2oscar,'dynamic_corr'))
 % assuming CL = CN
 pitching = PitchingMotion('alpha',Alpha,'CN',Cl_corr.*cosd(Alpha),'k',LB(nr).k,'freq',LB(nr).fosc,'V',50,'Ts',1/LB(nr).FS);
 pitching.setSinus(airfoil,deg2rad(LB(nr).alpha_0),deg2rad(LB(nr).alpha_1),LB(nr).fosc*2*pi);
@@ -42,8 +41,8 @@ pitching.setName('simcos')
 pitching.setCNsteady(airfoil.steady)
 
 % set static slope and zero lift
-airfoil.steady.computeSlope();
-airfoil.steady.setCN0(interp1(airfoil.steady.alpha,airfoil.steady.CN,0,'linear','extrap'));
+airfoil.steady.computeSlope(5);
+airfoil.steady.setAlpha0();
 airfoil.steady.fitKirchhoff();
 airfoil.steady.plotKirchhoff(); 
 
@@ -51,7 +50,8 @@ airfoil.steady.plotKirchhoff();
 Tp = 3;
 Tf = 3;
 Tv = 6;
-pitching.BeddoesLeishman(airfoil,Tp,Tf,Tv,'analytical');
+Tvl = 1;
+pitching.BeddoesLeishman(airfoil,Tp,Tf,Tv,Tvl,'analytical');
 
 %% Plot results
 figure

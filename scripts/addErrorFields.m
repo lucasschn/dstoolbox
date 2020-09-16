@@ -6,20 +6,11 @@
 % CNf, CNv and CN_LB curves.
 % Author : Lucas Schneeberger
 % Date : 05.09.2020
-
 close all
 clear all
 clc
-if ismac
-    run('/Users/lucas/src/codes_smarth/labbook.m')
-    path2fig = '../fig';
-    path2static = fullfile('..','static_flatplate');
-elseif ispc 
-    run('labbook')
-    path2fig = '\\oscar\macintosh hd\Users\lucas\Documents\EPFL\PDM\fig';
-    path2static = '\\oscar\macintosh hd\Users\lucas\Documents\EPFL\PDM\static_flatplate';
-end
 
+run(fullfile('..','labbook.m'))
 
 %% Define the airfoil and the associated steady curve
 
@@ -29,7 +20,7 @@ static = load(path2static);
 airfoil.steady = SteadyCurve(static.alpha,static.CN,13);
 
 
-filename = 'res25uniform3';
+filename = 'res25uniform2';
 load(fullfile('..','data','paramsweep',filename))
  
 c = 71;

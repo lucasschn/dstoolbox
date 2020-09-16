@@ -76,12 +76,14 @@ classdef PitchingMotion < AirfoilMotion
             obj.CNI = 4*Talpha/obj.M*(danalphadt-D);
         end
         function computeAnalyticalCirculatoryLift(obj,airfoil)
-            % all angles in radians
+            % all angles in radians            
             dalpha_rad = diff(obj.analpha_rad); % not used, for debugging purpose
             deltaalpha = obj.amp_rad*cos(obj.omega*obj.t+obj.phi)*obj.omega*obj.Ts; % deg, is equal to dalpha
             rule = 'mid-point';
             [X,Y] = obj.computeDuhamel(deltaalpha,rule);
-            obj.CNC = airfoil.steady.slope*(reshape(obj.analpha(1:length(X)),size(X))-X-Y); % alpha is in degrees, slope is in 1/deg
+            obj.alphaE = (reshape(obj.analpha(1:length(X)),size(X))-X-Y);
+            obj.alphaE_rad = deg2rad(obj.alphaE);
+            obj.CNC = airfoil.steady.slope*obj.alphaE; % alpha is in degrees, slope is in 1/deg
         end
         function plotAttachedLift(obj,airfoil)
             figure;
