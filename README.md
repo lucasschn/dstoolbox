@@ -72,5 +72,9 @@ ramp.BeddoesLeishman(airfoil,Tp,Tf,Tv,Tvl,'mode') % computes the aerodynamic loa
 ```
 The time constants Tp, Tf, Tv, and Tvl are necessary input arguments to Beddoes-Leishman model. Depending on the selected model the number of time constants can vary from 3 to 4. The 'mode' argument can be either 'experimental' or 'analytical' depending if the user wants numerical or analytical derivatives to be used. 
 
+## App
+
+Before using the app, you have to run the script `setPaths.m`on your machine with the correct path to the folder where you want the produced figures to be saved.
+
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)

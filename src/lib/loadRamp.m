@@ -1,16 +1,31 @@
 function ramp = loadRamp(c,filtered)
 % loads ramp experiment number c. filtered argument is a boolean that specifies if the
 % signals should be filtered (default) or not.
-run(fullfile('..','..','labbook.m'))
+disp(pwd)
+try
+    run(fullfile('..','..','labbook.m'))
+catch 
+    try
+        run('..','labbook.m')
+    catch 
+        try
+            run('labbook.m')
+        catch
+           error('Labbook was not found at any paths.')
+        end   
+    end
+end
 
 if length(c) > 1
     error('loadRamp can only manage one experiment at a time. Verify your case number size.')
 end
+
 try
     load(loadmat(LB(c).ms,LB(c).mpt),'raw','zero');
 catch IOError
     error('Matlab couldn''t read the experimental data. Are you sure you are connected to the server?')
 end
+
 msname = sprintf('ms%03impt%i',LB(c).ms,LB(c).mpt);
 assignin('base',msname,RampUpMotion('alpha',raw.alpha,'t',raw.t,'V',LB(c).U,'alphadot',LB(c).alphadot));
 evalin('base',sprintf('%s.setName()',msname))

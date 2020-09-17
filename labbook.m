@@ -9,41 +9,40 @@
 % project: smartH
 %%%
 
+disp('Labbook has been found')
+
 try
     load('paths','path2fig')
 catch
-    open(fullfile('scripts','setPaths.m'))
-    error('The path to the figure folder has not been set. Please set your paths in setPaths.m and run this script again.')
+    try 
+        load(fullfile('..','paths'),'path2fig')
+    catch
+        open(fullfile('scripts','setPaths.m'))
+        error('The path to the figure folder has not been set. Please set your paths in setPaths.m and run this script again.')
+    end
 end
 
 path2static = fullfile('..','static_flatplate');
-path2smarth = '\\sti1raw.epfl.ch\unfold\smartH';
+if ismac
+    path2smarth = '/Volumes/unfold/smartH/2019_SH';
+elseif ispc
+    path2smarth = '\\sti1raw.epfl.ch\unfold\smartH\2019_SH';
+else
+    error('Your platform is not supported.')   
+end
 
 %%% where is data - where will data go?
-if ispc()
-    root.raw = @(nr3) fullfile('\\sti1raw.epfl.ch','unfold','smartH','2019_SH',sprintf('%i',nr3),'loads'); % Raw data location
-    root.data=@(nr3) fullfile('\\sti1raw.epfl.ch','unfold','smartH','2019_SH',sprintf('%i',nr3));
-    root.res = '\\sti1raw.epfl.ch\unfold\smartH\2019_SH\results';
-    root.pivmat = sprintf('%s\\2019_SH\\postprocessing\\matfiles\\piv',path2smarth);
-    root.loadmat = sprintf('%s\\2019_SH\\postprocessing\\matfiles\\loads',path2smarth);%'\\sti1raw.epfl.ch\unfold\smartH\2019_SH\Postprocessing\matfiles\loads';
-    root.fig = sprintf('%s\\2019_SH\\figurematter',path2smarth);
-    root.matlab = sprintf('%s\\2019_SH\\matlab',path2smarth);
-    root.ftle = sprintf('%s\\2019_SH\\postprocessing\ftle',path2smarth);
-    root.pod = sprintf('%s\\2019_SH\\postprocessing\\pod',path2smarth);
-    root.pp = sprintf('%s\\2019_SH\\postprocessing',path2smarth);
-elseif ismac()
-    root.raw = @(nr3) fullfile('//sti1raw.epfl.ch/unfold/smartH/2019_SH/',sprintf('%i',nr3),'/loads'); % Raw data location
-    root.data=@(nr3) fullfile('//sti1raw.epfl.ch/unfold/smartH/2019_SH/',sprintf('%i',nr3));
-    root.res='//sti1raw.epfl.ch/unfold/smartH/2019_SH/results';
-    root.pivmat = sprintf('%s/2019_SH/postprocessing/matfiles/piv',path2smarth);
-    root.loadmat = sprintf('%s/2019_SH/postprocessing/matfiles/loads',path2smarth);
-    %'//sti1raw.epfl.ch/unfold/smartH/2019_SH/Postprocessing/matfiles/loads';
-    root.fig = sprintf('%s/2019_SH/figurematter',path2smarth);
-    root.matlab = sprintf('%s/2019_SH/matlab',path2smarth);
-    root.ftle = sprintf('%s/2019_SH/postprocessing/ftle',path2smarth);
-    root.pod = sprintf('%s/2019_SH/postprocessing/pod',path2smarth);
-    root.pp = sprintf('%s/2019_SH/postprocessing',path2smarth);
-end
+    root.raw = @(nr3) fullfile(path2smarth,sprintf('%i',nr3),'loads'); % Raw data location
+    root.data=@(nr3) fullfile(path2smarth,sprintf('%i',nr3));
+    root.res = fullfile(path2smarth,'results');
+    root.pivmat = fullfile(path2smarth,'postprocessing','matfiles','piv');
+    root.loadmat = fullfile(path2smarth,'postprocessing','matfiles','loads');%'\\sti1raw.epfl.ch\unfold\smartH\2019_SH\Postprocessing\matfiles\loads';
+    root.fig = fullfile(path2smarth,'postprocessing','matfiles','figurematter');
+    root.matlab = fullfile(path2smarth,'matlab');
+    root.ftle = fullfile(path2smarth,'postprocessing','ftle');
+    root.pod = fullfile(path2smarth,'postprocessing','pod');
+    root.pp = fullfile(path2smarth,'postprocessing');
+
 % root.raw = '\\sti1raw.epfl.ch\unfold\smartH\2018_SH_004\20180629\loads'; % Raw data location
 
 %%% shortcuts to frequently used files
