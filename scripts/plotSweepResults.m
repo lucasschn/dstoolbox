@@ -1,4 +1,8 @@
-% This script is made to produce scatter plots and histogram plots in order to analyse the results of paramsweep.m
+% This script is made to produce scatter plots and histogram plots in order
+% to analyse the results of paramsweep.m.
+% For some error variables to be correctly set, you need to previously have run the
+% script addErrorFields on the results mat-file.
+%
 % Author : Lucas Schneeberger
 % Date : 28.08.2020
 
@@ -6,9 +10,9 @@ close all
 clear all
 clc
 
-load(fullfile('..','data','paramsweep','res25uniform2'))
+load(fullfile('..','data','paramsweep','res25uniform4'))
 
-plotOneRate(res,25,'Tp','SmaxCNf','Tf')
+plotHistogram(res,'Tv','errSecondPeakLoc',1)
 
 function plotOneRate(res,rate,varx,vary,color_var)
 res_adot = res(cat(1,res.alphadot)==rate);
@@ -29,6 +33,8 @@ else
     end
     xlabel(getLabelString(varx))
     ylabel(getLabelString(vary))
+    ax = gca;
+    ax.FontSize = 20;
     title(sprintf('alphadot = %.2f',rate))
 end
 
@@ -65,6 +71,8 @@ s = scatter(x,y,'filled');
 grid on
 xlabel(getLabelString(varx))
 ylabel(getLabelString(vary))
+ax = gca;
+    ax.FontSize = 20;
 s.CData = color;
 c = colorbar;
 c.Ticks = linspace(0,1,length(unique(cat(1,res.alphadot))));
@@ -95,6 +103,8 @@ hold on
 % (always positive)
 histogram(x(abs(y) < threshold),bin_vect,'DisplayName',sprintf('|%s| < %g',getLabelString(vary),threshold))
 grid on
+ax = gca; 
+ax.FontSize=20;
 xlabel(getLabelString(varx))
 ylabel('nb of samples')
 axis([0, max(x), 0, Inf])
@@ -113,6 +123,7 @@ xlabel(getLabelString(varx))
 ylabel('relative nb of samples (%)')
 ax2 = gca;
 ax2.XTick = ax1.XTick;
+ax2.FontSize = 20; 
 yticklabels(num2cell(ax2.YTick*100))
 end
 
@@ -159,7 +170,15 @@ switch var
     case 'errCNv_PeakLoc'
         label = 'error on vortex lift peak timing (convectime time units)';
     case 'errCNv_PeakHeight'
-        label = 'error on vortex lift peak height';    
+        label = 'error on vortex lift peak height';
+    case 'errFirstPeakLoc'
+        label = 'error on first total lift peak timing';
+    case 'errFirstPeakHeight'
+        label = 'error on first total lift peak height';
+    case 'errSecondPeakLoc'
+        label = 'error on second total lift peak timing (if any)';
+    case 'errSecondPeakHeight'
+        label = 'error on second total lift peak height';
     otherwise
         label = var;
 end

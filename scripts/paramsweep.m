@@ -25,25 +25,8 @@ n = 1e4; % number of samples per pitch rate
 
 res = struct('comment',{});
 
-for k = 1:length(c) % loop over the pitch rates
-    data = load(loadmat(LB(c(k)).ms,LB(c(k)).mpt),'raw','inert','avg','zero');
-    raw = data.raw;
-    zero = data.zero;
-    inert.alpha = raw.alpha(raw.t>=0);
-    msname = sprintf('ms%03impt%i',LB(c(k)).ms,LB(c(k)).mpt);
-    ramp = RampUpMotion('alpha',raw.alpha,'t',raw.t,'V',LB(c(k)).U,'alphadot',LB(c(k)).alphadot);
-    evalin('base',sprintf('ramp.setName(''%s'') ',msname))
-
-    Cl = raw.Cl-zero.Cl;
-    Cd = raw.Cd-zero.Cd;
-    fs = 1/ramp.Ts;
-    Clf = myFilterTwice(Cl,fs);
-    Cdf = myFilterTwice(Cd,fs);
-    ramp.setCL(Clf);
-    ramp.setCD(Cdf);
-    
-    ramp.computeAirfoilFrame();
-    ramp.isolateRamp();
+for k = 1:length(c) % loop over the pitch rates    
+    ramp = loadRamp(c(k),true);
     ramp.setPitchRate(airfoil);
     % Define stall (convectime must have been set)
     ramp.findExpOnset();     
@@ -66,10 +49,14 @@ for k = 1:length(c) % loop over the pitch rates
         
         % Postprocessing
         ramp.findPeaks()
-        ramp.computeErr()
+        ramp.computeErrors()
         
-        % Put results in the struct        
+        % Put results in the struct
+        res(n*(k-1)+kk).S = ramp.S;
         res(n*(k-1)+kk).CN_LB = ramp.CN_LB;
+        res(n*(k-1)+kk).CNk = ramp.CNk;
+        res(n*(k-1)+kk).CNf = ramp.CNf;
+        res(n*(k-1)+kk).CNv = ramp.CNv;
         res(n*(k-1)+kk).maxCN = ramp.maxCN;
         res(n*(k-1)+kk).maxCN_LB = ramp.maxCN_LB;
         res(n*(k-1)+kk).maxCNk = ramp.maxCNk;
@@ -80,12 +67,25 @@ for k = 1:length(c) % loop over the pitch rates
         res(n*(k-1)+kk).SmaxCNk = ramp.SmaxCNk;
         res(n*(k-1)+kk).SmaxCNf = ramp.SmaxCNf;
         res(n*(k-1)+kk).SmaxCNv = ramp.SmaxCNv;
+        
         res(n*(k-1)+kk).err = ramp.err;
+        res(n*(k-1)+kk).errCNk_PeakLoc = ramp.errCNk_PeakLoc;
+        res(n*(k-1)+kk).errCNk_PeakHeight = ramp.errCNk_PeakHeight;
+        res(n*(k-1)+kk).errCNf_PeakLoc = ramp.errCNf_PeakLoc;
+        res(n*(k-1)+kk).errCNf_PeakHeight = ramp.errCNf_PeakHeight;
+        res(n*(k-1)+kk).errCNv_PeakLoc = ramp.errCNv_PeakLoc;
+        res(n*(k-1)+kk).errCNv_PeakHeight = ramp.errCNv_PeakHeight;
+        res(n*(k-1)+kk).errPeakLoc = ramp.errPeakLoc;
+        res(n*(k-1)+kk).errPeakHeight = ramp.errPeakHeight;
+        res(n*(k-1)+kk).errFirstPeakLoc = ramp.errFirstPeakLoc;
+        res(n*(k-1)+kk).errFirstPeakHeight = ramp.errFirstPeakHeight;
+        res(n*(k-1)+kk).errSecondPeakLoc = ramp.errSecondPeakLoc;
+        res(n*(k-1)+kk).errSecondPeakHeight = ramp.errSecondPeakHeight;
     end
 end
 
 if ~isfolder(fullfile('..','data','paramsweep'))
     mkdir(fullfile('..','data','paramsweep'));
 end
-name = 'res25uniform3';
-save(fullfile('..','data','paramsweep',name),'res');
+name = 'res25uniform4';
+save(fullfile('..','data','paramsweep',name),'res','-v7.3');

@@ -9,6 +9,8 @@ clc
 set(0,'DefaultFigureWindowStyle','docked')
 
 run(fullfile('..','labbook.m'))
+run setPaths
+
 try
     load('paths','path2fig')
 catch
@@ -29,27 +31,11 @@ airfoil.steady = SteadyCurve(static.alpha,static.CN,13);
 
 c = 71;
 
-data = load(loadmat(LB(c).ms,LB(c).mpt),'raw','zero');
-raw = data.raw;
-zero = data.zero;
-msname = sprintf('ms%03impt%i',LB(c).ms,LB(c).mpt);
-ramp = RampUpMotion('alpha',raw.alpha-raw.alpha(1),'t',raw.t,'V',LB(c).U,'alphadot',LB(c).alphadot);
-evalin('base',sprintf('ramp.setName(''%s'') ',msname))
-
-Cl = raw.Cl-zero.Cl;
-Cd = raw.Cd-zero.Cd;
-fs = 1/ramp.Ts;
-Clf = myFilterTwice(Cl,fs);
-Cdf = myFilterTwice(Cd,fs);
-ramp.setCL(Clf);
-ramp.setCD(Cdf);
-
-ramp.computeAirfoilFrame();
-ramp.isolateRamp();
+ramp = loadRamp(c,true);
 ramp.setPitchRate(airfoil);
 % Define stall (convectime must have been set)
 ramp.findExpOnset();
 %% Run Leishman-Beddoes' model on the ramp
-ramp.BeddoesLeishman(airfoil,1,0.65,0.05,3,'experimental')
-ramp.plotLB('convectime')
+ramp.BeddoesLeishman(airfoil,3,3,1,1.7,'experimental')
+ramp.plotCustom('CN','CN_LB')
 saveas(gcf,fullfile(path2fig,'testFig'),'png')

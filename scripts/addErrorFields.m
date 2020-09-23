@@ -20,28 +20,13 @@ static = load(path2static);
 airfoil.steady = SteadyCurve(static.alpha,static.CN,13);
 
 
-filename = 'res25uniform2';
+filename = 'res25uniform3';
 load(fullfile('..','data','paramsweep',filename))
  
 c = 71;
 
-data = load(loadmat(LB(c).ms,LB(c).mpt),'raw','inert','avg','zero');
-raw = data.raw;
-zero = data.zero;
-msname = sprintf('ms%03impt%i',LB(c).ms,LB(c).mpt);
-ramp = RampUpMotion('alpha',raw.alpha,'t',raw.t,'V',LB(c).U,'alphadot',LB(c).alphadot);
-evalin('base',sprintf('ramp.setName(''%s'') ',msname))
+ramp = loadRamp(c,true);
 
-Cl = raw.Cl-zero.Cl;
-Cd = raw.Cd-zero.Cd;
-fs = 1/ramp.Ts;
-Clf = myFilterTwice(Cl,fs);
-Cdf = myFilterTwice(Cd,fs);
-ramp.setCL(Clf);
-ramp.setCD(Cdf);
-
-ramp.computeAirfoilFrame();
-ramp.isolateRamp();
 ramp.setPitchRate(airfoil);
 % Define stall (convectime must have been set)
 ramp.findExpOnset();
@@ -71,7 +56,7 @@ for k=1:length(res)
     
     %% Total lift errors
     % Only compute error until the end of primary peak
-    res(k).err = (res(k).CN_LB(i_ramp_start:i_vortex_end) - ramp.CN(i_ramp_start:i_vortex_end)).^2;
+    res(k).err = mean((res(k).CN_LB(i_ramp_start:i_vortex_end) - ramp.CN(i_ramp_start:i_vortex_end)).^2);
     res(k).errPeakLoc = res(k).SmaxCN_LB - res(k).SmaxCN;
     res(k).errPeakHeight = res(k).maxCN_LB - res(k).maxCN;
     
@@ -89,6 +74,21 @@ for k=1:length(res)
     res(k).errCNv_PeakLoc = res(k).SmaxCNv - res(k).SmaxCN; % still compare to primary peak
     res(k).errCNv_PeakHeight = res(k).maxCNv - refCNv;
     
+    %% Errors for peaks found with findpeaks
+    i_start = find(res(k).CN_LB>=0,1);
+    [peaks,peak_indices] = findpeaks(res(k).CN_LB(i_start:end),'MinPeakDistance',150);
+    res(k).firstPeak = peaks(1);
+    res(k).firstPeakLoc = res(k).S(peak_indices(1));
+    if length(peaks)>1
+        res(k).secondPeak = peaks(2);
+        res(k).secondPeakLoc = res(k).S(peak_indices(2));
+    end
+    res(k).errFirstPeakLoc = res(k).firstPeakLoc - res(k).SmaxCN;
+    res(k).errFirstPeakHeight = res(k).firstPeak - res(k).maxCN;
+    if ~isempty(res(k).secondPeak)
+        res(k).errSecondPeakLoc = res(k).secondPeakLoc - res(k).SmaxCN;
+        res(k).errSecondPeakHeight = res(k).secondPeak - res(k).maxCN;
+    end
 end
 
 save(fullfile('..','data','paramsweep',filename),'res')
