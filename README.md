@@ -76,5 +76,19 @@ The time constants Tp, Tf, Tv, and Tvl are necessary input arguments to Beddoes-
 
 Before using the app, you have to run the script `setPaths.m`on your machine with the correct path to the folder where you want the produced figures to be saved.
 
+## Troubleshooting
+
+When running a file always make sure that your current folder is the folder containing the file. For example, many scripts won't execute correctly if your current folder is not `dstoolbox/scripts`.
+
+
+If you see the error message
+
+```
+Matlab couldn't read the experimental data. Are you sure you are connected to the server?
+```
+
+Make sure you are connected to the raw server. Otherwise, open labbook.m and make sure the path to the smartH folder is correctly set. 
+
+
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)

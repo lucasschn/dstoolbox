@@ -40,7 +40,8 @@ for k=1:length(c)
     ramp.BeddoesLeishman(airfoil,3,2,1,1,'experimental')
     tc_ds(k) = ramp.S(ramp.i_CLonset);
     % defines steady-state as when on of the secondary vortices drops passes
-    % under model-predicted value
+    % under model-predicted value (which is anticipating the value for a
+    % bit)
     i_inf = find(ramp.CN(ramp.i_CLonset:end)<ramp.CN_LB(end),1);
     if ~isempty(i_inf)
         tc_inf(k) = ramp.S(ramp.i_CLonset + i_inf);

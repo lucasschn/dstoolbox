@@ -69,17 +69,36 @@ classdef AirfoilMotion < matlab.mixin.SetGet
         CNv2
         CN_LB
         % Post-processing
+        % peak heights
         maxCN
         maxCN_LB
         maxCNk
         maxCNf
         maxCNv
+        firstPeak
+        secondPeak
+        % peak locations
         SmaxCN
         SmaxCN_LB
         SmaxCNk
         SmaxCNf
         SmaxCNv
+        firstPeakLoc
+        secondPeakLoc
+        % errors
         err % mean squared difference between the experimental data and the LB prediction
+        errCNk_PeakLoc
+        errCNk_PeakHeight
+        errCNf_PeakLoc
+        errCNf_PeakHeight
+        errCNv_PeakLoc
+        errCNv_PeakHeight
+        errPeakLoc
+        errPeakHeight
+        errFirstPeakLoc
+        errFirstPeakHeight
+        errSecondPeakLoc
+        errSecondPeakHeight
         %% Goman-Khrabrov
         tau1
         tau2
@@ -645,9 +664,19 @@ classdef AirfoilMotion < matlab.mixin.SetGet
                 obj.SmaxCNv = NaN; 
             else
                 obj.SmaxCNv = obj.S(imaxCNv);
-            end             
+            end
+            i_start = find(obj.S>=0,1);            
+            [peaks,peak_times] = findpeaks(obj.CN_LB(i_start:end),obj.S(i_start:length(obj.CN_LB)),'MinPeakDistance',1);
+            if ~isempty(peaks)
+                obj.firstPeak = peaks(1);
+                obj.firstPeakLoc = peak_times(1);
+                if length(peaks)>1
+                    obj.secondPeak = peaks(2);
+                    obj.secondPeakLoc = peak_times(2);
+                end
+            end
         end
-        function computeErr(obj,doplot)
+        function computeErrors(obj,doplot)
             [obj.maxCN,imaxCN] = max(obj.CN);
             dCN = diff(obj.CN(imaxCN:end)); % deltaCN after stall
             i_vortex_end = find(dCN>0.,1) + imaxCN; 
@@ -664,6 +693,32 @@ classdef AirfoilMotion < matlab.mixin.SetGet
                 grid on 
                 xlabel('t_c')
                 ylabel('err')
+            end
+            obj.errPeakLoc = obj.SmaxCN_LB - obj.SmaxCN;
+            obj.errPeakHeight = obj.maxCN_LB - obj.maxCN;
+            % Kirchhof lift w/o added mass errors
+            obj.errCNk_PeakLoc = obj.SmaxCNk - obj.SmaxCN;
+            obj.errCNk_PeakHeight = obj.maxCNk - obj.maxCN;
+            
+            % Kirchhoff lift w/ added mass errors
+            obj.errCNf_PeakLoc = obj.SmaxCNf - obj.SmaxCN;
+            obj.errCNf_PeakHeight = obj.maxCNf - obj.maxCN;
+            
+            % Vortex lift error
+            % define the steady state CN for usage in the computation of the error on
+            % the vortex lift
+            CNsteady_value = mean(obj.CN(end-100:end));
+            % Define reference as difference between maxCN and final value of CN
+            refCNv = obj.maxCN - CNsteady_value;
+            obj.errCNv_PeakLoc = obj.SmaxCNv - obj.SmaxCN; % still compare to primary peak
+            obj.errCNv_PeakHeight = obj.maxCNv - refCNv;
+            
+            % errors for peaks found with findpeaks
+            obj.errFirstPeakLoc = obj.firstPeakLoc - obj.SmaxCN;
+            obj.errFirstPeakHeight = obj.firstPeak - obj.maxCN;
+            if ~isempty(obj.secondPeak)
+                obj.errSecondPeakLoc = obj.secondPeakLoc - obj.SmaxCN;
+                obj.errSecondPeakHeight = obj.secondPeak - obj.maxCN;
             end
         end
         function save2Excel(obj)
@@ -686,13 +741,25 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             SmaxCNk = obj.SmaxCNk;
             SmaxCNf = obj.SmaxCNf;
             SmaxCNv = obj.SmaxCNv;
-            err = obj.err;            
+            err = obj.err;
+            errCNk_PeakLoc = obj.errCNk_PeakLoc;
+            errCNk_PeakHeight = obj.errCNk_PeakHeight;
+            errCNf_PeakLoc = obj.errCNf_PeakLoc;
+            errCNf_PeakHeight = obj.errCNf_PeakHeight;
+            errCNv_PeakLoc = obj.errCNv_PeakLoc;
+            errCNv_PeakHeight = obj.errCNv_PeakHeight;
+            errPeakLoc = obj.errPeakLoc;
+            errPeakHeight = obj.errPeakHeight;
+            errFirstPeakHeight = obj.errFirstPeakHeight;
+            errFirstPeakLoc = obj.errFirstPeakLoc;
+            errSecondPeakHeight = obj.errSecondPeakHeight;
+            errSecondPeakLoc = obj.errSecondPeakLoc;
             if any([isempty(Tp),isempty(Tf),isempty(Tv),isempty(Tvl),isempty(maxCN),isempty(maxCN_LB),isempty(maxCNk),isempty(maxCNf),isempty(maxCNv),isempty(SmaxCN),isempty(SmaxCN_LB),isempty(SmaxCNk),isempty(SmaxCNf),isempty(SmaxCNv),isempty(err)])
                 error('One of the field is empty.')
             elseif exist(name,'file')                
-                save(name,'r','alphadot','Tp','Tf','Tv','Tvl','maxCN','maxCN_LB','maxCNk','maxCNf','maxCNv','SmaxCN','SmaxCNk','SmaxCNf','SmaxCNv','err','-append')
+                save(name,'r','alphadot','T*','max*','Smax*','err*','-regexp','-append') 
             else
-                save(name,'r','alphadot','Tp','Tf','Tv','Tvl','maxCN','maxCN_LB','maxCNk','maxCNf','maxCNv','SmaxCN','SmaxCNk','SmaxCNf','SmaxCNv','err')
+                save(name,'r','alphadot','T*','max*','Smax*','err*','-regexp')
             end
         end
         function plotAlpha(obj,mode)
@@ -1047,27 +1114,30 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             legend('Location','SouthEast')
         end
         function plotCustom(obj,varargin)
-            figure
-            plot(obj.S(1:length(obj.CN)),obj.CN,'LineWidth',2,'DisplayName','exp')
-            hold on 
-            if any(contains(varargin,'CN_LB'))
-            plot(obj.S(1:length(obj.CN_LB)),obj.CN_LB,'LineWidth',2,'DisplayName','LB')
+            figure           
+            for k = 1:nargin-1 % obj counts
+               switch varargin{k}
+                   case 'CN'
+                    plot(obj.S(1:length(obj.CN)),obj.CN,'LineWidth',2,'DisplayName','exp')
+                    hold on 
+                   case 'CN_LB'
+                    plot(obj.S(1:length(obj.CN_LB)),obj.CN_LB,'LineWidth',2,'DisplayName','LB')
+                    hold on
+                   case 'CNI'
+                    plot(obj.S(1:length(obj.CNI)),obj.CNI,'LineWidth',2,'DisplayName','C_N^{I}')
+                   case 'CNk'
+                    plot(obj.S(1:length(obj.CNk)),obj.CNk,'LineWidth',2,'DisplayName','C_N^{k}')
+                   case'CNf'
+                    plot(obj.S(1:length(obj.CNf)),obj.CNf,'LineWidth',2,'DisplayName','C_N^f')
+                   case 'CNv'
+                    plot(obj.S(1:length(obj.CNv)),obj.CNv,'LineWidth',2,'DisplayName','C_N^v')
+                   case 'CNsteady'
+                    plot(obj.S(1:length(obj.CNsteady)),obj.CNsteady,'LineWidth',2,'DisplayName','static')
+                   otherwise
+                       error('Valid arguments for plotCustom are CN, CN_LB, CNI, CNk, CNf, CNf, CNv and CNsteady.')
+               end
             end
-            if any(contains(varargin,'CNI'))
-                plot(obj.S(1:length(obj.CNI)),obj.CNI,'LineWidth',2,'DisplayName','C_N^{I}')
-            end            
-            if any(contains(varargin,'CNk'))
-            plot(obj.S(1:length(obj.CNk)),obj.CNk,'LineWidth',2,'DisplayName','C_N^{k}')
-            end
-            if any(contains(varargin,'CNf'))
-            plot(obj.S(1:length(obj.CNf)),obj.CNf,'LineWidth',2,'DisplayName','C_N^v')
-            end
-            if any(contains(varargin,'CNv'))
-            %plot(obj.S(1:length(obj.CNv)),obj.CNv,'LineWidth',2,'DisplayName','C_N^f')
-            end
-            if any(contains(varargin,'CNsteady'))
-            plot(obj.S(1:length(obj.CNsteady)),obj.CNsteady,'LineWidth',2,'DisplayName','static')
-            end
+            hold off
             grid on 
             xlabel('t_c')
             ylabel('C_N')

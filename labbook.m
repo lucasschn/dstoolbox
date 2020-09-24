@@ -36,7 +36,7 @@ end
     root.data=@(nr3) fullfile(path2smarth,sprintf('%i',nr3));
     root.res = fullfile(path2smarth,'results');
     root.pivmat = fullfile(path2smarth,'postprocessing','matfiles','piv');
-    root.loadmat = fullfile(path2smarth,'postprocessing','matfiles','loads');%'\\sti1raw.epfl.ch\unfold\smartH\2019_SH\Postprocessing\matfiles\loads';
+    root.loadmat = fullfile(path2smarth,'postprocessing','matfiles','loads');
     root.fig = fullfile(path2smarth,'postprocessing','matfiles','figurematter');
     root.matlab = fullfile(path2smarth,'matlab');
     root.ftle = fullfile(path2smarth,'postprocessing','ftle');
