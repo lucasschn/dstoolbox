@@ -90,5 +90,13 @@ Matlab couldn't read the experimental data. Are you sure you are connected to th
 Make sure you are connected to the raw server. Otherwise, open labbook.m and make sure the path to the smartH folder is correctly set. 
 
 
+If Matlab stops responding when trying to load data from the server, first wait for at least 1min. The loading process of files up to 2GB has been observed to take around 30s on some configurattions. 
+
+Then, check your firewall preferences. To make sure you can properly read a file from the server, browse to the file and try to manually open it by clicking on it. 
+
+On Windows machines, a permanent solution is to add the files and the raw servers to the list of sites considered as part of the local intranet. To do this, follow the instruction [there](https://winraedorpers.com/fr/windows/1165-windows-fix-8220we-can8217t-verify-who-created-this-file8221-error.html)
+
+Please report any issue you may find using [Github's tool for issue reporting] (https://github.com/lucasschn/dstoolbox/issues)
+
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)

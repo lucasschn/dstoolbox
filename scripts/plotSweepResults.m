@@ -10,11 +10,28 @@ close all
 clear all
 clc
 
-load(fullfile('..','paths.mat'),'path2res')
+%% Load the path to the mat-file containing the results of the parameters sweep
+try
+    % try to find the path2res variable in paths.mat first
+    load(fullfile('..','paths.mat'),'path2res')
+catch % if path2res was not found in paths.mat, ...
+    try % .. maybe setPaths.m has never been run and paths.mat does not exist
+        run('setPaths.m')
+        load(fullfile('..','paths.mat'),'path2res')
+    catch % ... or maybe path2res is ill-defined
+        open('setPaths.m')
+        error('The path to the paramsweep results mat-file has not been correctly set. Please correct the path in setPaths.m first.') 
+    end
+end
 
-load(fullfile(path2res,'res25uniform4.mat'),'res')
+% now try to load the results mat-file in memory (if matlab stops responding, check your firewall parameters)
+tic
+res = importdata(fullfile(path2res,'res25uniform4.mat'));
+toc 
 
-plotOneRate(res,25,'Tp','Tf',isempty(errSecondPeakLoc))
+%% Choose among the three functions for plotting results of paramsweep
+
+plotOneRate(res,25,'Tp','Tf','hasSecondPeak')
 
 function plotOneRate(res,rate,varx,vary,color_var)
 res_adot = res(cat(1,res.alphadot)==rate);
@@ -155,6 +172,14 @@ switch var
         label = 'timing of C_N^v peak';
     case 'maxCNv'
         label = 'height of C_N^v peak';
+    case 'firstPeakLoc'
+        label = 'first peak timing';
+    case 'secondPeakLoc'
+        label = 'second peak timing';
+    case 'firstPeak'
+        label = 'first peak height';
+    case 'secondPeak'
+        label = 'second peak height';
     case 'err'
         label = 'mean square error';
     case 'errPeakLoc'
