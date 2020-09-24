@@ -416,7 +416,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
         end
         function computeSepLag(obj,airfoil,model)
             % change the static curve model here
-            interpolate_fexp = false;
+            interpolate_fexp = true;
             switch model
                 case {'BL','BLBangga'}
                     obj.model='BL';
