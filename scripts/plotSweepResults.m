@@ -10,9 +10,11 @@ close all
 clear all
 clc
 
-load(fullfile('..','data','paramsweep','res25uniform4'))
+load(fullfile('..','paths.mat'),'path2res')
 
-plotHistogram(res,'Tv','errSecondPeakLoc',1)
+load(fullfile(path2res,'res25uniform4.mat'),'res')
+
+plotOneRate(res,25,'Tp','Tf',isempty(errSecondPeakLoc))
 
 function plotOneRate(res,rate,varx,vary,color_var)
 res_adot = res(cat(1,res.alphadot)==rate);
