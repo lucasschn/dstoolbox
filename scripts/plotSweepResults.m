@@ -1,5 +1,6 @@
 % This script is made to produce scatter plots and histogram plots in order
-% to analyse the results of paramsweep.m.
+% to analyse the results of paramsweep.m. Some sample results are available
+% on the file server, under unfold-commun/temp_lucas/
 % For some error variables to be correctly set, you need to previously have run the
 % script addErrorFields on the results mat-file.
 %
@@ -11,6 +12,7 @@ clear all
 clc
 
 %% Load the path to the mat-file containing the results of the parameters sweep
+
 try
     % try to find the path2res variable in paths.mat first
     load(fullfile('..','paths.mat'),'path2res')
@@ -24,20 +26,41 @@ catch % if path2res was not found in paths.mat, ...
     end
 end
 
-% now try to load the results mat-file in memory (if matlab stops responding, check your firewall parameters)
+%%  now try to load the results mat-file in memory (if matlab stops responding, check your firewall parameters)
 tic
-res = importdata(fullfile(path2res,'res25uniform4.mat'));
+try
+load(fullfile(path2res,'res25uniform4.mat'),'res');
+catch ME
+    switch ME.identifier
+        case 'MATLAB:importdata:FileNotFound'
+            open('setPaths.m')
+            error('Please make sure that the path to the result mat-files is correct in setPaths.m and that you are connected to the server if applicable.')
+        otherwise
+            error('An undetermined error ocurred.')
+    end
+end
 toc 
 
 %% Choose among the three functions for plotting results of paramsweep
 
-plotOneRate(res,25,'Tp','Tf','hasSecondPeak')
+plotOneRate(res,25,'Tp','Tf','secondPeak')
 
 function plotOneRate(res,rate,varx,vary,color_var)
+% produces a scatter plot showing the distribution of samples as function
+% of two variables varx and vary as x- and y-axes. Only the samples for
+% pitch rate 'rate' in deg/s are taken into account. The plot can also be
+% colored as a function of a third variable color_var. 
+
 res_adot = res(cat(1,res.alphadot)==rate);
 if isempty(res_adot)
-    warning('The specified pitch rate could not be found in the results structure.')
-else
+    error('The specified pitch rate could not be found in the results structure.')
+elseif ~any(contains(fields(res),varx))
+    error('The results mat-file does not contain a %s field',varx)
+elseif ~any(contains(fields(res),vary))
+    error('The results mat-file does not contain a %s field',vary)
+elseif ~any(contains(fields(res),color_var))
+    error('The results mat-file does not contain a %s field',color_var)
+else  
     for k=1:length(res_adot)
         x(k) = eval(sprintf('res_adot(k).%s',varx));
         y(k) = eval(sprintf('res_adot(k).%s',vary));
@@ -47,7 +70,7 @@ else
     grid minor
     setDataTip(s,res_adot)
     
-    if length(res_adot)>5e3
+    if length(res_adot) > 5e3
         s.SizeData = 10;
     end
     xlabel(getLabelString(varx))
@@ -57,18 +80,18 @@ else
     title(sprintf('alphadot = %.2f',rate))
 end
 
-if nargin > 4
-    color = nan(size(res));
-    cvar_min = eval(sprintf('min(cat(1,res_adot.%s))',color_var));
-    cvar_max = eval(sprintf('max(cat(1,res_adot.%s))',color_var));
-    for k = 1:length(res_adot)
-        color(k) = (eval(sprintf('res_adot(k).%s',color_var))-cvar_min)/(cvar_max-cvar_min);
-    end
+if nargin > 4 % then a color variable as been specified
+%     color = nan(size(res));
+    cvar_min = double(eval(sprintf('min(cat(1,res_adot.%s))',color_var)));
+    cvar_max = double(eval(sprintf('max(cat(1,res_adot.%s))',color_var)));
+%     for k = 1:length(res_adot)
+%         color(k) = (eval(sprintf('res_adot(k).%s',color_var))-cvar_min)/(cvar_max-cvar_min);
+%     end
     
-    s.CData = eval(sprintf('cat(1,res_adot.%s)',color_var));
+    s.CData = double(eval(sprintf('cat(1,res_adot.%s)',color_var)));
     
     c = colorbar;
-    c.Ticks = linspace(cvar_min,cvar_max,length(unique(cat(1,sprintf('res.%s',color_var)))));
+%     c.Ticks = linspace(cvar_min,cvar_max,length(unique(eval(sprintf('cat(1,res_adot.%s)',color_var)))));
     c.Label.String = sprintf('%s',getLabelString(color_var));
 end
 
@@ -100,6 +123,11 @@ c.TickLabels = unique(color*(adot_max-adot_min)+adot_min);
 end
 
 function plotHistogram(res,varx,vary,threshold)
+% Plots an histogram of the total number of samples in res as function of
+% varx (in blue) and of number of samples meething the criterion abs(vary)
+% < threshold (in red). Also generates another histogram showing the ration
+% between criterion-meeting samples and total samples as a function of
+% varx. 
 if contains(varx,'+')
     varcell = split(varx,'+');
     for k=1:length(varcell)

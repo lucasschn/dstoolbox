@@ -25,10 +25,17 @@ end
 path2static = fullfile('..','static_flatplate');
 if ismac
     path2smarth = '/Volumes/unfold/smartH/2019_SH';
+    if ~isfolder(path2smarth)
+        warning('The defined path is not a folder. Trying to replace with unfold-1 because of shadowing on mac.')
+        path2smarth = replace(path2smarth,'unfold','unfold-1');
+    end
 elseif ispc
     path2smarth = '\\sti1raw.epfl.ch\unfold\smartH\2019_SH';
+    if ~isfolder(path2smarth)
+        warning('The defined path is not a folder.')
+    end
 else
-    error('Your platform is not supported.')   
+    error('Your platform is not supported.')
 end
 
 %%% where is data - where will data go?

@@ -52,7 +52,6 @@ for k = 1:length(c) % loop over the pitch rates
         ramp.computeErrors()
         
         % Put results in the struct
-        res(n*(k-1)+kk).S = ramp.S;
         res(n*(k-1)+kk).CN_LB = ramp.CN_LB;
         res(n*(k-1)+kk).CNk = ramp.CNk;
         res(n*(k-1)+kk).CNf = ramp.CNf;
@@ -79,8 +78,10 @@ for k = 1:length(c) % loop over the pitch rates
         res(n*(k-1)+kk).errPeakHeight = ramp.errPeakHeight;
         res(n*(k-1)+kk).errFirstPeakLoc = ramp.errFirstPeakLoc;
         res(n*(k-1)+kk).errFirstPeakHeight = ramp.errFirstPeakHeight;
+        res(n*(k-1)+kk).hasSecondPeak = isempty(ramp.secondPeak);
         res(n*(k-1)+kk).errSecondPeakLoc = ramp.errSecondPeakLoc;
         res(n*(k-1)+kk).errSecondPeakHeight = ramp.errSecondPeakHeight;
+        
     end
 end
 

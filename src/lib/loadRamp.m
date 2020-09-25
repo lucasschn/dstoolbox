@@ -2,18 +2,11 @@ function ramp = loadRamp(c,filtered)
 % loads ramp experiment number c. filtered argument is a boolean that specifies if the
 % signals should be filtered (default) or not.
 disp(pwd)
+
 try
-    run(fullfile('..','..','labbook.m'))
-catch 
-    try
-        run('..','labbook.m')
-    catch 
-        try
-            run('labbook.m')
-        catch
-           error('Labbook was not found at any paths.')
-        end   
-    end
+    run(fullfile('..','labbook.m'))
+catch
+    error('Labbook was not found at any paths.')
 end
 
 if length(c) > 1
@@ -22,8 +15,8 @@ end
 
 try
     load(loadmat(LB(c).ms,LB(c).mpt),'raw','zero');
-catch IOError
-    error('Matlab couldn''t read the experimental data. Are you sure you are connected to the server?')
+catch IOError    
+    error('Matlab could not read the experimental data. Are you sure you are connected to the raw server?')
 end
 
 msname = sprintf('ms%03impt%i',LB(c).ms,LB(c).mpt);

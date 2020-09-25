@@ -72,6 +72,20 @@ ramp.BeddoesLeishman(airfoil,Tp,Tf,Tv,Tvl,'mode') % computes the aerodynamic loa
 ```
 The time constants Tp, Tf, Tv, and Tvl are necessary input arguments to Beddoes-Leishman model. Depending on the selected model the number of time constants can vary from 3 to 4. The 'mode' argument can be either 'experimental' or 'analytical' depending if the user wants numerical or analytical derivatives to be used. 
 
+### Test files
+
+A collection of scripts, such as `testLB.m` or `testSheng.m` contain all the necessary code for creating a ramp object from experimental data and apply one of the available dynamic stall models, depending on the test script. In `testLB.m`, the lines corresponding to the experiment number, associated with a certain pitch rate, and the time constants used in the call for BeddoesLeishman() method can be changed: 
+
+```matlab
+c = 71; % change this number to select the desired experiment (see labbook)
+
+ramp.BeddoesLeishman(airfoil,3,3,1,1,'experimental') % change the four numbers corresponding to Tp, Tf, Tv and Tvl respectively
+```
+
+### Parameter sweep
+
+Part of this project is related to the analysis of the LB-prediction when the time constants are choosed randomly amongst a predefined population, with a large amount of samples. The script `paramsweep.m` runs the LB model using a user-defined number of samples among the user-defined range of Tp, Tf, Tv and Tvl. The script `plotSweepResults.m` allows for
+
 ## App
 
 Before using the app, you have to run the script `setPaths.m`on your machine with the correct path to the folder where you want the produced figures to be saved.

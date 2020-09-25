@@ -96,10 +96,10 @@ for k=1:length(res)
     i_start = find(res(k).CN_LB>=0,1);
     [peaks,peak_indices] = findpeaks(res(k).CN_LB(i_start:end),'MinPeakDistance',150);
     res(k).firstPeak = peaks(1);
-    res(k).firstPeakLoc = res(k).S(peak_indices(1));
+    res(k).firstPeakLoc = ramp.S(peak_indices(1));
     if length(peaks)>1
         res(k).secondPeak = peaks(2);
-        res(k).secondPeakLoc = res(k).S(peak_indices(2));
+        res(k).secondPeakLoc = ramp.S(peak_indices(2));
     end
     res(k).errFirstPeakLoc = res(k).firstPeakLoc - res(k).SmaxCN;
     res(k).errFirstPeakHeight = res(k).firstPeak - res(k).maxCN;
@@ -107,7 +107,8 @@ for k=1:length(res)
         res(k).errSecondPeakLoc = res(k).secondPeakLoc - res(k).SmaxCN;
         res(k).errSecondPeakHeight = res(k).secondPeak - res(k).maxCN;
     end
+    %% Add a 0-1 variable that states if a second peak has been detected or not
     res(k).hasSecondPeak = isempty(res(k).secondPeak);
 end
 
-save(fullfile('..','data','paramsweep',filename),'res')
+save(fullfile(path2res,filename),'res','-v7.3')

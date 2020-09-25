@@ -9,13 +9,22 @@ addpath(fullfile(path2root,'src','lib'))
 addpath(fullfile(path2root,'src','model'))
 addpath(fullfile(path2root,'plot_dir'))
 
-path2res = '\\sti1files.epfl.ch\unfold\unfold-commun\temp_lucas';
-% path2res = fullfile(path2root,'data','paramsweep');
+%% Path to the result mat-files 
+% needs to be set for plotSweepResults.m to work correctly.
+% /!\ You should not use a remote location here, the files are too large.
+% Instead, download the res.mat on your computer and indicate the path to
+% the local copy. Alternatively, you can create a new res.mat by running
+% paramsweep.m 
 
+path2res = fullfile(path2root,'data','paramsweep');
+
+%% Path to the figure folder for saving figures
 % set here the path where you want to save the figures produced by the
 % scripts
-path2fig = '\\oscar\macintosh hd\Users\lucas\Documents\EPFL\PDM\fig';
-% path2fig = fullfile(path2root,'fig');
+if ispc()
+% path2fig = '\\oscar\macintosh hd\Users\lucas\Documents\EPFL\PDM\fig';
+end
+path2fig = fullfile(path2root,'fig');
 
 if ~isfolder(path2fig)
     mkdir(path2fig)
