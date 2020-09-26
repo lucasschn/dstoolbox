@@ -1,24 +1,14 @@
-function out = functionLB(param,static_alpha,static_CN,alpha_ss,raw,zero,LB,c,Tp,Tf,Tv,Tvl)
+function out = functionLB(input,LBcoeffs)
 
-airfoil = Airfoil('airfoil',param.c);
-airfoil.steady = SteadyCurve(static_alpha,static_CN,alpha_ss);
-ramp = RampUpMotion('alpha',raw.alpha,'t',raw.t,'V',LB(c).U,'alphadot',LB(c).alphadot);
-
-Cl = raw.Cl-zero.Cl;
-Cd = raw.Cd-zero.Cd;
-Cl = Cl - mean(Cl(1:50));
-Cd = Cd - mean(Cd(1:50));
-fs = 1/ramp.Ts;
-
-% filter the load data
-Cl_fff = myFilterTwice(Cl,fs);
-Cd_fff = myFilterTwice(Cd,fs);
-ramp.setCL(Cl_fff);
-ramp.setCD(Cd_fff);
-
+airfoil = Airfoil('airfoil',input.c);
+airfoil.steady = SteadyCurve(input.static.alpha,input.static.Cn,input.alpha_ss);
+ramp = RampUpMotion('alpha',input.dyn.alpha,'t',input.dyn.t,'V',input.U,'alphadot',input.alphadot);
+ramp.setCL(input.dyn.Cl)
+ramp.setCD(input.dyn.Cd)
 ramp.computeAirfoilFrame();
-ramp.isolateRamp();
+% uncomment this if you don't want the whole signal but just the ramp part
+%  ramp.isolateRamp();
 
-ramp.BeddoesLeishman(airfoil,Tp,Tf,Tv,Tvl,'experimental')
+ramp.BeddoesLeishman(airfoil,LBcoeffs.Tp,LBcoeffs.Tf,LBcoeffs.Tv,LBcoeffs.Tvl,'experimental')
 out = struct(ramp);
 end

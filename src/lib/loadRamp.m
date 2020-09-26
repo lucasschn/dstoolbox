@@ -3,11 +3,7 @@ function ramp = loadRamp(c,filtered)
 % signals should be filtered (default) or not.
 disp(pwd)
 
-try
-    run(fullfile('..','labbook.m'))
-catch
-    error('Labbook was not found at any paths.')
-end
+run labbook.m
 
 if length(c) > 1
     error('loadRamp can only manage one experiment at a time. Verify your case number size.')

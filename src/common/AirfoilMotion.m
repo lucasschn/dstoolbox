@@ -312,6 +312,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             delay = mean(grpdelay(d));            
             dadt = filter(d,obj.alpha)/obj.Ts;
             dalphadt = dadt(delay:end);
+            dalphadt = gradient(obj.alpha,obj.Ts);
             D = zeros(size(dalphadt));
             for n=2:length(dalphadt)
                 D(n) = D(n-1)*exp(-obj.Ts/TlKalpha)+(dalphadt(n)-dalphadt(n-1))*exp(-obj.Ts/(2*TlKalpha));
@@ -330,7 +331,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             end
         end
         function computeExperimentalCirculatoryLift(obj,airfoil)
-            deltaalpha = diff(obj.alpha); % deg
+            deltaalpha = gradient(obj.alpha); % deg
             rule = 'mid-point';
             order = 2;
             switch order

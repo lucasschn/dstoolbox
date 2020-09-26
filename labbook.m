@@ -11,18 +11,19 @@
 
 disp('Labbook has been found')
 
-try
-    load('paths','path2fig')
-catch
-    try 
-        load(fullfile('..','paths'),'path2fig')
-    catch
-        open(fullfile('scripts','setPaths.m'))
-        error('The path to the figure folder has not been set. Please set your paths in setPaths.m and run this script again.')
-    end
-end
-
+% try
+%     load('paths','path2fig')
+% catch
+%     try 
+%         load(fullfile('..','paths'),'path2fig')
+%     catch
+%         open(fullfile('scripts','setPaths.m'))
+%         error('The path to the figure folder has not been set. Please set your paths in setPaths.m and run this script again.')
+%     end
+% end
+% 
 path2static = fullfile('..','static_flatplate');
+
 if ismac
     path2smarth = '/Volumes/unfold/smartH/2019_SH';
     if ~isfolder(path2smarth)
