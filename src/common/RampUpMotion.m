@@ -78,35 +78,6 @@ classdef RampUpMotion < AirfoilMotion
             obj.i_continuous_grow = i_grow{imax};
             obj.alpha_continuous_grow = obj.alpha(i_grow{imax});
         end
-        function sett(obj,t)
-            if length(t)==length(obj.alpha)
-                obj.t = t;
-                obj.Ts = mean(diff(t));
-            else
-                error('t and alpha must be of same length.')
-            end
-        end
-        function setCL(obj,CL)
-            if length(CL)==length(obj.alpha)
-                obj.CL = CL;
-            else
-                error('CL and alpha must be of same length.')
-            end
-        end
-        function setCD(obj,CD)
-            if length(CD)==length(obj.alpha)
-                obj.CD = CD;
-            else
-                error('CD and alpha must be of same length.')
-            end
-        end
-        function setCN(obj,CN)
-            if length(CN)==length(obj.alpha)
-                obj.CN = CN;
-            else
-                error('CN and alpha must be of same length.')
-            end
-        end
         function setAlphaDot(obj,alphadot)
             % sets alphadot in degrees
             dalphadt = diff(obj.alpha)./diff(obj.t);

@@ -4,70 +4,69 @@ classdef AirfoilMotion < matlab.mixin.SetGet
         model
         dataset
         % experimental pitch angle evolutions
-        alpha
-        alpha_rad
-        analpha
-        analpha_rad
-        alphadot_rad
+        alpha % deg
+        alpha_rad % rad
+        analpha % deg
+        analpha_rad % rad
+        alphadot_rad % rad/s
         % exprimental load curves
-        CL
-        CD
-        CN
-        CC
+        CL % exprimental lift coefficient
+        CD % exprimental drag coefficient
+        CN % exprimental normal force coefficient. Defined positive towards the suction side. 
+        CC % exprimental chord-wise force coefficient. Defined positive towards the trailing edge.
         % experimental parts
         CNsteady % static value of CN(alpha(n)) according to the dynamic alpha(n)
         CNqs % static + pi*c/2V*alphadot(t), according to Theodorsen
         CNth % CNqs + added mass 
-        Ts
-        t
+        Ts % sampling period in seconds
+        t % experimental time vector in seconds
         S % convective time
         rt % instantaneous red. pitch rate
         % experimental flow parameters
-        V
+        V % m/s
         M % Mach number
-        a % speed of sound
+        a % speed of sound in m/s
         %% Beddoes-Leishman
-        % Beddoes constants
-        A1 = 0.3;
-        A2 = 0.7;
+        A1 = 0.3; % first Beddoes A-constant
+        A2 = 0.7; % second Beddoes A-constant
         A3 = 0; % for third order according to Sheng 2008 and 2011
-        b1 = 0.14;
-        b2 = 0.53;
-        b3 = 0;
+        b1 = 0.14; % first Beddoes b-constant
+        b2 = 0.53; % second Beddoes b-constant
+        b3 = 0; % for third order according to Sheng 2008 and 2011
         % Time constants
         DeltaS
-        Tp
-        Tf
-        Tv
-        Tvl
+        Tp % delay on the CN coefficient. First LB constant. Used in computeLEseparation().
+        Tf % delay on the separation curve. Second LB constant. Used in compute TEseparation().
+        Tv % vortex growth rate time constant. Third LB contant. Used in computeDS().
+        Tvl % vortex growth cutoff time constant. Fourth LB constant. Used in computeDS().
         % Attached flow behaviour
-        CNI
-        CNC
-        CCC
-        CNp
-        alphaE
-        alphaE_rad
+        CNI % impulsive normal coefficient. Also called added mass. 
+        CNC % circulatory normal coefficient. 
+        CCC % circulatiory chord-wise coefficient.
+        CNp % potential normal coefficient, sum of the circulatory and added mass contributions
+        alphaE % attached effective angle of attack in degrees
+        alphaE_rad % % attached effective angle of attack in radians
         % LE separation
-        CNprime
-        Dp
-        CNcrit
+        CNprime % delayed normal coefficient. Called CN' in Leisman-Beddoes article. 
+        Dp % CNprime defficiency function
+        CNcrit % critical normal coefficient. Used to define when the DS vortex should start forming (when CNprime=CNcrit)
         % TE separation
-        alphaf
-        alphaf_rad
-        CNk
-        f
-        fp
-        fpp
-        fppexp
-        CNf
-        CCf
+        alphaf % separated effective angle of attack in degrees 
+        alphaf_rad % separated effective angle of attack in radians
+        CNk % delayed Kirchhoff normal force coefficient, calculated using Kirchhoff model with fpp as a separation curve. Does not include added mass.
+        f % separation point in time. Ranges from 0 to 1, indicates the separation point in x/c.
+        fp % delayed separation point in time, computed from CNprime. Ranges from 0 to 1, indicates the separation point in x/c.
+        fpp % double delayed separation point in time, computed after adding Tf delay to fp. % separation point in time. Ranges from 0 to 1, indicates the separation point in x/c.
+        fppexp % experimental separation location, found by applied the inverted Kirchhoff model to the experimental CN curve. % separation point in time. Ranges from 0 to 1, indicates the separation point in x/c.
+        CNf % delayed Kirchhoff normal force coefficient plus added mass. Is equal to CNk+CNI. 
+        CCf % delayed Kirchhoff chord-wise force coefficient plus added mass. 
         % Dynamic Stall
-        tau_v
-        Cv
-        CNv
+        tau_v % about two times slower as the convective time
+        Cv % intermediary vortex normal coefficient.
+        CNv % total accumulated vortex normal coefficient.
         St % Strouhal number
-        CNv2
-        CN_LB
+        CNv2 % secondary vortex normal coefficient
+        CN_LB % total LB-predicted normal coefficient. Equal to CNf+CNv.
         % Post-processing
         % peak heights
         maxCN
@@ -77,7 +76,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
         maxCNv
         firstPeak
         secondPeak
-        % peak locations
+        % peak locations (timing in convective time units)
         SmaxCN
         SmaxCN_LB
         SmaxCNk
@@ -110,7 +109,9 @@ classdef AirfoilMotion < matlab.mixin.SetGet
         analpha_lag
     end
     properties (Constant = true)
-        
+        % here you can set properties that you don't want to be changed by
+        % anything in the code. Setting constants here helps code
+        % robustness
     end
     methods
         function obj = AirfoilMotion(varargin)
@@ -134,7 +135,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             end
         end
         function fillProps(obj)
-            % fills the properties that can be deduced from one another
+            % sets the motion properties that can be deduced from properties that have been already set
             if ~isempty(obj.alpha)
                 obj.alpha_rad = deg2rad(obj.alpha);
             end
@@ -173,13 +174,6 @@ classdef AirfoilMotion < matlab.mixin.SetGet
                 obj.name = name;
             else
                 obj.name = inputname(1);
-            end
-        end
-        function setCN(obj,CN)
-            if length(CN)==length(obj.alpha)
-                obj.CN = CN;
-            else
-                error('CN and alpha must be of same length.')
             end
         end
         function setCNsteady(obj,varargin)
@@ -229,6 +223,16 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             end
         end
         function BeddoesLeishman(obj,airfoil,Tp,Tf,Tv,Tvl,alphamode)
+            % BeddoesLeishman(obj,airfoil,Tp,Tf,Tv,Tvl,alphamode) runs the 
+            % LB model on the experimental airfoil motion 'motion' with
+            % airfoil 'airfoil'. Tp,Tf,Tv, and Tvl are the associated time
+            % constants and alphamode defines if the alpha time evolution
+            % and its derivative should be computed analytically (for
+            % example alpha_1*sin(2pi*f*t) for a pitching motion) or
+            % experimentally (taking the numerical derivatives from the
+            % alpha vector). Analytical mode is only available for
+            % RampUpMotion and PitchingMotion objects.
+            
             obj.model = 'LB';
             airfoil.steady.fitKirchhoff()
             obj.setCNsteady(airfoil.steady)
@@ -722,47 +726,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
                 obj.errSecondPeakHeight = obj.secondPeak - obj.maxCN;
             end
         end
-        function save2Excel(obj)
-            writematrix(obj.r,'../paramsweep.xlsx','Sheet',sprintf('adot = %1.1f',obj.alphadot),'Range','B4')
-        end
-        function save2mat(obj,name)
-            r = obj.r;
-            alphadot = obj.alphadot;
-            Tp = obj.Tp;
-            Tf = obj.Tf;
-            Tv = obj.Tv;
-            Tvl = obj.Tvl;
-            maxCN = obj.maxCN;
-            maxCN_LB = obj.maxCN_LB;
-            maxCNk = obj.maxCNk;
-            maxCNf = obj.maxCNf;
-            maxCNv = obj.maxCNv;
-            SmaxCN = obj.SmaxCN;
-            SmaxCN_LB = obj.SmaxCN_LB;
-            SmaxCNk = obj.SmaxCNk;
-            SmaxCNf = obj.SmaxCNf;
-            SmaxCNv = obj.SmaxCNv;
-            err = obj.err;
-            errCNk_PeakLoc = obj.errCNk_PeakLoc;
-            errCNk_PeakHeight = obj.errCNk_PeakHeight;
-            errCNf_PeakLoc = obj.errCNf_PeakLoc;
-            errCNf_PeakHeight = obj.errCNf_PeakHeight;
-            errCNv_PeakLoc = obj.errCNv_PeakLoc;
-            errCNv_PeakHeight = obj.errCNv_PeakHeight;
-            errPeakLoc = obj.errPeakLoc;
-            errPeakHeight = obj.errPeakHeight;
-            errFirstPeakHeight = obj.errFirstPeakHeight;
-            errFirstPeakLoc = obj.errFirstPeakLoc;
-            errSecondPeakHeight = obj.errSecondPeakHeight;
-            errSecondPeakLoc = obj.errSecondPeakLoc;
-            if any([isempty(Tp),isempty(Tf),isempty(Tv),isempty(Tvl),isempty(maxCN),isempty(maxCN_LB),isempty(maxCNk),isempty(maxCNf),isempty(maxCNv),isempty(SmaxCN),isempty(SmaxCN_LB),isempty(SmaxCNk),isempty(SmaxCNf),isempty(SmaxCNv),isempty(err)])
-                error('One of the field is empty.')
-            elseif exist(name,'file')                
-                save(name,'r','alphadot','T*','max*','Smax*','err*','-regexp','-append') 
-            else
-                save(name,'r','alphadot','T*','max*','Smax*','err*','-regexp')
-            end
-        end
+
         function plotAlpha(obj,mode)
             figure
             if ~isempty(obj.S)
@@ -1147,6 +1111,76 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             ax.FontSize = 20;
             axis([0 Inf 0 3])
             title(sprintf('$r=%.3f,T_p=%.1f,T_f =%.1f,T_v=%.1f,T_{vl}=%.1f$',obj.r,obj.Tp,obj.Tf,obj.Tv,obj.Tvl),'FontSize',14,'interpreter','latex')
+        end
+        function save2Excel(obj)
+            writematrix(obj.r,'../paramsweep.xlsx','Sheet',sprintf('adot = %1.1f',obj.alphadot),'Range','B4')
+        end
+        function save2mat(obj,name)
+            r = obj.r;
+            alphadot = obj.alphadot;
+            Tp = obj.Tp;
+            Tf = obj.Tf;
+            Tv = obj.Tv;
+            Tvl = obj.Tvl;
+            maxCN = obj.maxCN;
+            maxCN_LB = obj.maxCN_LB;
+            maxCNk = obj.maxCNk;
+            maxCNf = obj.maxCNf;
+            maxCNv = obj.maxCNv;
+            SmaxCN = obj.SmaxCN;
+            SmaxCN_LB = obj.SmaxCN_LB;
+            SmaxCNk = obj.SmaxCNk;
+            SmaxCNf = obj.SmaxCNf;
+            SmaxCNv = obj.SmaxCNv;
+            err = obj.err;
+            errCNk_PeakLoc = obj.errCNk_PeakLoc;
+            errCNk_PeakHeight = obj.errCNk_PeakHeight;
+            errCNf_PeakLoc = obj.errCNf_PeakLoc;
+            errCNf_PeakHeight = obj.errCNf_PeakHeight;
+            errCNv_PeakLoc = obj.errCNv_PeakLoc;
+            errCNv_PeakHeight = obj.errCNv_PeakHeight;
+            errPeakLoc = obj.errPeakLoc;
+            errPeakHeight = obj.errPeakHeight;
+            errFirstPeakHeight = obj.errFirstPeakHeight;
+            errFirstPeakLoc = obj.errFirstPeakLoc;
+            errSecondPeakHeight = obj.errSecondPeakHeight;
+            errSecondPeakLoc = obj.errSecondPeakLoc;
+            if any([isempty(Tp),isempty(Tf),isempty(Tv),isempty(Tvl),isempty(maxCN),isempty(maxCN_LB),isempty(maxCNk),isempty(maxCNf),isempty(maxCNv),isempty(SmaxCN),isempty(SmaxCN_LB),isempty(SmaxCNk),isempty(SmaxCNf),isempty(SmaxCNv),isempty(err)])
+                error('One of the field is empty.')
+            elseif exist(name,'file')                
+                save(name,'r','alphadot','T*','max*','Smax*','err*','-regexp','-append') 
+            else
+                save(name,'r','alphadot','T*','max*','Smax*','err*','-regexp')
+            end
+        end
+        function sett(obj,t)
+            if length(t)==length(obj.alpha)
+                obj.t = t;
+                obj.Ts = mean(diff(t));
+            else
+                error('t and alpha must be of same length.')
+            end
+        end
+        function setCL(obj,CL)
+            if length(CL)==length(obj.alpha)
+                obj.CL = CL;
+            else
+                error('CL and alpha must be of same length.')
+            end
+        end
+        function setCD(obj,CD)
+            if length(CD)==length(obj.alpha)
+                obj.CD = CD;
+            else
+                error('CD and alpha must be of same length.')
+            end
+        end
+        function setCN(obj,CN)
+            if length(CN)==length(obj.alpha)
+                obj.CN = CN;
+            else
+                error('CN and alpha must be of same length.')
+            end
         end
     end
 end
