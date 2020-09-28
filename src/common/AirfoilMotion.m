@@ -245,6 +245,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             obj.computeDS(airfoil,Tv,Tvl,'BL');
         end
         function BLBangga(obj,airfoil,Tp,Tf,Tv,Tvl,alphamode)
+            obj.model = 'Bangga-LB';
             obj.setCNsteady(airfoil.steady)
             obj.computeAttachedFlow(airfoil,alphamode);
             obj.computeLEseparation(Tp,alphamode);
@@ -420,8 +421,11 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             obj.Tf = Tf;
             obj.f = interp1(airfoil.steady.alpha,airfoil.steady.f,obj.alpha);                       
             
-            % Here a model for fp is selected
-            obj.computeSepLag(airfoil,model)
+            % Here a model for fp is selected, interpolate_fexp sets if the
+            % experimental separation curve should be used as it is or if a
+            % Kirchhoff model for separation curve should be fitted.
+            interpolate_fexp = true; 
+            obj.computeSepLag(airfoil,model,interpolate_fexp)
             
             Df=zeros(size(obj.fp));
             for n=2:length(obj.fp)
@@ -438,21 +442,20 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             eta = 0.95;
             obj.CCf = eta*airfoil.steady.slope*obj.alphaE(1:n).^2.*sqrt(obj.fpp(1:n));
         end
-        function computeSepLag(obj,airfoil,model)
+        function computeSepLag(obj,airfoil,model,interpolate_fexp)
             % change the static curve model here
-            interpolate_fexp = true;
             switch model
-                case {'BL','BLBangga'}
-                    obj.model='BL';
+                case {'LB','Bangga-LB'}
                     obj.alphaf = obj.CNprime/airfoil.steady.slope; % effective separation point
                     obj.alphaf_rad = deg2rad(obj.alphaf);
                     if interpolate_fexp
+                        obj.model='LB w/o Kirchhoff fit';
                         obj.fp = interp1(airfoil.steady.alpha,airfoil.steady.fexp,obj.alphaf);
                     else % use the seppoint function fit evaluated in alphaf
+                        obj.model='LB with Kirchhoff fit';
                         obj.fp = seppoint(airfoil.steady,obj.alphaf);
                     end
-                case 'BLSheng'
-                    obj.model='BLSheng';
+                case 'Sheng-LB'
                     try
                         load(fullfile('..',sprintf('linfit_%s.mat',airfoil.name)),'Talpha','alpha_ds0');
                     catch
@@ -472,17 +475,20 @@ classdef AirfoilMotion < matlab.mixin.SetGet
                     end
                     n = min([length(obj.alpha_lag),length(delta_alpha1)]);
                     if interpolate_fexp
+                        obj.model='BLSheng w/o Kirchhoff fit';
                         obj.fp = interp1(airfoil.steady.alpha,airfoil.steady.fexp,obj.alpha_lag(1:n)-delta_alpha1(1:n),'linear','extrap');
                     else
+                        obj.model='BLSheng with Kirchhoff fit';
                         obj.fp = seppoint(airfoil.steady,obj.alpha_lag(1:n)-delta_alpha1(1:n));
                     end
-                case 'BLSheng with expfit'
-                    obj.model='expfit';
+                case 'Expfit'
                     [~,Talpha] = Expfit(airfoil,obj);
                     obj.computeAlphaLag(airfoil,Talpha)
                     if interpolate_fexp
+                        obj.model = 'Expfit w/o Kirchhoff fit (seperation curve)';
                         obj.fp = interp1(airfoil.steady.alpha,airfoil.fexp,obj.alpha_lag,'linear','extrap');
                     else
+                        obj.model = 'Expfit with Kirchhoff fit (seperation curve)';
                         obj.fp = seppoint(airfoil.steady,obj.alpha_lag); % effective separation point
                     end
             end
@@ -726,7 +732,6 @@ classdef AirfoilMotion < matlab.mixin.SetGet
                 obj.errSecondPeakHeight = obj.secondPeak - obj.maxCN;
             end
         end
-
         function plotAlpha(obj,mode)
             figure
             if ~isempty(obj.S)
@@ -970,12 +975,24 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             ylabel('\alpha (°)')
         end
         function plotSeparation(obj,airfoil,mode,save)
+            %plotSepration(airfoil,mode,save) plots the separation curves,
+            %including the delayed ones defined in LB model. The airfoil
+            %argument sets to which airfoil the experimental motion
+            %corresponds and mode defines the x-axis, either alpha or
+            %convectime (=convective time). Save is a logical argument that
+            %defines if you want to save the figure in the fig folder.
+            if nargin<=1
+                error('You need to specifiy an airfoil and an x-axis for your plot, e.g. plotSeparation(airfoil,''convectime'')'); 
+            end
+            plotKirchhofffit = ~contains(obj.model,'w/o'); % Kirchhoff fit curve must be plotted if the expression w/o Kirchhoff fit is not found in the model name. 
             figure
             switch mode
                 case 'angle'
                     plot(airfoil.steady.alpha,airfoil.steady.fexp,'DisplayName','f_{exp}','LineWidth',2)
                     hold on
-                    plot(airfoil.steady.alpha,obj.f,'DisplayName','f','LineWidth',2)
+                    if plotKirchhofffit
+                        plot(airfoil.steady.alpha,obj.f,'DisplayName','f','LineWidth',2)
+                    end
                     plot(obj.alpha(1:length(obj.fp)),obj.fp,'DisplayName','f''','LineWidth',2)
                     plot(obj.alpha(1:length(obj.fpp)),obj.fpp,'DisplayName','f''''','LineWidth',2)
                     xlabel('\alpha (°)')
@@ -983,7 +1000,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
                 case 'convectime'
                     plot(obj.S,interp1(airfoil.steady.alpha,airfoil.steady.fexp,obj.alpha),'DisplayName','f_{exp}','LineWidth',2)
                     hold on
-                    if ~strcmp(obj.model,'BLBangga')
+                    if plotKirchhofffit && ~contains(obj.model,'BLBangga')
                         plot(obj.S,interp1(airfoil.steady.alpha,airfoil.steady.f,obj.alpha),'DisplayName','f','LineWidth',2)
                     end
                     plot(obj.S(1:length(obj.fp)),obj.fp,'DisplayName','f''','LineWidth',2)
@@ -992,7 +1009,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
                     xlabel('t_c')
                     legend('Location','NorthEast','FontSize',20)
                 otherwise
-                    error('Either angle or convectime mode must be specified as an argument')
+                    error('Either angle or convectime (=convective time)mode must be specified as an argument')
             end
             ax = gca;
             ax.FontSize = 20;
