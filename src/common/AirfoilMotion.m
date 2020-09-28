@@ -12,7 +12,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
         % exprimental load curves
         CL % exprimental lift coefficient
         CD % exprimental drag coefficient
-        CN % exprimental normal force coefficient. Defined positive towards the suction side. 
+        CN % exprimental normal force coefficient. Defined positive towards the suction side.
         CC % exprimental chord-wise force coefficient. Defined positive towards the trailing edge.
         % experimental parts
         CNsteady % static value of CN(alpha(n)) according to the dynamic alpha(n)
@@ -40,26 +40,26 @@ classdef AirfoilMotion < matlab.mixin.SetGet
         Tv % vortex growth rate time constant. Third LB contant. Used in computeDS().
         Tvl % vortex growth cutoff time constant. Fourth LB constant. Used in computeDS().
         % Attached flow behaviour
-        CNI % impulsive normal coefficient. Also called added mass. 
-        CNC % circulatory normal coefficient. 
+        CNI % impulsive normal coefficient. Also called added mass.
+        CNC % circulatory normal coefficient.
         CCC % circulatiory chord-wise coefficient.
         CNp % potential normal coefficient, sum of the circulatory and added mass contributions
         alphaE % attached effective angle of attack in degrees
         alphaE_rad % % attached effective angle of attack in radians
         % LE separation
-        CNprime % delayed normal coefficient. Called CN' in Leisman-Beddoes article. 
+        CNprime % delayed normal coefficient. Called CN' in Leisman-Beddoes article.
         Dp % CNprime defficiency function
         CNcrit % critical normal coefficient. Used to define when the DS vortex should start forming (when CNprime=CNcrit)
         % TE separation
-        alphaf % separated effective angle of attack in degrees 
+        alphaf % separated effective angle of attack in degrees.
         alphaf_rad % separated effective angle of attack in radians
         CNk % delayed Kirchhoff normal force coefficient, calculated using Kirchhoff model with fpp as a separation curve. Does not include added mass.
         f % separation point in time. Ranges from 0 to 1, indicates the separation point in x/c.
         fp % delayed separation point in time, computed from CNprime. Ranges from 0 to 1, indicates the separation point in x/c.
         fpp % double delayed separation point in time, computed after adding Tf delay to fp. % separation point in time. Ranges from 0 to 1, indicates the separation point in x/c.
         fppexp % experimental separation location, found by applied the inverted Kirchhoff model to the experimental CN curve. % separation point in time. Ranges from 0 to 1, indicates the separation point in x/c.
-        CNf % delayed Kirchhoff normal force coefficient plus added mass. Is equal to CNk+CNI. 
-        CCf % delayed Kirchhoff chord-wise force coefficient plus added mass. 
+        CNf % delayed Kirchhoff normal force coefficient plus added mass. Is equal to CNk+CNI.
+        CCf % delayed Kirchhoff chord-wise force coefficient plus added mass.
         % Dynamic Stall
         tau_v % about two times slower as the convective time
         Cv % intermediary vortex normal coefficient.
@@ -223,7 +223,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             end
         end
         function BeddoesLeishman(obj,airfoil,Tp,Tf,Tv,Tvl,alphamode)
-            % BeddoesLeishman(obj,airfoil,Tp,Tf,Tv,Tvl,alphamode) runs the 
+            % BeddoesLeishman(obj,airfoil,Tp,Tf,Tv,Tvl,alphamode) runs the
             % LB model on the experimental airfoil motion 'motion' with
             % airfoil 'airfoil'. Tp,Tf,Tv, and Tvl are the associated time
             % constants and alphamode defines if the alpha time evolution
@@ -232,7 +232,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             % experimentally (taking the numerical derivatives from the
             % alpha vector). Analytical mode is only available for
             % RampUpMotion and PitchingMotion objects.
-            
+
             obj.model = 'LB';
             airfoil.steady.fitKirchhoff()
             obj.setCNsteady(airfoil.steady)
@@ -1147,8 +1147,8 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             errSecondPeakLoc = obj.errSecondPeakLoc;
             if any([isempty(Tp),isempty(Tf),isempty(Tv),isempty(Tvl),isempty(maxCN),isempty(maxCN_LB),isempty(maxCNk),isempty(maxCNf),isempty(maxCNv),isempty(SmaxCN),isempty(SmaxCN_LB),isempty(SmaxCNk),isempty(SmaxCNf),isempty(SmaxCNv),isempty(err)])
                 error('One of the field is empty.')
-            elseif exist(name,'file')                
-                save(name,'r','alphadot','T*','max*','Smax*','err*','-regexp','-append') 
+            elseif exist(name,'file')
+                save(name,'r','alphadot','T*','max*','Smax*','err*','-regexp','-append')
             else
                 save(name,'r','alphadot','T*','max*','Smax*','err*','-regexp')
             end
