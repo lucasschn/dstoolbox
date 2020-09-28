@@ -2,8 +2,8 @@ close all
 clear all
 clc
 set(0,'DefaultFigureWindowStyle','docked')
-path2oscar = '\\oscar\macintosh hd\Users\lucas\Documents\EPFL\PDM\';
-run(fullfile(path2oscar,'data\2008_simcos\matlab\labbook_simcos.m'))
+
+run labbook_simcos.m
 
 %% flow parameters
 V = 50; %m/s
@@ -17,15 +17,15 @@ M = 0.14;
 
 airfoil = Airfoil('OA209',0.3);
 %airfoil.steady = SteadyCurve(static_data(:,1),static_data(:,2));
-load(fullfile(path2oscar,'static_corr'))
+load(fullfile('..','static_corr'))
 airfoil.steady = SteadyCurve(mA,mCl_corr);
 airfoil.steady.plotCN()
-saveas(gcf,fullfile(path2oscar,'fig','static_OA209.png'))
+% saveas(gcf,fullfile(path2oscar,'fig','static_OA209.png'))
 
 %% Dynamic data
+
 nr=13;
 data = load(pressuredata(nr));
-
 
 % Drag missing, compute the pressure drag 
 CD = zeros(size(data.Cl));
@@ -33,7 +33,7 @@ for k=1:length(data.Cl)
     CD(k) = sum(data.Cp(k,:)*data.xk);
 end
 
-load(fullfile(path2oscar,'dynamic_corr'))
+load(fullfile('..','dynamic_corr'))
 % assuming CL = CN
 pitching = PitchingMotion('alpha',Alpha,'CN',Cl_corr.*cosd(Alpha),'k',LB(nr).k,'freq',LB(nr).fosc,'V',50,'Ts',1/LB(nr).FS);
 pitching.setSinus(airfoil,deg2rad(LB(nr).alpha_0),deg2rad(LB(nr).alpha_1),LB(nr).fosc*2*pi);
@@ -49,9 +49,9 @@ airfoil.steady.plotKirchhoff();
 %% Define Beddoes-Leishman model
 Tp = 3;
 Tf = 3;
-Tv = 6;
+Tv = 1;
 Tvl = 1;
-pitching.BeddoesLeishman(airfoil,Tp,Tf,Tv,Tvl,'analytical');
+pitching.BeddoesLeishman(airfoil,Tp,Tf,Tv,Tvl,'experimental');
 
 %% Plot results
 figure
