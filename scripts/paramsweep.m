@@ -14,7 +14,7 @@ run(fullfile('..','labbook'))
 
 airfoil = Airfoil('flatplate',0.15);
 airfoil.r0 = 0.04;
-static = load(fullfile('..','static_flatplate'));
+static = load(fullfile('..','data','static_flatplate'));
 airfoil.steady = SteadyCurve(static.alpha,static.CN,13);
 
 %% Run the parameter sweep
