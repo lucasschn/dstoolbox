@@ -9,7 +9,7 @@ c=13;
 static = load(fullfile('..','data','static_flatplate.mat'));
 
 % for pitching motion
-data = load(pressuredata(nr));
+data = load(pressuredata(c));
 
 % Drag missing, compute the pressure drag 
 CD = zeros(size(data.Cl));
@@ -28,7 +28,7 @@ input.alpha_ss = 13;
 input.U = param.U0;
 input.alphadot=0.2; % deg/s 
 % input.dyn.t = raw.t;
-TS = 1/LB(nr).FS;
+TS = 1/LB(c).FS;
 input.dyn.t = 0:TS:(length(Cl_corr)-1)*TS;
 % input.dyn.alpha = raw.alpha; 
 input.dyn.alpha = Alpha;

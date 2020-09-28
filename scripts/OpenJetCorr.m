@@ -3,11 +3,11 @@
 % page 103
 
 close all; clear; clc;
-run('data/2008_simcos/matlab/labbook.m')
+run labbook_simcos.m
 I = param;
 I.indx = 13;
 
-load('data/2008_simcos/matfiles/static_pressure.mat')
+load('\\sti1raw.epfl.ch\unfold\2008_simcos\matfiles\static_pressure.mat')
 %% Correction for open jet wind tunnels - static
 delta = 0.16;
 S_wing = 0.3;
@@ -42,7 +42,7 @@ xlabel('$$\alpha$$','FontName', 'TimesNewRoman','FontUnit', 'points','FontSize',
 ylabel('$$C_L$$','Interpreter', 'LaTeX','FontName', 'TimesNewRoman','FontUnit', 'points','FontSize', FontSizeLb,'FontWeight', 'normal','Rotation', 90,'Units', 'Normalize','Position',ylabelpos);
 
 %% Correction for open jet wind tunnels - dynamic
-load(['data/2008_simcos/matfiles/pressure_',LB(I.indx).dpt,'.mat'])
+load(['\\sti1raw.epfl.ch\unfold\2008_simcos\matfiles\pressure_',LB(I.indx).dpt,'.mat'])
 
 del_A_dyn = rad2deg((1 + 0.3)*((Cl*delta*S_wing)./S_windt));
 Cl_corr = Cl + Cl.*cosd(del_A_dyn);
