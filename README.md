@@ -62,18 +62,29 @@ ramp = loadRamp(22,false);
 ramp.setPitchRate(airfoil);
 ramp.findExpOnset()
 ```
+The convenient function `ramp=loadRamp(c,filtered)` runs the labbook, loads the data, zeroes the data correctly and filters it if `filtered`is true. It then isolates the part of interest of the experiment, namely the ramp itself and a bit after it, and returns a RamUpMotion object `ramp` with the experimental force fields filled. Here the number 22 defines the experimental case number `c` corresponding to the desired experiement. All case numbers are defined in the labbook (`labbook.m`in the repository). `setPitchrate(airfoil)`must be executed independently because it requires an airfoil object as an argument (in order to define the reduced pitch rate, the chord length is required). This will also set the convectime time vector, which allows `findExpOnset()` to be run. It is recommended to take the habbit to declare a ramp using this three methods before any usage.
 
-Here the number 22 defines the experimental case number corresponding to the desired experiement. All case numbers are defined in the labbook (`labbook.m`in the repository). `setPitchrate(airfoil)`must be executed independently because it requires an airfoil object as an argument (in order to define the reduced pitch rate, the chord length is required). This will also set the convectime time vector, which allows `findExpOnset()` to be run. It is recommended to take the habbit to declare a ramp using this three methods before any usage. 
+### Apply a dynamic stall model to an experimental case
 
 Once the airfoil motion has been set up correctly, the corresponding aerodynamic normal coefficients can be predicted using a dynamic stall model. All dynamic stall models are methods that apply to motion objects. The general syntax for models is as follows: 
 
 ```matlab
-ramp.BeddoesLeishman(airfoil,Tp,Tf,Tv,Tvl,'mode') % computes the aerodynamic loading experienced by an airfoil object describing the motion described by ramp
+ramp.BeddoesLeishman(airfoil,Tp,Tf,Tv,Tvl,'mode') % computes the aerodynamic loading experienced by an airfoil object describing the motion described by ramp according to Leishman-Beddoes model
 ```
 
-The time constants Tp, Tf, Tv, and Tvl are necessary input arguments to Beddoes-Leishman model. Depending on the selected model the number of time constants can vary from 3 to 4. The 'mode' argument can be either 'experimental' or 'analytical' depending if the user wants numerical or analytical derivatives to be used. 
+The time constants Tp, Tf, Tv, and Tvl are necessary input arguments to Beddoes-Leishman model. Depending on the selected model the number of time constants can vary from 3 to 4. The 'mode' argument can be either 'experimental' or 'analytical' depending if the user wants numerical or analytical derivatives to be used. Alternatively, Sheng's model can be run on the same experimental data with the command:
 
-The convenient function `ramp=loadRamp(c,filtered)` runs the labbook, loads the data, zeroes the data correctly and filters it if `filtered`is true. It then isolates the part of interest of the experiment, namely the ramp itself and a bit after it, and returns a RamUpMotion object `ramp` with the experimental force fields filled.
+```matlab
+ramp.BLSheng(obj,airfoil,Tf,Tv,Tvl,alphamode) % computes the aerodynamic load according to Sheng's version of LB model
+```
+
+In Sheng's model, there is no necessity to provide the `Tp`constant, because the first delay due to airfoil unsteadiness is represented by the constant `Talpha`, which is determined based on experimental data. However, the prerequisite is that that constant has been already determined by running the script `ShengCriterion2019.m`. That one uses Sabrina's 2019 data. For Sabrina's 2018 data, see `ShengCriterion2018.m`.
+
+```matlab
+ramp.BLSheng(obj,airfoil,Tf,Tv,Tvl,alphamode) % computes the aerodynamic load according to Sheng's version of LB model
+```
+
+You can verify if the necessary script has been run or not by checking for the presence of a `linfit_flatplate.mat` matfile in your repository (in case you are considering the flat plate airfoil).  
 
 ### Test files
 
@@ -110,7 +121,7 @@ Matlab couldn't read the experimental data. Are you sure you are connected to th
 
 Make sure you are connected to the raw server. Otherwise, open labbook.m and make sure the path to the smartH folder is correctly set. 
 
-If Matlab stops responding when trying to load data from the server, first wait for at least 1min. The loading process of files up to 2GB has been observed to take around 30s on some configurattions. 
+If Matlab stops responding when trying to load data from the server, first wait for at least 1min. The loading process of files up to 2GB has been observed to take around 30s on some configurations. 
 
 Then, check your firewall preferences. To make sure you can properly read a file from the server, browse to the file and try to manually open it by clicking on it. 
 

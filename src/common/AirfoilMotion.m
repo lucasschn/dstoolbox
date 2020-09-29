@@ -317,6 +317,9 @@ classdef AirfoilMotion < matlab.mixin.SetGet
         end
         function computeExperimentalImpulsiveLift(obj,TlKalpha)
             % experimental alphas, angles in deg     
+            if obj.Ts>=0.5
+                error('The sampling time must be smaller than 0.5s for the LB model to be applied. Please resample your signal.')
+            end
             d = designfilt('differentiatorfir','FilterOrder',100,'PassbandFrequency',1,'StopbandFrequency',1.2,'SampleRate',1/obj.Ts);
             delay = mean(grpdelay(d));            
             dadt = filter(d,obj.alpha)/obj.Ts;
@@ -423,7 +426,11 @@ classdef AirfoilMotion < matlab.mixin.SetGet
         end
         function computeTEseparation(obj,airfoil,Tf,model)
             obj.Tf = Tf;
-            obj.f = interp1(airfoil.steady.alpha,airfoil.steady.f,obj.alpha);                       
+            if any(obj.alpha>max(airfoil.steady.alpha)) || any(obj.alpha>max(airfoil.steady.alpha))
+                warning('The static curve has to be extrapolated because some AoA values are outside the static AoA range.')
+            end
+            
+            obj.f = interp1(airfoil.steady.alpha,airfoil.steady.f,obj.alpha,'linear','extrap');                       
             
             % Here a model for fp is selected, interpolate_fexp sets if the
             % experimental separation curve should be used as it is or if a
@@ -454,7 +461,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
                     obj.alphaf_rad = deg2rad(obj.alphaf);
                     if interpolate_fexp
                         obj.model='LB w/o Kirchhoff fit';
-                        obj.fp = interp1(airfoil.steady.alpha,airfoil.steady.fexp,obj.alphaf);
+                        obj.fp = interp1(airfoil.steady.alpha,airfoil.steady.fexp,obj.alphaf,'linear','extrap');
                     else % use the seppoint function fit evaluated in alphaf
                         obj.model='LB with Kirchhoff fit';
                         obj.fp = seppoint(airfoil.steady,obj.alphaf);
@@ -830,7 +837,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             hold on
             plot(obj.S(1:length(obj.CN_LB)),obj.CN_LB,'LineWidth',2,'DisplayName','LB')
             plot(obj.S(1:length(obj.CNv)),obj.CNv,'LineWidth',2,'DisplayName','C_N^v')
-            plot(obj.S(1:length(obj.CNk)),obj.CNf,'LineWidth',2,'DisplayName','C_N^f')
+            plot(obj.S(1:length(obj.CNk)),obj.CNk,'LineWidth',2,'DisplayName','C_N^f')
             plot(obj.S(1:length(obj.CNf)),obj.CNf,'LineWidth',2,'DisplayName','C_N^f')
             xlabel('t_c')
             ylabel('C_N')

@@ -2,11 +2,9 @@ close all
 clear all
 clc
 set(0,'DefaultFigureWindowStyle','docked')
-if ispc
-    addpath('\\OSCAR\Macintosh HD\Users\lucas\src\codes_smarth')
-end
-addpath(genpath(fullfile('..','src','model')))
+
 run('labbook.m')
+
 %% Define the airfoil and the associated steady curve
 
 airfoil = Airfoil('flatplate',0.15);
