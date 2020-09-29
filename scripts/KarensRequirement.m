@@ -13,7 +13,7 @@ test = 'simcos';
 
 %% Static properties
 switch test
-    case 'rampup'
+    case {'rampup','general'}
         static = load(fullfile('..','data','static_flatplate.mat'));
         input.static.alpha = static.alpha;
         input.static.Cn = static.CN;
@@ -22,6 +22,8 @@ switch test
         load(fullfile('..','static_corr'))
         input.static.alpha = mA;
         input.static.Cn = mCl_corr;
+    otherwise
+        error('Your test case have not been recognized. The three options are rampup, simcos, and general.')
 end
 
 %% Defining model parameters
