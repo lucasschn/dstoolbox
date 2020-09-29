@@ -70,7 +70,10 @@ Once the airfoil motion has been set up correctly, the corresponding aerodynamic
 ```matlab
 ramp.BeddoesLeishman(airfoil,Tp,Tf,Tv,Tvl,'mode') % computes the aerodynamic loading experienced by an airfoil object describing the motion described by ramp
 ```
+
 The time constants Tp, Tf, Tv, and Tvl are necessary input arguments to Beddoes-Leishman model. Depending on the selected model the number of time constants can vary from 3 to 4. The 'mode' argument can be either 'experimental' or 'analytical' depending if the user wants numerical or analytical derivatives to be used. 
+
+The convenient function `ramp=loadRamp(c,filtered)` runs the labbook, loads the data, zeroes the data correctly and filters it if `filtered`is true. It then isolates the part of interest of the experiment, namely the ramp itself and a bit after it, and returns a RamUpMotion object `ramp` with the experimental force fields filled.
 
 ### Test files
 
@@ -84,7 +87,11 @@ ramp.BeddoesLeishman(airfoil,3,3,1,1,'experimental') % change the four numbers c
 
 ### Parameter sweep
 
-Part of this project is related to the analysis of the LB-prediction when the time constants are choosed randomly amongst a predefined population, with a large amount of samples. The script `paramsweep.m` runs the LB model using a user-defined number of samples among the user-defined range of Tp, Tf, Tv and Tvl. The script `plotSweepResults.m` allows for
+Part of this project is related to the analysis of the LB-prediction when the time constants are choosed randomly amongst a predefined population, with a large amount of samples. The script `paramsweep.m` runs the LB model using a user-defined number of samples among the user-defined range of Tp, Tf, Tv and Tvl. The script `plotSweepResults.m` allows for plotting the results of that parameter sweep using three different functions. 
+
+* `plotOneRate(res,rate,varx,vary,color_var)` creates a scatter plot for the result mat-file loaded in the variable `res`, only for the experiments with pitch rate equal to `rate`. The x- and y-axis are defined by the variables `varx`and `vary`. The optional variable `color_var` allows for coloring the points on the scatter plot according to a third variable. 
+* `plotAllRates(res,varx,vary)` creates a scatter plot for `res`, with x- and y-axis defined by the variables `varx`and `vary`. here no disction of pitch rate is made and all results are plotted.
+* `plotHistogram(res,varx,vary,threshold)` creates histograms for the result mat-file loaded in `res` with x-axis `varx`. The first one shows the distribution of all samples along the variable `varx` (in blue). The second one shows the distribution of samples meeting the criterion |vary|<threshold along the variable `varx` (in red). The two first ones are superimposed on the same axes. A third one in a new figure is then created showing the ratio between the samples meeting the criterion and the total number of samples for each bin of `varx`.
 
 ## App
 
@@ -102,7 +109,6 @@ Matlab couldn't read the experimental data. Are you sure you are connected to th
 ```
 
 Make sure you are connected to the raw server. Otherwise, open labbook.m and make sure the path to the smartH folder is correctly set. 
-
 
 If Matlab stops responding when trying to load data from the server, first wait for at least 1min. The loading process of files up to 2GB has been observed to take around 30s on some configurattions. 
 

@@ -69,13 +69,12 @@ classdef AirfoilMotion < matlab.mixin.SetGet
         CN_LB % total LB-predicted normal coefficient. Equal to CNf+CNv.
         % Post-processing
         % peak heights
-        maxCN
-        maxCN_LB
-        maxCNk
-        maxCNf
-        maxCNv
-        firstPeak
-        secondPeak
+        maxCN % maximum value of CN over the experiment
+        maxCNk % maximum value of CNk over the experiment
+        maxCNf % maximum value of CNf over the experiment
+        maxCNv % maximum value of CNv over the experiment
+        firstPeak % value of the first local maximum after start of experiment (t>0)
+        secondPeak % value of the second local maximum after start of experiment and before the primary peak ends (when the slope of CN changes sign to become positive again)
         % peak locations (timing in convective time units)
         SmaxCN % timing of experimental normal coefficient peak
         SmaxCN_LB % timing of LB-predicted normal coefficient peak
@@ -99,14 +98,14 @@ classdef AirfoilMotion < matlab.mixin.SetGet
         errSecondPeakLoc % difference between the timing of experimental and second normal coefficient peak
         errSecondPeakHeight
         %% Goman-Khrabrov
-        tau1
-        tau2
-        x
-        alpha_shift
+        tau1 % first GK constant
+        tau2 % second GK constant
+        x % separation location in x/c
+        alpha_shift % angla of attack shifted by alphadot (alpha-alphadot*tau2) in radians
         CN_GK % normal coefficient predicted by Goman-Khrabrov
         %% Sheng
-        alpha_lag
-        analpha_lag
+        alpha_lag % alpha' in Sheng's paper, angle of attack shifted by Talpha
+        analpha_lag % analytical alpha', mathematical idealisation, in degrees
     end
     properties (Constant = true)
         % here you can set properties that you don't want to be changed by
@@ -286,6 +285,10 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             obj.CN_GK = steady.slope/4*(1+sqrt(obj.x)).^2+steady.CN0;
         end
         function computeAttachedFlow(obj,airfoil,alphamode)
+            % computeAttachedFlow computes the variables related to the
+            % attached part of the flow, without taking separation into
+            % account, i.e. CNC, CNI and CNp. They correspond to the 'Attached Flow Behaviour'
+            % part of the original Leishman and Beddoes (1989) article.            
             obj.S = 2*obj.V*obj.t/airfoil.c;
             obj.DeltaS = mean(diff(obj.S));
             obj.computeImpulsiveLift(airfoil,alphamode);
@@ -976,7 +979,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             ylabel('\alpha (°)')
         end
         function plotSeparation(obj,airfoil,mode,save)
-            %plotSepration(airfoil,mode,save) plots the separation curves,
+            %plotSeparation(airfoil,mode,save) plots the separation curves,
             %including the delayed ones defined in LB model. The airfoil
             %argument sets to which airfoil the experimental motion
             %corresponds and mode defines the x-axis, either alpha or
