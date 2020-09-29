@@ -24,7 +24,7 @@ airfoil.steady.plotCN()
 
 %% Dynamic data
 
-nr=13;
+nr = 13;
 data = load(pressuredata(nr));
 
 % Drag missing, compute the pressure drag 

@@ -4,112 +4,114 @@ classdef AirfoilMotion < matlab.mixin.SetGet
         model
         dataset
         % experimental pitch angle evolutions
-        alpha
-        alpha_rad
-        analpha
-        analpha_rad
-        alphadot_rad
+        alpha % deg
+        alpha_rad % rad
+        analpha % deg
+        analpha_rad % rad
+        alphadot_rad % rad/s
         % exprimental load curves
-        CL
-        CD
-        CN
-        CC
+        CL % exprimental lift coefficient
+        CD % exprimental drag coefficient
+        CN % exprimental normal force coefficient. Defined positive towards the suction side.
+        CC % exprimental chord-wise force coefficient. Defined positive towards the trailing edge.
         % experimental parts
         CNsteady % static value of CN(alpha(n)) according to the dynamic alpha(n)
         CNqs % static + pi*c/2V*alphadot(t), according to Theodorsen
         CNth % CNqs + added mass 
-        Ts
-        t
+        Ts % sampling period in seconds
+        t % experimental time vector in seconds
         S % convective time
         rt % instantaneous red. pitch rate
         % experimental flow parameters
-        V
+        V % m/s
         M % Mach number
-        a % speed of sound
+        a % speed of sound in m/s
         %% Beddoes-Leishman
-        % Beddoes constants
-        A1 = 0.3;
-        A2 = 0.7;
+        A1 = 0.3; % first Beddoes A-constant
+        A2 = 0.7; % second Beddoes A-constant
         A3 = 0; % for third order according to Sheng 2008 and 2011
-        b1 = 0.14;
-        b2 = 0.53;
-        b3 = 0;
+        b1 = 0.14; % first Beddoes b-constant
+        b2 = 0.53; % second Beddoes b-constant
+        b3 = 0; % for third order according to Sheng 2008 and 2011
         % Time constants
         DeltaS
-        Tp
-        Tf
-        Tv
-        Tvl
+        Tp % delay on the CN coefficient. First LB constant. Used in computeLEseparation().
+        Tf % delay on the separation curve. Second LB constant. Used in compute TEseparation().
+        Tv % vortex growth rate time constant. Third LB contant. Used in computeDS().
+        Tvl % vortex growth cutoff time constant. Fourth LB constant. Used in computeDS().
         % Attached flow behaviour
-        CNI
-        CNC
-        CCC
-        CNp
-        alphaE
-        alphaE_rad
+        CNI % impulsive normal coefficient. Also called added mass.
+        CNC % circulatory normal coefficient.
+        CCC % circulatiory chord-wise coefficient.
+        CNp % potential normal coefficient, sum of the circulatory and added mass contributions
+        alphaE % attached effective angle of attack in degrees
+        alphaE_rad % % attached effective angle of attack in radians
         % LE separation
-        CNprime
-        Dp
-        CNcrit
+        CNprime % delayed normal coefficient. Called CN' in Leisman-Beddoes article.
+        Dp % CNprime defficiency function
+        CNcrit % critical normal coefficient. Used to define when the DS vortex should start forming (when CNprime=CNcrit)
         % TE separation
-        alphaf
-        alphaf_rad
-        CNk
-        f
-        fp
-        fpp
-        fppexp
-        CNf
-        CCf
+        alphaf % separated effective angle of attack in degrees.
+        alphaf_rad % separated effective angle of attack in radians
+        CNk % delayed Kirchhoff normal force coefficient, calculated using Kirchhoff model with fpp as a separation curve. Does not include added mass.
+        f % separation point in time. Ranges from 0 to 1, indicates the separation point in x/c.
+        fp % delayed separation point in time, computed from CNprime. Ranges from 0 to 1, indicates the separation point in x/c.
+        fpp % double delayed separation point in time, computed after adding Tf delay to fp. % separation point in time. Ranges from 0 to 1, indicates the separation point in x/c.
+        fppexp % experimental separation location, found by applied the inverted Kirchhoff model to the experimental CN curve. % separation point in time. Ranges from 0 to 1, indicates the separation point in x/c.
+        CNf % delayed Kirchhoff normal force coefficient plus added mass. Is equal to CNk+CNI.
+        CCf % delayed Kirchhoff chord-wise force coefficient plus added mass.
         % Dynamic Stall
-        tau_v
-        Cv
-        CNv
+        tau_v % about two times slower as the convective time
+        Cv % intermediary vortex normal coefficient.
+        CNv % total accumulated vortex normal coefficient.
         St % Strouhal number
-        CNv2
-        CN_LB
-        % Post-processing peak heights
-        maxCN
-        maxCN_LB
-        maxCNk
-        maxCNf
-        maxCNv
-        firstPeak
-        secondPeak
-        % peak locations
-        SmaxCN
-        SmaxCN_LB
-        SmaxCNk
-        SmaxCNf
-        SmaxCNv
-        firstPeakLoc
-        secondPeakLoc
+        CNv2 % secondary vortex normal coefficient
+        CN_LB % total LB-predicted normal coefficient. Equal to CNf+CNv.
+        % Post-processing
+        % peak heights
+        maxCN % maximum value of CN over the experiment
+        maxCNk % maximum value of CNk over the experiment
+        maxCNf % maximum value of CNf over the experiment
+        maxCNv % maximum value of CNv over the experiment
+        firstPeak % value of the first local maximum after start of experiment (t>0)
+        secondPeak % value of the second local maximum after start of experiment and before the primary peak ends (when the slope of CN changes sign to become positive again)
+        % peak locations (timing in convective time units)
+        SmaxCN % timing of experimental normal coefficient peak
+        SmaxCN_LB % timing of LB-predicted normal coefficient peak
+        SmaxCNk % timing of Kirchhoff normal coefficient peak
+        SmaxCNf % timing of Kirchhoff plus added mass normal coefficient peak
+        SmaxCNv % timing of vortex normal coefficient peak
+        firstPeakLoc % timing of first peak of LB-predicted normal coefficient
+        secondPeakLoc % timing of second peak of LB-predicted normal coefficient peak
+
         % errors
         err % mean squared difference between the experimental data and the LB prediction
-        errCNk_PeakLoc
+        errCNk_PeakLoc % difference between the timing of experimental and Kirchhoff normal coefficient peak 
         errCNk_PeakHeight
-        errCNf_PeakLoc
+        errCNf_PeakLoc % difference between the timing of experimental and Kirchhoff plus added mass normal coefficient peak
         errCNf_PeakHeight
-        errCNv_PeakLoc
+        errCNv_PeakLoc % difference between the timing of experimental and vortex normal coefficient peak
         errCNv_PeakHeight
-        errPeakLoc
+        errPeakLoc % difference between the timing of experimental and Kirchhoff normal coefficient peak
         errPeakHeight
-        errFirstPeakLoc
+        errFirstPeakLoc % difference between the timing of experimental and LB-predicted normal coefficient peak
         errFirstPeakHeight
-        errSecondPeakLoc
+        errSecondPeakLoc % difference between the timing of experimental and second normal coefficient peak
         errSecondPeakHeight
         %% Goman-Khrabrov
-        tau1
-        tau2
-        x
-        alpha_shift
-        CN_GK
+        tau1 % first GK constant
+        tau2 % second GK constant
+        x % separation location in x/c
+        alpha_shift % angla of attack shifted by alphadot (alpha-alphadot*tau2) in radians
+        CN_GK % normal coefficient predicted by Goman-Khrabrov
         %% Sheng
-        alpha_lag
-        analpha_lag
+        alpha_lag % alpha' in Sheng's paper, angle of attack shifted by Talpha
+        analpha_lag % analytical alpha', mathematical idealisation, in degrees
     end
     properties (Constant = true)
-        
+        % here you can set properties that you don't want to be changed by
+        % anything in the code. Setting constants here helps code
+        % robustness
     end
     methods
         function obj = AirfoilMotion(varargin)
@@ -131,9 +133,10 @@ classdef AirfoilMotion < matlab.mixin.SetGet
                     obj.set(prop(k).Name,p.Results.(prop(k).Name))
                 end
             end
+            obj.fillProps()
         end
         function fillProps(obj)
-            % fills the properties that can be deduced from one another
+            % sets the motion properties that can be deduced from properties that have been already set
             if ~isempty(obj.alpha)
                 obj.alpha_rad = deg2rad(obj.alpha);
             end
@@ -172,13 +175,6 @@ classdef AirfoilMotion < matlab.mixin.SetGet
                 obj.name = name;
             else
                 obj.name = inputname(1);
-            end
-        end
-        function setCN(obj,CN)
-            if length(CN)==length(obj.alpha)
-                obj.CN = CN;
-            else
-                error('CN and alpha must be of same length.')
             end
         end
         function setCNsteady(obj,varargin)
@@ -229,6 +225,16 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             end
         end
         function BeddoesLeishman(obj,airfoil,Tp,Tf,Tv,Tvl,alphamode)
+            % BeddoesLeishman(obj,airfoil,Tp,Tf,Tv,Tvl,alphamode) runs the
+            % LB model on the experimental airfoil motion 'motion' with
+            % airfoil 'airfoil'. Tp,Tf,Tv, and Tvl are the associated time
+            % constants and alphamode defines if the alpha time evolution
+            % and its derivative should be computed analytically (for
+            % example alpha_1*sin(2pi*f*t) for a pitching motion) or
+            % experimentally (taking the numerical derivatives from the
+            % alpha vector). Analytical mode is only available for
+            % RampUpMotion and PitchingMotion objects.
+
             obj.model = 'LB';
             airfoil.steady.fitKirchhoff()
             obj.setCNsteady(airfoil.steady)
@@ -237,10 +243,11 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             obj.CNqs = CNsteady_pot(1:n) + pi*obj.rt(1:n).*cosd(obj.alpha(1:n));        
             obj.computeAttachedFlow(airfoil,alphamode);
             obj.computeLEseparation(Tp,alphamode);
-            obj.computeTEseparation(airfoil,Tf,'BL');
-            obj.computeDS(airfoil,Tv,Tvl,'BL');
+            obj.computeTEseparation(airfoil,Tf,'LB');
+            obj.computeDS(airfoil,Tv,Tvl,'LB');
         end
         function BLBangga(obj,airfoil,Tp,Tf,Tv,Tvl,alphamode)
+            obj.model = 'Bangga-LB';
             obj.setCNsteady(airfoil.steady)
             obj.computeAttachedFlow(airfoil,alphamode);
             obj.computeLEseparation(Tp,alphamode);
@@ -280,6 +287,10 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             obj.CN_GK = steady.slope/4*(1+sqrt(obj.x)).^2+steady.CN0;
         end
         function computeAttachedFlow(obj,airfoil,alphamode)
+            % computeAttachedFlow computes the variables related to the
+            % attached part of the flow, without taking separation into
+            % account, i.e. CNC, CNI and CNp. They correspond to the 'Attached Flow Behaviour'
+            % part of the original Leishman and Beddoes (1989) article.            
             obj.S = 2*obj.V*obj.t/airfoil.c;
             obj.DeltaS = mean(diff(obj.S));
             obj.computeImpulsiveLift(airfoil,alphamode);
@@ -418,8 +429,11 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             obj.Tf = Tf;
             obj.f = interp1(airfoil.steady.alpha,airfoil.steady.f,obj.alpha);                       
             
-            % Here a model for fp is selected
-            obj.computeSepLag(airfoil,model)
+            % Here a model for fp is selected, interpolate_fexp sets if the
+            % experimental separation curve should be used as it is or if a
+            % Kirchhoff model for separation curve should be fitted.
+            interpolate_fexp = true; 
+            obj.computeSepLag(airfoil,model,interpolate_fexp)
             
             Df=zeros(size(obj.fp));
             for n=2:length(obj.fp)
@@ -437,21 +451,20 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             eta = 0.95;
             obj.CCf = eta*airfoil.steady.slope*obj.alphaE(1:n).^2.*sqrt(obj.fpp(1:n));
         end
-        function computeSepLag(obj,airfoil,model)
+        function computeSepLag(obj,airfoil,model,interpolate_fexp)
             % change the static curve model here
-            interpolate_fexp = true;
             switch model
-                case {'BL','BLBangga'}
-                    obj.model='BL';
+                case {'LB','Bangga-LB'}
                     obj.alphaf = obj.CNprime/airfoil.steady.slope; % effective separation point
                     obj.alphaf_rad = deg2rad(obj.alphaf);
                     if interpolate_fexp
+                        obj.model='LB w/o Kirchhoff fit';
                         obj.fp = interp1(airfoil.steady.alpha,airfoil.steady.fexp,obj.alphaf);
                     else % use the seppoint function fit evaluated in alphaf
+                        obj.model='LB with Kirchhoff fit';
                         obj.fp = seppoint(airfoil.steady,obj.alphaf);
                     end
-                case 'BLSheng'
-                    obj.model='BLSheng';
+                case 'Sheng-LB'
                     try
                         load(fullfile('..',sprintf('linfit_%s.mat',airfoil.name)),'Talpha','alpha_ds0');
                     catch
@@ -471,17 +484,20 @@ classdef AirfoilMotion < matlab.mixin.SetGet
                     end
                     n = min([length(obj.alpha_lag),length(delta_alpha1)]);
                     if interpolate_fexp
+                        obj.model='BLSheng w/o Kirchhoff fit';
                         obj.fp = interp1(airfoil.steady.alpha,airfoil.steady.fexp,obj.alpha_lag(1:n)-delta_alpha1(1:n),'linear','extrap');
                     else
+                        obj.model='BLSheng with Kirchhoff fit';
                         obj.fp = seppoint(airfoil.steady,obj.alpha_lag(1:n)-delta_alpha1(1:n));
                     end
-                case 'BLSheng with expfit'
-                    obj.model='expfit';
+                case 'Expfit'
                     [~,Talpha] = Expfit(airfoil,obj);
                     obj.computeAlphaLag(airfoil,Talpha)
                     if interpolate_fexp
+                        obj.model = 'Expfit w/o Kirchhoff fit (seperation curve)';
                         obj.fp = interp1(airfoil.steady.alpha,airfoil.fexp,obj.alpha_lag,'linear','extrap');
                     else
+                        obj.model = 'Expfit with Kirchhoff fit (seperation curve)';
                         obj.fp = seppoint(airfoil.steady,obj.alpha_lag); % effective separation point
                     end
             end
@@ -587,14 +603,14 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             % computes tau_v, the adimensional time variable that keeps
             % track of the vortexâ?„â?„â?„ passing over the airfoil
             switch model
-                case {'BL','BLBangga'}
+                case {'LB','Bangga-LB'}
                     % the airfoil stalls when a certain normal coeff is
                     % exceeded by CNprime
                     CNss = interp1(airfoil.steady.alpha,airfoil.steady.CN,airfoil.steady.alpha_ss);
                     % obj.CNcrit = 1.147; % limit of CNds as r->0
                     obj.CNcrit = CNss;
                     isstalled = obj.CNprime > obj.CNcrit;
-                case 'BLSheng'
+                case 'Sheng-LB'
                     % the airfoil stalls when a certain AoA is exceeded by
                     % alpha'
                     load(sprintf('/Users/lucas/Documents/EPFL/PDM/linfit_%s.mat',airfoil.name),'alpha_ds0','r0');
@@ -603,7 +619,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
                     end
                     alpha_crit = computeAlphaCrit(airfoil,alpha_ds0,obj.r);
                     isstalled = obj.alpha_lag > alpha_crit;
-                case 'BLSheng with expfit'
+                case 'Expfit'
                     % the airfoil stalls when the static stall angle is
                     % exceeded by alpha'
                     alpha_crit = airfoil.steady.alpha_ss;
@@ -731,47 +747,6 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             if ~isempty(obj.secondPeak)
                 obj.errSecondPeakLoc = obj.secondPeakLoc - obj.SmaxCN;
                 obj.errSecondPeakHeight = obj.secondPeak - obj.maxCN;
-            end
-        end
-        function save2Excel(obj)
-            writematrix(obj.r,'../paramsweep.xlsx','Sheet',sprintf('adot = %1.1f',obj.alphadot),'Range','B4')
-        end
-        function save2mat(obj,name)
-            r = obj.r;
-            alphadot = obj.alphadot;
-            Tp = obj.Tp;
-            Tf = obj.Tf;
-            Tv = obj.Tv;
-            Tvl = obj.Tvl;
-            maxCN = obj.maxCN;
-            maxCN_LB = obj.maxCN_LB;
-            maxCNk = obj.maxCNk;
-            maxCNf = obj.maxCNf;
-            maxCNv = obj.maxCNv;
-            SmaxCN = obj.SmaxCN;
-            SmaxCN_LB = obj.SmaxCN_LB;
-            SmaxCNk = obj.SmaxCNk;
-            SmaxCNf = obj.SmaxCNf;
-            SmaxCNv = obj.SmaxCNv;
-            err = obj.err;
-            errCNk_PeakLoc = obj.errCNk_PeakLoc;
-            errCNk_PeakHeight = obj.errCNk_PeakHeight;
-            errCNf_PeakLoc = obj.errCNf_PeakLoc;
-            errCNf_PeakHeight = obj.errCNf_PeakHeight;
-            errCNv_PeakLoc = obj.errCNv_PeakLoc;
-            errCNv_PeakHeight = obj.errCNv_PeakHeight;
-            errPeakLoc = obj.errPeakLoc;
-            errPeakHeight = obj.errPeakHeight;
-            errFirstPeakHeight = obj.errFirstPeakHeight;
-            errFirstPeakLoc = obj.errFirstPeakLoc;
-            errSecondPeakHeight = obj.errSecondPeakHeight;
-            errSecondPeakLoc = obj.errSecondPeakLoc;
-            if any([isempty(Tp),isempty(Tf),isempty(Tv),isempty(Tvl),isempty(maxCN),isempty(maxCN_LB),isempty(maxCNk),isempty(maxCNf),isempty(maxCNv),isempty(SmaxCN),isempty(SmaxCN_LB),isempty(SmaxCNk),isempty(SmaxCNf),isempty(SmaxCNv),isempty(err)])
-                error('One of the field is empty.')
-            elseif exist(name,'file')                
-                save(name,'r','alphadot','T*','max*','Smax*','err*','-regexp','-append') 
-            else
-                save(name,'r','alphadot','T*','max*','Smax*','err*','-regexp')
             end
         end
         function plotAlpha(obj,mode)
@@ -1017,12 +992,24 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             ylabel('\alpha (Â°)')
         end
         function plotSeparation(obj,airfoil,mode,save)
+            %plotSeparation(airfoil,mode,save) plots the separation curves,
+            %including the delayed ones defined in LB model. The airfoil
+            %argument sets to which airfoil the experimental motion
+            %corresponds and mode defines the x-axis, either alpha or
+            %convectime (=convective time). Save is a logical argument that
+            %defines if you want to save the figure in the fig folder.
+            if nargin<=1
+                error('You need to specifiy an airfoil and an x-axis for your plot, e.g. plotSeparation(airfoil,''convectime'')');
+            end
+            plotKirchhofffit = ~contains(obj.model,'w/o'); % Kirchhoff fit curve must be plotted if the expression w/o Kirchhoff fit is not found in the model name.
             figure
             switch mode
                 case 'angle'
                     plot(airfoil.steady.alpha,airfoil.steady.fexp,'DisplayName','f_{exp}','LineWidth',2)
                     hold on
-                    plot(airfoil.steady.alpha,obj.f,'DisplayName','f','LineWidth',2)
+                    if plotKirchhofffit
+                        plot(airfoil.steady.alpha,obj.f,'DisplayName','f','LineWidth',2)
+                    end
                     plot(obj.alpha(1:length(obj.fp)),obj.fp,'DisplayName','f''','LineWidth',2)
                     plot(obj.alpha(1:length(obj.fpp)),obj.fpp,'DisplayName','f''''','LineWidth',2)
                     xlabel('\alpha (Â°)')
@@ -1030,7 +1017,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
                 case 'convectime'
                     plot(obj.S,interp1(airfoil.steady.alpha,airfoil.steady.fexp,obj.alpha),'DisplayName','f_{exp}','LineWidth',2)
                     hold on
-                    if ~strcmp(obj.model,'BLBangga')
+                    if plotKirchhofffit && ~contains(obj.model,'Bangga-LB')
                         plot(obj.S,interp1(airfoil.steady.alpha,airfoil.steady.f,obj.alpha),'DisplayName','f','LineWidth',2)
                     end
                     plot(obj.S(1:length(obj.fp)),obj.fp,'DisplayName','f''','LineWidth',2)
@@ -1039,7 +1026,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
                     xlabel('t_c')
                     legend('Location','NorthEast','FontSize',20)
                 otherwise
-                    error('Either angle or convectime mode must be specified as an argument')
+                    error('Either angle or convectime (=convective time)mode must be specified as an argument')
             end
             ax = gca;
             ax.FontSize = 20;
@@ -1159,6 +1146,76 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             ax.FontSize = 20;
             axis([0 Inf 0 3])
             title(sprintf('$r=%.3f,T_p=%.1f,T_f =%.1f,T_v=%.1f,T_{vl}=%.1f$',obj.r,obj.Tp,obj.Tf,obj.Tv,obj.Tvl),'FontSize',14,'interpreter','latex')
+        end
+        function save2Excel(obj)
+            writematrix(obj.r,'../paramsweep.xlsx','Sheet',sprintf('adot = %1.1f',obj.alphadot),'Range','B4')
+        end
+        function save2mat(obj,name)
+            r = obj.r;
+            alphadot = obj.alphadot;
+            Tp = obj.Tp;
+            Tf = obj.Tf;
+            Tv = obj.Tv;
+            Tvl = obj.Tvl;
+            maxCN = obj.maxCN;
+            maxCN_LB = obj.maxCN_LB;
+            maxCNk = obj.maxCNk;
+            maxCNf = obj.maxCNf;
+            maxCNv = obj.maxCNv;
+            SmaxCN = obj.SmaxCN;
+            SmaxCN_LB = obj.SmaxCN_LB;
+            SmaxCNk = obj.SmaxCNk;
+            SmaxCNf = obj.SmaxCNf;
+            SmaxCNv = obj.SmaxCNv;
+            err = obj.err;
+            errCNk_PeakLoc = obj.errCNk_PeakLoc;
+            errCNk_PeakHeight = obj.errCNk_PeakHeight;
+            errCNf_PeakLoc = obj.errCNf_PeakLoc;
+            errCNf_PeakHeight = obj.errCNf_PeakHeight;
+            errCNv_PeakLoc = obj.errCNv_PeakLoc;
+            errCNv_PeakHeight = obj.errCNv_PeakHeight;
+            errPeakLoc = obj.errPeakLoc;
+            errPeakHeight = obj.errPeakHeight;
+            errFirstPeakHeight = obj.errFirstPeakHeight;
+            errFirstPeakLoc = obj.errFirstPeakLoc;
+            errSecondPeakHeight = obj.errSecondPeakHeight;
+            errSecondPeakLoc = obj.errSecondPeakLoc;
+            if any([isempty(Tp),isempty(Tf),isempty(Tv),isempty(Tvl),isempty(maxCN),isempty(maxCN_LB),isempty(maxCNk),isempty(maxCNf),isempty(maxCNv),isempty(SmaxCN),isempty(SmaxCN_LB),isempty(SmaxCNk),isempty(SmaxCNf),isempty(SmaxCNv),isempty(err)])
+                error('One of the field is empty.')
+            elseif exist(name,'file')
+                save(name,'r','alphadot','T*','max*','Smax*','err*','-regexp','-append')
+            else
+                save(name,'r','alphadot','T*','max*','Smax*','err*','-regexp')
+            end
+        end
+        function sett(obj,t)
+            if length(t)==length(obj.alpha)
+                obj.t = t;
+                obj.Ts = mean(diff(t));
+            else
+                error('t and alpha must be of same length.')
+            end
+        end
+        function setCL(obj,CL)
+            if length(CL)==length(obj.alpha)
+                obj.CL = CL;
+            else
+                error('CL and alpha must be of same length.')
+            end
+        end
+        function setCD(obj,CD)
+            if length(CD)==length(obj.alpha)
+                obj.CD = CD;
+            else
+                error('CD and alpha must be of same length.')
+            end
+        end
+        function setCN(obj,CN)
+            if length(CN)==length(obj.alpha)
+                obj.CN = CN;
+            else
+                error('CN and alpha must be of same length.')
+            end
         end
     end
 end

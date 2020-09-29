@@ -1,9 +1,9 @@
 classdef PitchingMotion < AirfoilMotion
     properties
-        mean_rad
-        amp_rad
-        freq
-        omega
+        mean_rad % rad
+        amp_rad % rad
+        freq % Hz
+        omega % rad/s
         phi % phase at t=0 in radians
         k % reduced freq
         f_pts
