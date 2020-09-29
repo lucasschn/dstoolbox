@@ -83,6 +83,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
         SmaxCNv % timing of vortex normal coefficient peak
         firstPeakLoc % timing of first peak of LB-predicted normal coefficient
         secondPeakLoc % timing of second peak of LB-predicted normal coefficient peak
+
         % errors
         err % mean squared difference between the experimental data and the LB prediction
         errCNk_PeakLoc % difference between the timing of experimental and Kirchhoff normal coefficient peak 
@@ -114,8 +115,8 @@ classdef AirfoilMotion < matlab.mixin.SetGet
     end
     methods
         function obj = AirfoilMotion(varargin)
-            % convenient constructor with name/value pair of any attribute of
-            % AirfoilMotion
+            % convenient constructor with name/value pair of any attribute
+            % of AirfoilMotion
             p = inputParser;
             % Add name / default value pairs
             mco = ?AirfoilMotion;
@@ -177,11 +178,12 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             end
         end
         function setCNsteady(obj,varargin)
-            % Sets the static CN value for each time step. Pass a SteadyCurve as an argument to automatically compute
-            % the static CN for each angle of attack alpha(t) of the
-            % current AirfoilMotion. Provide a vector describing CN(t) to
-            % manually set the static CN values for each alpha(t).
-            % Quasi-steady lift based on Theodorsen theory is also computed
+            % Sets the static CN value for each time step. Pass a
+            % SteadyCurve as an argument to automatically compute the
+            % static CN for each angle of attack alpha(t) of the current
+            % AirfoilMotion. Provide a vector describing CN(t) to manually
+            % set the static CN values for each alpha(t). Quasi-steady lift
+            % based on Theodorsen theory is also computed
             if isa(varargin{1},'SteadyCurve')
                 steady = varargin{1};
                 obj.CNsteady = interp1(steady.alpha,steady.CN,obj.alpha); % only the alphadot term
@@ -363,22 +365,24 @@ classdef AirfoilMotion < matlab.mixin.SetGet
         end
         function [X,Y] = computeDuhamel(obj,deltaalpha,rule)
             % Choose the best-suited algorithm for approximation of the
-            % Duhamel integral. Rectangle is not recommended is the
-            % step size in convective time is small, but can be 10
-            % times faster to execute. Useful for numerous datapoints. (See section
-            % 8.14.1 of Principles of Helicopter Aerodynamics by J.
-            % Gordon Leishman)
+            % Duhamel integral. Rectangle is not recommended is the step
+            % size in convective time is small, but can be 10 times faster
+            % to execute. Useful for numerous datapoints. (See section
+            % 8.14.1 of Principles of Helicopter Aerodynamics by J. Gordon
+            % Leishman)
             X = zeros(size(deltaalpha));
             Y = zeros(size(deltaalpha));
             switch rule
                 case 'mid-point'  % approximation of Duhamel's integral using mid-point rule.
-                    % Error of order DeltaS^3 (< 1% if both b1*DeltaS and b2*DeltaS are <0.25)
+                    % Error of order DeltaS^3 (< 1% if both b1*DeltaS and
+                    % b2*DeltaS are <0.25)
                     for n=2:length(deltaalpha)
                         X(n) = X(n-1)*exp(-obj.b1*obj.beta^2*obj.DeltaS) + obj.A1*deltaalpha(n)*exp(-obj.b1*obj.beta^2*obj.DeltaS/2);
                         Y(n) = Y(n-1)*exp(-obj.b2*obj.beta^2*obj.DeltaS) + obj.A2*deltaalpha(n)*exp(-obj.b2*obj.beta^2*obj.DeltaS/2);
                     end
                 case 'rectangle' % approximation of the integral using rectangle rule.
-                    % Faster, but error of order DeltaS (< 5% if both b1*DeltaS and b2*DeltaS are <0.05)
+                    % Faster, but error of order DeltaS (< 5% if both
+                    % b1*DeltaS and b2*DeltaS are <0.05)
                     for n=2:length(deltaalpha)
                         X(n) = X(n-1)*exp(-obj.b1*obj.beta^2*obj.DeltaS) + obj.A1*deltaalpha(n);
                         Y(n) = Y(n-1)*exp(-obj.b2*obj.beta^2*obj.DeltaS) + obj.A2*deltaalpha(n);
@@ -445,7 +449,8 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             obj.fpp = obj.fp - Df;
             
             n = min([length(obj.CNI),length(obj.CNC)]);
-            % slope_adapted = slope5.*(obj.CNprime<CNcrit)+slope10.*(obj.CNprime>CNcrit);
+            % slope_adapted =
+            % slope5.*(obj.CNprime<CNcrit)+slope10.*(obj.CNprime>CNcrit);
             % Kirchhoff law
             obj.CNk = airfoil.steady.slope.*(obj.alphaE(1:n).*((1+sqrt(obj.fpp(1:n)))/2).^2-airfoil.steady.alpha0);
             obj.CNf = obj.CNk + obj.CNI(1:n);
@@ -506,16 +511,18 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             obj.computeExpSeparation(airfoil);
         end
         function computeExpSeparation(obj,airfoil)
-            % computes the experimental separation point using inverted Kirchhof model,
-            % ref: Leishman, Principles of Helicopter Aerodynamics 2nd Ed., eq. 7.106 page 405
+            % computes the experimental separation point using inverted
+            % Kirchhof model, ref: Leishman, Principles of Helicopter
+            % Aerodynamics 2nd Ed., eq. 7.106 page 405
             unbounded_fppexp = (2*sqrt((obj.CN(1:length(obj.CNv))-obj.CNv)./(airfoil.steady.slope*(obj.alpha(1:length(obj.CNv)) - airfoil.steady.alpha0)))-1).^2;
             obj.fppexp = max([zeros(size(unbounded_fppexp)),min([ones(size(unbounded_fppexp)), unbounded_fppexp],[],2)],[],2);
             obj.fppexp(obj.alpha<5) = 1;
         end
         function computeDS(obj,airfoil,Tv,Tvl,model)
-            % Computes the final Beddoes-Leishman predicted CN for the instanciated pitching motion, after
-            % having computed the attached-flow behavior and both TE and LE
-            % separation with the homolog methods.
+            % Computes the final Beddoes-Leishman predicted CN for the
+            % instanciated pitching motion, after having computed the
+            % attached-flow behavior and both TE and LE separation with the
+            % homolog methods.
             secondary_vortex=false;
             obj.Tv = Tv;
             obj.Tvl = Tvl;
@@ -523,7 +530,8 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             KN = 1/4*(1+sqrt(obj.fpp)).^2;
             n = min([length(obj.CNC),length(KN)]);
             % Cv defines how much lift will eventually go in the LEV. It is
-            % proportional to the circulation and the amount of separation (a decrease in f leads to an increase in Cv).
+            % proportional to the circulation and the amount of separation
+            % (a decrease in f leads to an increase in Cv).
             obj.Cv = obj.CNC(1:n).*(1-KN(1:n));
             % Here a model for stall criterion is selected. tau_v is
             % incremented after stall has started
@@ -532,7 +540,8 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             obj.CNv=zeros(size(obj.Cv));
             for k=2:length(obj.Cv)
                 if obj.tau_v(k) < Tvl % first one is 1!
-                    % CNv augments proportionally to delta Cv and decays exponentially at the same time
+                    % CNv augments proportionally to delta Cv and decays
+                    % exponentially at the same time
                     obj.CNv(k) = obj.CNv(k-1)*exp(-obj.DeltaS/Tv) + (obj.Cv(k)-obj.Cv(k-1))*exp(-obj.DeltaS/(2*Tv));
                 else
                     % CNv decays exponentially after tau_v has passed Tvl
@@ -545,10 +554,12 @@ classdef AirfoilMotion < matlab.mixin.SetGet
                 Tst = 2*(1-obj.fpp)/obj.St; % scalar?
                 for k=2:length(obj.Cv)
                     if obj.tau_v(k) > Tst(k) & obj.tau_v(k) < Tst(k) + Tvl
-                        % CNv augments proportionally to delta Cv and decays exponentially at the same time
+                        % CNv augments proportionally to delta Cv and
+                        % decays exponentially at the same time
                         obj.CNv2(k) = obj.CNv2(k-1)*exp(-obj.DeltaS/Tv) + (obj.Cv(k)-obj.Cv(k-1))*exp(-obj.DeltaS/(2*Tv));
                     else
-                        % CNv decays exponentially after tau_v has passed Tvl
+                        % CNv decays exponentially after tau_v has passed
+                        % Tvl
                         obj.CNv2(k) = obj.CNv2(k-1)*exp(-obj.DeltaS/Tv);
                     end
                 end
@@ -562,7 +573,8 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             end
         end
         function estimateTp(obj,steady)
-            % Estimation of the deficiency function Dp based on the equation CNprime(tds) = CNss = CN(tds) - Dp(tds)
+            % Estimation of the deficiency function Dp based on the
+            % equation CNprime(tds) = CNss = CN(tds) - Dp(tds)
             Dp_ds = obj.CNp(obj.i_CConset) - steady.CN(steady.alpha == steady.alpha_ss); % Dp(t_ds)
             figure
             plot(obj.S(1:length(obj.Dp)),obj.Dp,'LineWidth',2,'DisplayName','D_p')
@@ -595,8 +607,8 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             Tvl = obj.S(imaxCN) - obj.S(obj.i_CConset);
         end
         function computeVortexTime(obj,airfoil,model)
-            % computes tau_v, the adimensional time variable that keeps track of the
-            % vortex⁄⁄⁄ passing over the airfoil
+            % computes tau_v, the adimensional time variable that keeps
+            % track of the vortex�?��?��?� passing over the airfoil
             switch model
                 case {'LB','Bangga-LB'}
                     % the airfoil stalls when a certain normal coeff is
@@ -623,7 +635,8 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             dt = mean(diff(obj.t));
             dalpha = diff(obj.alpha);
             obj.tau_v = zeros(size(obj.t));
-            % Following Bangga 2020, Eq. 35 (first tau is always zero, last two points have no CNprime defined)
+            % Following Bangga 2020, Eq. 35 (first tau is always zero, last
+            % two points have no CNprime defined)
             for k = 2:length(isstalled)-1
                 if isstalled(k)
                     obj.tau_v(k) = obj.tau_v(k-1)+0.45*dt/airfoil.c*obj.V;
@@ -726,11 +739,11 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             obj.errCNf_PeakLoc = obj.SmaxCNf - obj.SmaxCN;
             obj.errCNf_PeakHeight = obj.maxCNf - obj.maxCN;
             
-            % Vortex lift error
-            % define the steady state CN for usage in the computation of the error on
-            % the vortex lift
+            % Vortex lift error define the steady state CN for usage in the
+            % computation of the error on the vortex lift
             CNsteady_value = mean(obj.CN(end-100:end));
-            % Define reference as difference between maxCN and final value of CN
+            % Define reference as difference between maxCN and final value
+            % of CN
             refCNv = obj.maxCN - CNsteady_value;
             obj.errCNv_PeakLoc = obj.SmaxCNv - obj.SmaxCN; % still compare to primary peak
             obj.errCNv_PeakHeight = obj.maxCNv - refCNv;
@@ -857,7 +870,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             fprintf('Starting time for stop criterion is %.1f. \n',S_start)
             fprintf('Stop time is %.1f. \n',S_stop)
             
-            % length of the plots 
+            % length of the plots
             %n = find(obj.CNv(i_stop:end) <= 0.005,1) + i_stop;
             n = find(obj.S >= 30);           
             
@@ -909,8 +922,8 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             title(['\alpha_{ss} = ' sprintf('%.1f',alpha_ss) ' °'])       
         end
         function plotSteady(obj,airfoil)
-            %             airfoil.steady.computeSlope(13)
-            %             slope13 = airfoil.steady.slope;
+            %             airfoil.steady.computeSlope(13) slope13 =
+            %             airfoil.steady.slope;
             CN_steady = airfoil.steady.slope*((1+sqrt(airfoil.steady.f_inf))/2).^2*30;
             figure
             plot(obj.S(1:length(obj.CN)),obj.CN,'LineWidth',2,'DisplayName','exp')
@@ -1067,7 +1080,8 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             if ~isempty(obj.analpha)
                 plot(obj.S,obj.analpha,'--','LineWidth',2,'DisplayName','ideal \alpha')
                 hold on
-                %plot(obj.S,obj.analpha_lag,'--','DisplayName','ideal \alpha''')
+                %plot(obj.S,obj.analpha_lag,'--','DisplayName','ideal
+                %\alpha''')
             end
             if ~isempty(obj.i_CConset)
                 plot(obj.S(obj.i_CConset),obj.alpha_CConset,'rx','DisplayName','\alpha_{ds,CC}')
