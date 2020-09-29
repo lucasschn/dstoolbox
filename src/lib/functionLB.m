@@ -14,7 +14,7 @@ switch type
     case 'pitching'
         motion = PitchingMotion('alpha',input.dyn.alpha,'t',input.dyn.t,'V',input.U,'freq',input.freq);
         motion.setSinus(airfoil,input.mean_rad,input.amp_rad,input.freq*2*pi);
-    case 'random'
+    case 'general'
         motion = AirfoilMotion('alpha',input.dyn.alpha,'t',input.dyn.t,'V',input.U); 
     otherwise
 end

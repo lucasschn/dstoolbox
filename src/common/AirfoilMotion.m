@@ -77,33 +77,33 @@ classdef AirfoilMotion < matlab.mixin.SetGet
         firstPeak
         secondPeak
         % peak locations (timing in convective time units)
-        SmaxCN
-        SmaxCN_LB
-        SmaxCNk
-        SmaxCNf
-        SmaxCNv
-        firstPeakLoc
-        secondPeakLoc
+        SmaxCN % timing of experimental normal coefficient peak
+        SmaxCN_LB % timing of LB-predicted normal coefficient peak
+        SmaxCNk % timing of Kirchhoff normal coefficient peak
+        SmaxCNf % timing of Kirchhoff plus added mass normal coefficient peak
+        SmaxCNv % timing of vortex normal coefficient peak
+        firstPeakLoc % timing of first peak of LB-predicted normal coefficient
+        secondPeakLoc % timing of second peak of LB-predicted normal coefficient peak
         % errors
         err % mean squared difference between the experimental data and the LB prediction
-        errCNk_PeakLoc
+        errCNk_PeakLoc % difference between the timing of experimental and Kirchhoff normal coefficient peak 
         errCNk_PeakHeight
-        errCNf_PeakLoc
+        errCNf_PeakLoc % difference between the timing of experimental and Kirchhoff plus added mass normal coefficient peak
         errCNf_PeakHeight
-        errCNv_PeakLoc
+        errCNv_PeakLoc % difference between the timing of experimental and vortex normal coefficient peak
         errCNv_PeakHeight
-        errPeakLoc
+        errPeakLoc % difference between the timing of experimental and Kirchhoff normal coefficient peak
         errPeakHeight
-        errFirstPeakLoc
+        errFirstPeakLoc % difference between the timing of experimental and LB-predicted normal coefficient peak
         errFirstPeakHeight
-        errSecondPeakLoc
+        errSecondPeakLoc % difference between the timing of experimental and second normal coefficient peak
         errSecondPeakHeight
         %% Goman-Khrabrov
         tau1
         tau2
         x
         alpha_shift
-        CN_GK
+        CN_GK % normal coefficient predicted by Goman-Khrabrov
         %% Sheng
         alpha_lag
         analpha_lag
@@ -133,6 +133,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
                     obj.set(prop(k).Name,p.Results.(prop(k).Name))
                 end
             end
+            obj.fillProps()
         end
         function fillProps(obj)
             % sets the motion properties that can be deduced from properties that have been already set
@@ -241,8 +242,8 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             obj.CNqs = CNsteady_pot(1:n) + pi*obj.rt(1:n).*cosd(obj.alpha(1:n));        
             obj.computeAttachedFlow(airfoil,alphamode);
             obj.computeLEseparation(Tp,alphamode);
-            obj.computeTEseparation(airfoil,Tf,'BL');
-            obj.computeDS(airfoil,Tv,Tvl,'BL');
+            obj.computeTEseparation(airfoil,Tf,'LB');
+            obj.computeDS(airfoil,Tv,Tvl,'LB');
         end
         function BLBangga(obj,airfoil,Tp,Tf,Tv,Tvl,alphamode)
             obj.model = 'Bangga-LB';
@@ -587,14 +588,14 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             % computes tau_v, the adimensional time variable that keeps track of the
             % vortex⁄⁄⁄ passing over the airfoil
             switch model
-                case {'BL','BLBangga'}
+                case {'LB','Bangga-LB'}
                     % the airfoil stalls when a certain normal coeff is
                     % exceeded by CNprime
                     CNss = interp1(airfoil.steady.alpha,airfoil.steady.CN,airfoil.steady.alpha_ss);
                     % obj.CNcrit = 1.147; % limit of CNds as r->0
                     obj.CNcrit = CNss;
                     isstalled = obj.CNprime > obj.CNcrit;
-                case 'BLSheng'
+                case 'Sheng-LB'
                     % the airfoil stalls when a certain AoA is exceeded by
                     % alpha'
                     load(sprintf('/Users/lucas/Documents/EPFL/PDM/linfit_%s.mat',airfoil.name),'alpha_ds0','r0');
@@ -603,7 +604,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
                     end
                     alpha_crit = computeAlphaCrit(airfoil,alpha_ds0,obj.r);
                     isstalled = obj.alpha_lag > alpha_crit;
-                case 'BLSheng with expfit'
+                case 'Expfit'
                     % the airfoil stalls when the static stall angle is
                     % exceeded by alpha'
                     alpha_crit = airfoil.steady.alpha_ss;
@@ -982,9 +983,9 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             %convectime (=convective time). Save is a logical argument that
             %defines if you want to save the figure in the fig folder.
             if nargin<=1
-                error('You need to specifiy an airfoil and an x-axis for your plot, e.g. plotSeparation(airfoil,''convectime'')'); 
+                error('You need to specifiy an airfoil and an x-axis for your plot, e.g. plotSeparation(airfoil,''convectime'')');
             end
-            plotKirchhofffit = ~contains(obj.model,'w/o'); % Kirchhoff fit curve must be plotted if the expression w/o Kirchhoff fit is not found in the model name. 
+            plotKirchhofffit = ~contains(obj.model,'w/o'); % Kirchhoff fit curve must be plotted if the expression w/o Kirchhoff fit is not found in the model name.
             figure
             switch mode
                 case 'angle'
@@ -1000,7 +1001,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
                 case 'convectime'
                     plot(obj.S,interp1(airfoil.steady.alpha,airfoil.steady.fexp,obj.alpha),'DisplayName','f_{exp}','LineWidth',2)
                     hold on
-                    if plotKirchhofffit && ~contains(obj.model,'BLBangga')
+                    if plotKirchhofffit && ~contains(obj.model,'Bangga-LB')
                         plot(obj.S,interp1(airfoil.steady.alpha,airfoil.steady.f,obj.alpha),'DisplayName','f','LineWidth',2)
                     end
                     plot(obj.S(1:length(obj.fp)),obj.fp,'DisplayName','f''','LineWidth',2)
