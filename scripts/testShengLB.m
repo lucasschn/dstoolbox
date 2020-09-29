@@ -10,12 +10,15 @@ addpath('../plot_dir/')
 addpath('../src/model/')
 addpath('../src/common/')
 addpath('../src/lib/')
-run('/Users/lucas/src/codes_smarth/labbook.m')
+% run('/Users/lucas/src/codes_smarth/labbook.m')
+run labbook.m
 %% Define the airfoil and the associated steady curve
 
 airfoil = Airfoil('flatplate',0.15);
 airfoil.r0 = 0.01;
-static = load('../static_flatplate');
+% static = load('../static_flatplate');
+path2static = fullfile('..','data','static_flatplate');
+static = load(path2static);
 airfoil.steady = SteadyCurve(static.alpha,static.CN,8);
 
 %% Setting up the ramps

@@ -43,7 +43,7 @@ toc
 
 %% Choose among the three functions for plotting results of paramsweep
 
-plotOneRate(res,25,'Tp','Tf','secondPeak')
+plotOneRate(res,25,'Tp','Tf','Tv')
 
 function plotOneRate(res,rate,varx,vary,color_var)
 % produces a scatter plot showing the distribution of samples as function
