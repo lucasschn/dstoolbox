@@ -54,7 +54,8 @@ classdef AirfoilMotion < matlab.mixin.SetGet
         alphaf % separated effective angle of attack in degrees.
         alphaf_rad % separated effective angle of attack in radians
         CNk % delayed Kirchhoff normal force coefficient, calculated using Kirchhoff model with fpp as a separation curve. Does not include added mass.
-        f % separation point in time. Ranges from 0 to 1, indicates the separation point in x/c.
+        f % fitted separation point in time. Ranges from 0 to 1, indicates the separation point in x/c. Calculated using Kirchhoff fit with S1 and S2.
+        fexp % experimental separation point. Computed by directly applying inverted Kirchhoff model on static data. 
         fp % delayed separation point in time, computed from CNprime. Ranges from 0 to 1, indicates the separation point in x/c.
         fpp % double delayed separation point in time, computed after adding Tf delay to fp. % separation point in time. Ranges from 0 to 1, indicates the separation point in x/c.
         fppexp % experimental separation location, found by applied the inverted Kirchhoff model to the experimental CN curve. % separation point in time. Ranges from 0 to 1, indicates the separation point in x/c.
@@ -186,10 +187,12 @@ classdef AirfoilMotion < matlab.mixin.SetGet
             % based on Theodorsen theory is also computed
             if isa(varargin{1},'SteadyCurve')
                 steady = varargin{1};
-                obj.CNsteady = interp1(steady.alpha,steady.CN,obj.alpha); % only the alphadot term
+                obj.CNsteady = interp1(steady.alpha,steady.CN,obj.alpha,'linear','extrap'); % only the alphadot term
+                obj.fexp = interp1(steady.alpha,steady.fexp,obj.alpha,'linear','extrap');
             else
                 if length(varargin{1})==length(obj.alpha)
                     obj.CNsteady = varargin{1};
+                    obj.fexp = interp1(steady.alpha,steady.fexp,obj.alpha,'linear','extrap');
                 else
                     error('CN and alpha must be of same length. Provide a SteadyCurve object for resampling.')
                 end
@@ -1022,7 +1025,7 @@ classdef AirfoilMotion < matlab.mixin.SetGet
                     xlabel('\alpha (°)')
                     legend('Location','SouthWest','FontSize',20)
                 case 'convectime'
-                    plot(obj.S,interp1(airfoil.steady.alpha,airfoil.steady.fexp,obj.alpha),'DisplayName','f_{exp}','LineWidth',2)
+                    plot(obj.S,obj.fexp,'DisplayName','f_{exp}','LineWidth',2)
                     hold on
                     if plotKirchhofffit && ~contains(obj.model,'Bangga-LB')
                         plot(obj.S,interp1(airfoil.steady.alpha,airfoil.steady.f,obj.alpha),'DisplayName','f','LineWidth',2)

@@ -9,7 +9,7 @@ close all
 clc
 
 % now testing for simcos data
-test = 'simcos';
+test = 'general';
 
 %% Static properties
 switch test
