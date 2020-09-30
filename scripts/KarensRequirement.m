@@ -19,7 +19,7 @@ LBcoeffs.Tvl = 1;
 %% Loading dynamic data
 
 % now testing for simcos data
-test = 'general';
+test = 'simcos';
 switch test
     case 'simcos' % for pitching motion
         run labbook_simcos.m
@@ -37,14 +37,15 @@ switch test
         input.dyn.t = 0:TS:(n-1)*TS;
         input.dyn.alpha = Alpha;
         input.dyn.Cl = Cl_corr;
-        input.dyn.Cd = CD;
+        input.dyn.Cd = zeros(size(Cl_corr));
 
         % sinus parameters
         input.freq = LB(c).fosc;
         input.mean_rad = deg2rad(LB(c).alpha_0);
         input.amp_rad = deg2rad(LB(c).alpha_1);
-        out = functionLB(input,LBcoeffs,'ramp');
+        out = functionLB(input,LBcoeffs,'pitching');
     case 'rampup' % for rampup motion
+        run labbook.m
         load(loadmat(LB(c).ms,LB(c).mpt),'raw','zero')
         input.U=LB(c).U;
 
@@ -58,7 +59,7 @@ switch test
 
         out = functionLB(input,LBcoeffs,'pitching');
     case 'general'
-        input.U=LB(c).U;
+        input.U=50;
         n = 100;
         Ts = 0.1;
         t = 0:Ts:(n-1)*Ts;
@@ -73,5 +74,8 @@ switch test
 end
 
 figure, hold all
-plot(input.dyn.t,input.dyn.alpha)
-plot(input.dyn.t,out.CN_LB)
+plot(out.S,out.CN)
+plot(out.S,out.CN_LB)
+plot(out.S,out.CNI)
+plot(out.S,out.CNk)
+plot(out.S,out.CNv)
